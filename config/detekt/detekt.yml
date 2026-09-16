@@ -1,0 +1,34 @@
+build:
+  maxIssues: 0
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+style:
+  MagicNumber:
+    active: false
+  MaxLineLength:
+    active: true
+    maxLineLength: 140
+
+complexity:
+  LongMethod:
+    active: true
+    threshold: 60
+  LongParameterList:
+    active: true
+    functionThreshold: 7
+    constructorThreshold: 8
+  TooManyFunctions:
+    active: true
+    thresholdInClasses: 20
+
+naming:
+  FunctionNaming:
+    active: true
+    # Compose の @Composable 関数はPascalCase許容、テストのバッククォート関数名も許容する
+    excludes: ["**/commonTest/**", "**/*Test.kt"]
+
+comments:
+  active: false
