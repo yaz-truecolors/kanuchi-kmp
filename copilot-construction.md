@@ -119,6 +119,10 @@ app-wasmjs -> domain
   3つのGitHub Actions Secretsが必要（リポジトリ管理者が事前に登録する。詳細は
   `supabase/README.md`）。いずれも強い権限を持つ秘密情報のため、コード・チャット・
   ログに絶対に出力しないこと。
+- `SUPABASE_ACCESS_TOKEN` には有効期限（Expiration）を設定する運用にしている。
+  期限切れになるとCIが認証エラーで失敗するため、更新手順を `supabase/README.md`
+  （「`SUPABASE_ACCESS_TOKEN` の有効期限切れ・更新手順」節）に記載している。
+  CIが原因不明で失敗した場合は、まずこのトークンの期限切れを疑うこと。
 - `supabase/config.toml` はローカル開発 (`supabase start`) 用の設定。ダッシュボード側の
   Data API設定（`Automatically expose new tables` 等）と値を一致させておくこと
   （`auto_expose_new_tables = false` に設定済み）。

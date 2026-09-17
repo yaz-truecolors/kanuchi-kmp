@@ -37,6 +37,25 @@ supabase link --project-ref <project-id>
 supabase db push
 ```
 
+### `SUPABASE_ACCESS_TOKEN` の有効期限切れ・更新手順
+
+個人アクセストークンには有効期限（Expiration）を設定できる（推奨）。期限が切れると
+`supabase-deploy.yml` の実行が認証エラーで失敗するため、以下の手順で更新する。
+
+1. [Supabaseダッシュボード](https://supabase.com/dashboard/account/tokens) にログインし、
+   右上のアカウントメニュー → **Access Tokens** を開く
+2. 期限切れの古いトークンを **Revoke**（失効）する
+3. **Generate new token** で新しいトークンを発行する（名前は `github-actions-kanuchi` など、
+   用途がわかるものにする。有効期限は運用ポリシーに応じて設定する）
+4. 発行された値をコピーする（この画面を閉じると二度と表示されないので注意）
+5. GitHubリポジトリの **Settings → Secrets and variables → Actions** を開き、
+   `SUPABASE_ACCESS_TOKEN` を選択して **Update secret** に新しい値を貼り付けて保存する
+6. `.github/workflows/supabase-deploy.yml` を **workflow_dispatch**（手動実行）で1回動かし、
+   正常に完了することを確認する
+
+`SUPABASE_DB_PASSWORD` / `SUPABASE_PROJECT_ID` には有効期限の概念はないため、
+プロジェクトのDBパスワードをリセットしない限り更新不要。
+
 （もしくは、Supabase Studio → SQL Editor に `supabase/migrations/` 配下のSQLファイルを
 日時順に貼り付けて実行しても同じ結果になる）
 
