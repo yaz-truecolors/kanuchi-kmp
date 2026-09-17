@@ -60,7 +60,7 @@ create table public.shift_settings (
   updated_at timestamptz not null default now(),
   constraint shift_settings_time_check check (end_time > start_time),
   constraint shift_settings_break_check check (break_hours >= 0),
-  constraint shift_settings_hours_check check (min_hours <= max_hours)
+  constraint shift_settings_hours_check check (min_hours >= 0 and min_hours <= max_hours)
 );
 
 comment on table public.shift_settings is 'ユーザーごとの勤務時間設定。本人のみ参照・編集可。';
@@ -74,7 +74,7 @@ create table public.work_records (
   work_date date not null,
   clock_in time,
   clock_out time,
-  break_hours numeric(4, 2),
+  break_hours numeric(4, 2) check (break_hours is null or break_hours >= 0),
   -- Excelの休暇記号(祝)・不良記号(欠)に相当。値が無ければ通常稼働日として扱う。
   flag text check (flag in ('holiday', 'absence')),
   note text,

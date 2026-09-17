@@ -15,7 +15,12 @@
 -- ============================================================
 alter table public.profiles enable row level security;
 
-grant select, update on public.profiles to authenticated;
+grant select on public.profiles to authenticated;
+-- UPDATEは display_name (本人が変更可) と role (adminのみ、トリガーで強制) の
+-- 2列に限定する。email/created_at/id 等はここに含めないことで、
+-- auth.usersからの複製データや監査用カラムをRLS/トリガーを介さず
+-- 直接書き換えられてしまう事故を防ぐ。
+grant update (display_name, role) on public.profiles to authenticated;
 -- INSERT は handle_new_user() トリガー (SECURITY DEFINER) のみが行うため、
 -- authenticated ロールへの INSERT 権限は意図的に付与しない。
 

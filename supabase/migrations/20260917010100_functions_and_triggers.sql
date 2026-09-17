@@ -81,6 +81,30 @@ create trigger on_auth_user_created
   for each row execute function public.handle_new_user();
 
 -- ============================================================
+-- handle_user_email_updated(): auth.users.email が変更された場合
+-- (メールアドレスの変更・再確認等) に profiles.email へ同期する。
+-- handle_new_user は INSERT 時のみ発火するため、これが無いと
+-- auth.users.email 更新後も profiles.email が古い値のまま残ってしまう。
+-- ============================================================
+create function public.handle_user_email_updated()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.email is distinct from old.email then
+    update public.profiles set email = new.email where id = new.id;
+  end if;
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_email_updated
+  after update of email on auth.users
+  for each row execute function public.handle_user_email_updated();
+
+-- ============================================================
 -- enforce_role_change_permission(): profiles.role の変更は admin のみ許可する。
 -- RLS の WITH CHECK だけでは「変更前後の値の比較」ができないため、トリガーで防御する。
 --
