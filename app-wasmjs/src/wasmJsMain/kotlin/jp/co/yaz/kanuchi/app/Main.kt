@@ -1,34 +1,29 @@
 package jp.co.yaz.kanuchi.app
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.ComposeViewport
+import jp.co.yaz.kanuchi.data.di.dataModule
+import jp.co.yaz.kanuchi.domain.di.domainModule
+import jp.co.yaz.kanuchi.presentation.di.presentationModule
+import jp.co.yaz.kanuchi.presentation.navigation.KanuchiNavHost
 import kotlinx.browser.document
+import org.koin.core.context.startKoin
 
 /**
  * Kanuchi (鍛冶) - wasmJs エントリポイント。
- *
- * 現時点ではプレースホルダー画面のみ。DI(Koin)の初期化や Navigation グラフは
- * presentation 層の実装が進み次第、ここから組み立てる。
+ * Koinの起動とCompose Navigationの組み立てのみを担い、実際の画面ロジックは
+ * presentation層の各Composable/ViewModelに委ねる。
  */
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
-    ComposeViewport(document.body!!) {
-        KanuchiPlaceholderApp()
+    startKoin {
+        modules(domainModule, dataModule, presentationModule)
     }
-}
 
-@Composable
-private fun KanuchiPlaceholderApp() {
-    MaterialTheme {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Kanuchi（鍛冶） - presentation層の実装後にここへ画面が組み込まれます")
+    ComposeViewport(document.body!!) {
+        MaterialTheme {
+            KanuchiNavHost()
         }
     }
 }

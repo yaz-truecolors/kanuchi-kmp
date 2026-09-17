@@ -67,6 +67,20 @@ app-wasmjs -> domain
   生成され続け、意味のない生成物が増える。
 - `kotlinx.browser`（`document` など）を使う場合は `kotlinx-browser` ライブラリを明示的に追加する
   必要がある（wasmJsでは標準ライブラリに同梱されていない）。
+- `app-wasmjs/src/wasmJsMain/resources/index.html` の `<script>` タグには
+  **`type="module"` が必須**。付け忘れると、ブラウザで実行した際に
+  `SyntaxError: Cannot use 'import.meta' outside a module` が発生し、アプリが
+  真っ白のまま何も描画されない（Kotlin/Wasmの出力がESモジュール前提のため）。
+  `./gradlew build` や `ktlintCheck`/`detekt` はこの種のランタイムエラーを検知できないため、
+  UIに関わる変更をしたら必ず実ブラウザ（またはPuppeteer等のヘッドレスブラウザ）で
+  「実際に描画されるか」を確認すること。
+- Compose for Web/Wasmは `<canvas>` に直接描画するため、`document.querySelectorAll('input')`
+  等のDOM検査では要素を検出できない。UI検証はスクリーンショット比較や、要素の推定座標への
+  クリック/キー入力シミュレーションで行う。
+- `wasmJsBrowserDevelopmentRun`（webpack-dev-server経由）はコンテンツキャッシュや
+  ライブリロードの都合でリソース変更が反映されないことがある。挙動を疑ったら
+  `wasmJsBrowserDistribution` の成果物 (`build/dist/wasmJs/productionExecutable`) を
+  `python3 -m http.server` 等で直接静的配信して確認する方が確実。
 
 ## 6. テスト・CI
 
@@ -106,6 +120,16 @@ app-wasmjs -> domain
   `SET LOCAL ROLE authenticated; SET LOCAL "request.jwt.claim.sub" = '<uuid>';` で
   「特定ユーザーとしてログインした状態」を再現できる（PostgRESTが実際のリクエストごとに
   行っているセッション変数の設定を模している）。詳細は `supabase/README.md` を参照。
+- **supabase-ktの例外をそのままUIに表示しない。** `AuthRestException` 等の `message`/`toString()`
+  にはAuthorizationヘッダーを含む生のHTTPレスポンス詳細が含まれており、そのまま
+  `errorMessage`としてUIに出すと内部情報が漏れる（実際に発生した事故: `LoginViewModel`が
+  `error.message`をそのまま表示していたところ、画面に`Headers: {Authorization=[Bearer sb...`
+  が表示されてしまった）。data層のRepository実装で例外を捕捉し、`AuthRestException.errorDescription`
+  （Supabase Authが提供するユーザー向け説明文）か、汎用的な日本語メッセージのどちらかに
+  変換してから`Result.failure`に包むこと。`AuthRepository`インターフェース側のKDocに
+  「失敗時のmessageはUIにそのまま表示してよい（実装側が安全性を保証する）」という契約を明記している。
+- コルーチン内で例外を`catch (e: Exception)`する際は、`kotlinx.coroutines.CancellationException`
+  を先に`catch`して再送出すること。握りつぶすと構造化された並行処理のキャンセルが正しく伝播しない。
 
 ## 9. Supabase マイグレーション運用
 
