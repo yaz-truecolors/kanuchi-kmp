@@ -9,7 +9,7 @@ kotlinx-serialization = "1.11.0"
 navigation-compose = "2.9.2"
 lifecycle = "2.11.0"
 supabase = "3.8.0"
-ktor = "3.5.1"
+ktor = "3.6.0"
 ktlint-gradle = "14.2.0"
 detekt = "1.23.8"
 
