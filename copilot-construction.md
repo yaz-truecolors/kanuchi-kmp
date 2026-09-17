@@ -85,8 +85,56 @@ app-wasmjs -> domain
   必ず確認する（本人データのみ／adminは全件、等）。
 - SupabaseのURL・anonキーはRLSで保護される前提の公開可能な値として扱う。秘匿すべき鍵
   （service_role key等）は絶対にクライアントコードに埋め込まない。
+- Supabaseは2026年末までに `anon`/`service_role` キーを廃止予定。新規実装では
+  publishable key（`sb_publishable_...`）/ secret key（`sb_secret_...`）方式を使う。
+  `supabase-kt` の `createSupabaseClient()` は単純に文字列キーを渡すだけなので、
+  どちらの方式でも実装コードの変更は不要。
+- `profiles.role` の変更を「adminのみ許可」にするトリガー（`enforce_role_change_permission`）は、
+  **Postgresの実行ロールが `authenticated` の場合のみ**チェックするように実装すること。
+  無条件でチェックすると、運用開始時に「最初のadminをSupabase管理画面から手動設定する」
+  という初期セットアップ手順自体がブロックされてしまう（誰もadminがいない状態では
+  `is_admin()` が常に false になるため、直接DB接続からの昇格も拒否されてしまう）。
+  `current_setting('role', true) = 'authenticated'` で判定し、SQL Editor 等の直接DB接続
+  （実行ロールが `postgres` 等）はチェック対象外にする。
+- `profiles` テーブルのRLSポリシー内で「自分がadminか」を判定する際は、素朴に
+  `exists (select 1 from profiles where id = auth.uid() and role = 'admin')` と書くと
+  無限再帰（自分自身のテーブルのRLSを評価するために自分自身のRLSを再評価する）になり得る。
+  `SECURITY DEFINER` な `is_admin()` 関数として切り出し、テーブル所有者権限で実行することで
+  再帰を回避している。
+- RLSポリシー・トリガーはSupabase実機に適用する前に、ローカルのDocker上のPostgresで
+  検証すること。`auth.users` / `auth.uid()` / `auth.role()` を模した最小限のシムを用意し、
+  `SET LOCAL ROLE authenticated; SET LOCAL "request.jwt.claim.sub" = '<uuid>';` で
+  「特定ユーザーとしてログインした状態」を再現できる（PostgRESTが実際のリクエストごとに
+  行っているセッション変数の設定を模している）。詳細は `supabase/README.md` を参照。
 
-## 8. このドキュメントの更新方針
+## 9. Supabase マイグレーション運用
+
+- マイグレーションSQLは `supabase/migrations/` に配置し、ファイル名は
+  `<タイムスタンプ>_<内容>.sql` の昇順で適用順を表す（Supabase CLI の規約に準拠）。
+- `main` へのマージ時、GitHub Actions (`.github/workflows/supabase-deploy.yml`) が
+  `supabase db push` を実行し、未適用のマイグレーションを自動的に本番へ反映する。
+  手動でSupabase StudioのSQL Editorに貼り付ける必要はない（緊急時・CI障害時の
+  フォールバックとしては引き続き可能）。
+- このCIには `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` / `SUPABASE_PROJECT_ID` の
+  3つのGitHub Actions Secretsが必要（リポジトリ管理者が事前に登録する。詳細は
+  `supabase/README.md`）。いずれも強い権限を持つ秘密情報のため、コード・チャット・
+  ログに絶対に出力しないこと。
+- `SUPABASE_ACCESS_TOKEN` には有効期限（Expiration）を設定する運用にしている。
+  期限切れになるとCIが認証エラーで失敗するため、更新手順を `supabase/README.md`
+  （「`SUPABASE_ACCESS_TOKEN` の有効期限切れ・更新手順」節）に記載している。
+  CIが原因不明で失敗した場合は、まずこのトークンの期限切れを疑うこと。
+- `supabase/config.toml` はローカル開発 (`supabase start`) 用の設定。ダッシュボード側の
+  Data API設定（`Automatically expose new tables` 等）と値を一致させておくこと
+  （`auto_expose_new_tables = false` に設定済み）。
+- 新しいテーブルを追加する際は、以下を必ずセットで行うこと（1つでも欠けると
+  「テーブルはあるがAPI経由で一切アクセスできない」「RLSが無効なまま公開される」等の
+  事故につながる）：
+  1. `alter table ... enable row level security;`
+  2. `grant select/insert/update/delete on ... to authenticated;`
+     （`anon`には付与しない。本プロジェクトはマジックリンク認証必須のため）
+  3. 用途に応じた `create policy ...`
+
+## 10. このドキュメントの更新方針
 
 実装を進める中で新しく分かった「ハマりどころ」「決めた規約」は、都度このファイルに追記すること。
 `docs/requirements.md` は要件・設計の「why」を記録する場所、このファイルは実装者向けの
