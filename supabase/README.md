@@ -12,21 +12,33 @@
 
 ## マイグレーションの適用方法
 
-このリポジトリでは Supabase CLI をリンクしていないため、`supabase/migrations/` 配下の
-SQLファイルは **Supabase Studio の SQL Editor** で手動適用する運用とする。
+`main` ブランチへのマージ時、GitHub Actions (`.github/workflows/supabase-deploy.yml`) が
+Supabase CLI (`supabase db push`) を使って `supabase/migrations/` 配下の未適用マイグレーションを
+自動的に本番プロジェクトへ適用する。手動でSQL Editorに貼り付ける必要はない。
 
-適用順序（ファイル名の日時順、これより前後させないこと）：
+### 初回セットアップ（リポジトリ管理者が1回だけ行う）
 
-1. `20260917010000_initial_schema.sql` — テーブル定義
-2. `20260917010100_functions_and_triggers.sql` — 関数・トリガー（updated_at自動更新、
-   新規ユーザーのprofile自動作成、role変更の権限チェック）
-3. `20260917010200_row_level_security.sql` — RLS有効化・権限GRANT・ポリシー定義
+CIから利用するため、以下3つをGitHubリポジトリの **Settings → Secrets and variables → Actions**
+に登録する（値はいずれもチャットやコード上で共有しないこと）。
 
-適用手順：
+| Secret名 | 値の取得元 |
+|---|---|
+| `SUPABASE_ACCESS_TOKEN` | Supabaseダッシュボード右上のアカウントメニュー → *Access Tokens* で発行する個人アクセストークン |
+| `SUPABASE_DB_PASSWORD` | プロジェクト作成時に設定したデータベースパスワード |
+| `SUPABASE_PROJECT_ID` | プロジェクトURLの `https://<project-id>.supabase.co` の `<project-id>` 部分（例: `azvfmvyquyrgzbkdfkga`） |
 
-1. Supabase Studio → 左メニュー **SQL Editor** を開く
-2. 上記1〜3のファイルの中身を **この順番で** 貼り付けて実行する
-3. エラーが出ないことを確認する
+登録後は、`supabase/migrations/` に新しいSQLファイルを追加して `main` にマージするだけで
+自動的に反映される。ローカルで動作確認したい場合や、CIを使わず手動適用したい場合は、
+Supabase CLIをインストールした上で以下を実行する。
+
+```sh
+supabase login
+supabase link --project-ref <project-id>
+supabase db push
+```
+
+（もしくは、Supabase Studio → SQL Editor に `supabase/migrations/` 配下のSQLファイルを
+日時順に貼り付けて実行しても同じ結果になる）
 
 ## 初期admin（最初の管理者）の設定
 

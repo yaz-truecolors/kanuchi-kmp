@@ -111,8 +111,17 @@ app-wasmjs -> domain
 
 - マイグレーションSQLは `supabase/migrations/` に配置し、ファイル名は
   `<タイムスタンプ>_<内容>.sql` の昇順で適用順を表す（Supabase CLI の規約に準拠）。
-- Supabase CLIをこのリポジトリにリンクしていないため、現状は Supabase Studio の
-  SQL Editor で手動適用する運用。適用手順は `supabase/README.md` を参照。
+- `main` へのマージ時、GitHub Actions (`.github/workflows/supabase-deploy.yml`) が
+  `supabase db push` を実行し、未適用のマイグレーションを自動的に本番へ反映する。
+  手動でSupabase StudioのSQL Editorに貼り付ける必要はない（緊急時・CI障害時の
+  フォールバックとしては引き続き可能）。
+- このCIには `SUPABASE_ACCESS_TOKEN` / `SUPABASE_DB_PASSWORD` / `SUPABASE_PROJECT_ID` の
+  3つのGitHub Actions Secretsが必要（リポジトリ管理者が事前に登録する。詳細は
+  `supabase/README.md`）。いずれも強い権限を持つ秘密情報のため、コード・チャット・
+  ログに絶対に出力しないこと。
+- `supabase/config.toml` はローカル開発 (`supabase start`) 用の設定。ダッシュボード側の
+  Data API設定（`Automatically expose new tables` 等）と値を一致させておくこと
+  （`auto_expose_new_tables = false` に設定済み）。
 - 新しいテーブルを追加する際は、以下を必ずセットで行うこと（1つでも欠けると
   「テーブルはあるがAPI経由で一切アクセスできない」「RLSが無効なまま公開される」等の
   事故につながる）：
