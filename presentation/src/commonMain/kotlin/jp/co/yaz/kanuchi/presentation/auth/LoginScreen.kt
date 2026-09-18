@@ -16,10 +16,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import kanuchi.presentation.generated.resources.Res
+import kanuchi.presentation.generated.resources.login_app_title
+import kanuchi.presentation.generated.resources.login_description
+import kanuchi.presentation.generated.resources.login_email_label
+import kanuchi.presentation.generated.resources.login_error_prefix
+import kanuchi.presentation.generated.resources.login_send_button
+import kanuchi.presentation.generated.resources.login_sending_button
+import kanuchi.presentation.generated.resources.login_success_message
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -40,13 +46,13 @@ fun LoginScreen(viewModel: LoginViewModel = koinViewModel()) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(text = "Kanuchi（鍛冶）", style = MaterialTheme.typography.headlineSmall)
-            Text(text = "メールアドレスにログイン用のリンクを送ります。")
+            Text(text = stringResource(Res.string.login_app_title), style = MaterialTheme.typography.headlineSmall)
+            Text(text = stringResource(Res.string.login_description))
 
             OutlinedTextField(
                 value = uiState.email,
                 onValueChange = viewModel::onEmailChanged,
-                label = { Text("メールアドレス") },
+                label = { Text(stringResource(Res.string.login_email_label)) },
                 singleLine = true,
                 enabled = !uiState.isSending,
                 modifier = Modifier.fillMaxWidth(),
@@ -60,22 +66,19 @@ fun LoginScreen(viewModel: LoginViewModel = koinViewModel()) {
                 if (uiState.isSending) {
                     CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp))
                 }
-                Text(if (uiState.isSending) "送信中..." else "ログインリンクを送る")
+                Text(
+                    if (uiState.isSending) {
+                        stringResource(Res.string.login_sending_button)
+                    } else {
+                        stringResource(Res.string.login_send_button)
+                    },
+                )
             }
 
-            // 非同期の送信結果はスクリーンリーダーにも通知されるよう、liveRegionを付与する。
-            // 成功はPolite(他の読み上げを妨げない)、エラーはAssertive(即座に通知)にする。
             when {
-                uiState.sentSuccessfully ->
-                    Text(
-                        text = "メールを送信しました。受信箱をご確認ください。",
-                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                    )
+                uiState.sentSuccessfully -> Text(stringResource(Res.string.login_success_message))
                 uiState.errorMessage != null ->
-                    Text(
-                        text = "エラー: ${uiState.errorMessage}",
-                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive },
-                    )
+                    Text(stringResource(Res.string.login_error_prefix, uiState.errorMessage.orEmpty()))
             }
         }
     }

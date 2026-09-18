@@ -24,7 +24,22 @@ Excelファイル「受託作業時間内訳管理」で個人が手作業で行
 - アプリ名：**Kanuchi（鍛冶）**
 - 用途：チーム内での日次稼働時間・案件別工数配分の入力、および管理者による集計確認
 - 対象プラットフォーム：Webブラウザのみ（Kotlin/Wasm）
+- 対象ブラウザ：**Google Chrome を推奨環境とする**（他ブラウザでの動作は保証しない）
 - 利用形態：サーバー費用ゼロで運用（無料枠内）
+
+### UI/UX方針
+
+- **言語**：日本語のみ。多言語対応（i18n）は行わない。
+- **フォント**：**Noto Sans JP**（Google製、日本語を含む標準的なゴシック体、SIL Open Font License 1.1）を
+  全画面で使用する。日本語限定利用のため、他言語フォントの選定・フォールバック設計は不要と判断した。
+- **アクセシビリティ**：スクリーンリーダー対応（`semantics`指定、`liveRegion`等）を含む
+  アクセシビリティ対応は本アプリでは行わない方針とする。関連コードは原則含めない。
+  （社内の限定利用ツールであり、対応コストに見合わないと判断したため）
+- **文言・テキスト定数の管理**：Compose Multiplatformの公式リソース機構
+  （`composeResources/values/strings.xml` → 生成される `Res.string.*`）を用いて一元管理する。
+  多言語対応は行わないが、文言の可読性・保守性・将来の多言語化の余地を考慮しこの仕組みに従う。
+  KMP/Compose Multiplatformプロジェクトにおける文字列・フォント等静的リソースの管理方法として
+  公式に提供されている唯一の標準機構であるため採用した（詳細は `copilot-construction.md` 参照）。
 
 ## 3. 技術スタック
 
@@ -36,6 +51,8 @@ Excelファイル「受託作業時間内訳管理」で個人が手作業で行
 | ホスティング | GitHub Pages（静的ファイル配信、`wasmJs` ビルド成果物） |
 | DI | Koin |
 | Navigation | Compose Multiplatform 公式 Navigation |
+| フォント | Noto Sans JP（Compose Multiplatformリソース機構でバンドル配信） |
+| 文言管理 | Compose Multiplatformリソース機構（`composeResources/values/strings.xml`） |
 | Lint / フォーマッタ | ktlint + detekt 併用 |
 | テスト | kotlin.test（domain / data / ViewModel ロジックを対象） |
 | CI/CD | GitHub Actions |

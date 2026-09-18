@@ -1,12 +1,12 @@
 package jp.co.yaz.kanuchi.app
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import jp.co.yaz.kanuchi.data.di.dataModule
 import jp.co.yaz.kanuchi.domain.di.domainModule
 import jp.co.yaz.kanuchi.presentation.di.presentationModule
 import jp.co.yaz.kanuchi.presentation.navigation.KanuchiNavHost
+import jp.co.yaz.kanuchi.presentation.theme.KanuchiTheme
 import kotlinx.browser.document
 import org.koin.core.context.startKoin
 
@@ -22,7 +22,7 @@ fun main() {
     }
 
     ComposeViewport(document.body!!) {
-        MaterialTheme {
+        KanuchiTheme {
             KanuchiNavHost()
         }
     }

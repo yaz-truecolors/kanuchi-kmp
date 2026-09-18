@@ -9,6 +9,7 @@ import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import jp.co.yaz.kanuchi.domain.auth.AuthRepository
 import jp.co.yaz.kanuchi.domain.auth.EmailAddress
+import jp.co.yaz.kanuchi.domain.auth.GenericAuthFailureException
 import kotlinx.coroutines.CancellationException
 
 /**
@@ -46,10 +47,7 @@ internal class SupabaseAuthRepository(
             // 含まれるため、絶対にUIへそのまま渡さないこと。
             Result.failure(Exception(e.errorDescription))
         } catch (e: Exception) {
-            Result.failure(Exception(GENERIC_ERROR_MESSAGE))
+            // data層はUI表示用の文言を持たない。汎用エラーメッセージへの変換はpresentation層に委ねる。
+            Result.failure(GenericAuthFailureException())
         }
-
-    private companion object {
-        const val GENERIC_ERROR_MESSAGE = "マジックリンクの送信に失敗しました。しばらくしてから再度お試しください。"
-    }
 }
