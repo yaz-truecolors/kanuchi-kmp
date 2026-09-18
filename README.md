@@ -8,6 +8,8 @@
 
 詳細な要件・設計は [docs/requirements.md](docs/requirements.md) を参照してください。
 
+対象ブラウザは **Google Chrome を推奨**します（他ブラウザでの動作は保証していません）。
+
 ## 技術スタック
 
 | 項目 | 選定 |
@@ -18,6 +20,7 @@
 | アーキテクチャ | Clean Architecture + DDD |
 | DI | Koin |
 | Navigation | Compose Multiplatform 公式 Navigation |
+| フォント | Noto Sans JP（日本語限定利用のため） |
 | Lint | ktlint + detekt |
 | CI/CD | GitHub Actions |
 

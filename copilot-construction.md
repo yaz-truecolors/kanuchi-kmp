@@ -158,7 +158,46 @@ app-wasmjs -> domain
      （`anon`には付与しない。本プロジェクトはマジックリンク認証必須のため）
   3. 用途に応じた `create policy ...`
 
-## 10. このドキュメントの更新方針
+## 10. UI実装規約（フォント・文言・アクセシビリティ）
+
+- **文言・テキスト定数は必ず `presentation/src/commonMain/composeResources/values/strings.xml` に
+  集約する。** Composable/ViewModel内にJapanese文言をハードコードしないこと。
+  - Composable内: `stringResource(Res.string.xxx)` （プレースホルダーを含む場合は
+    `stringResource(Res.string.xxx, arg1, arg2, ...)`。`strings.xml`側は `%1$s` 形式で定義する）
+  - Composable以外（ViewModel等のsuspend関数内）: `getString(Res.string.xxx)`
+    （`org.jetbrains.compose.resources.getString`、非Composable向けのsuspend版）
+  - 新しい画面を追加する際は、その画面用のキーを `strings.xml` に追記してから実装すること。
+    キー命名は `<画面名>_<用途>` 形式（例: `login_email_label`）で統一する。
+  - `data`/`domain`層はUI表示用の文言を一切持たない。エラー等で「具体的な理由を提示できない」場合は、
+    ドメイン層に無メッセージのマーカー例外（例: `GenericAuthFailureException`）を定義し、
+    `presentation`層がそれを`strings.xml`管理下の汎用メッセージにマッピングする
+    （実例: `LoginViewModel.onSendMagicLinkClicked()`）。外部システム（Supabase等）が返す
+    エラー説明文（例: `AuthRestException.errorDescription`）は当該システムの言語でそのまま
+    表示してよく、centralization対象の「自前の文言」には含めない。
+- **フォントは Noto Sans JP に統一する。** `presentation/src/commonMain/composeResources/font/noto_sans_jp.ttf`
+  （SIL Open Font License 1.1。ライセンス全文は `presentation/licenses/NotoSansJP-OFL.txt`）を
+  `presentation/src/commonMain/kotlin/.../presentation/theme/KanuchiTheme.kt` の `KanuchiTheme` 経由で
+  `MaterialTheme` の `Typography` 全スタイルに適用している。画面のルートは必ず
+  `MaterialTheme { ... }` ではなく `KanuchiTheme { ... }` でラップすること
+  （現状は `app-wasmjs/.../Main.kt` の1箇所のみ）。
+  - 元ファイルは Google Fonts (`google/fonts` リポジトリ) の可変フォント
+    (`ofl/notosansjp/NotoSansJP[wght].ttf`, 約9.5MB) から `fonttools` の
+    `varLib.instancer.instantiateVariableFont(font, {"wght": 400}, updateFontNames=True)` で
+    Regularウェイトの静的インスタンスを切り出したもの（約5.5MB）。可変軸を持たせても
+    本アプリでは複数ウェイトを使い分けていないため、静的インスタンス化してファイルサイズを削減した。
+  - フォントファイルは `composeResources/font/` 直下にはフォントファイル (ttf/otf/ttc) 以外を
+    置かないこと。ライセンステキスト等の付随ファイルはリソース生成の対象外である
+    `presentation/licenses/` に置く。
+- **アクセシビリティ対応（スクリーンリーダー向け `Modifier.semantics { ... }`、
+  `liveRegion` 等）は行わない方針。** 実装しないだけでなく、既存コードにも追加しないこと。
+  過去のPRレビュー（Copilotコードレビュー）でこの種の指摘を受けることがあるが、
+  本プロジェクトの方針として意図的に対応しないと決めているため、その指摘は採用しない
+  （必要であれば本ファイルの当該記述を根拠として説明する）。
+- **動作確認はGoogle Chromeを基準とする。** ローカルでの手動ブラウザ確認、CIの
+  `browser-actions/setup-chrome`、いずれもChromeを使う。他ブラウザでの見た目・挙動の
+  差異は許容し、個別対応しない。
+
+## 11. このドキュメントの更新方針
 
 実装を進める中で新しく分かった「ハマりどころ」「決めた規約」は、都度このファイルに追記すること。
 `docs/requirements.md` は要件・設計の「why」を記録する場所、このファイルは実装者向けの

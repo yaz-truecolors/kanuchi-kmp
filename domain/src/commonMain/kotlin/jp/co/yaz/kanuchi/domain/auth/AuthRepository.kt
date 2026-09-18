@@ -14,8 +14,12 @@ interface AuthRepository {
      * 「そのメールアドレスが実在するかどうか」は判定しない
      * (メール列挙攻撃を防ぐためSupabase Auth側も同様の挙動をする)。
      *
-     * 失敗時、[Result.exceptionOrNull]?.message はUIにそのまま表示してよい
-     * (実装側が認証ヘッダー等の内部詳細を含まない安全なメッセージに変換する責任を持つ)。
+     * 失敗時の例外は以下のいずれか:
+     * - [Result.exceptionOrNull]?.message が非nullの場合、そのままUIに表示してよい
+     *   (実装側が認証ヘッダー等の内部詳細を含まない安全なメッセージに変換する責任を持つ)
+     * - [GenericAuthFailureException] の場合、具体的な理由が得られなかったことを示す。
+     *   presentation層が自前の汎用メッセージ (strings.xml等) に変換して表示すること。
+     *   domain/data層はUI表示用の文言そのものを持たない。
      */
     suspend fun sendMagicLink(email: EmailAddress): Result<Unit>
 }
