@@ -2,9 +2,11 @@ package jp.co.yaz.kanuchi.presentation.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import jp.co.yaz.kanuchi.domain.auth.EmailNotInvitedException
 import jp.co.yaz.kanuchi.domain.auth.GenericAuthFailureException
 import jp.co.yaz.kanuchi.domain.auth.SendMagicLinkUseCase
 import kanuchi.presentation.generated.resources.Res
+import kanuchi.presentation.generated.resources.login_email_not_invited_message
 import kanuchi.presentation.generated.resources.login_generic_error_message
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,13 +35,14 @@ class LoginViewModel(
                 .onSuccess {
                     _uiState.value = _uiState.value.copy(isSending = false, sentSuccessfully = true)
                 }.onFailure { error ->
-                    // GenericAuthFailureException はdata層がUI表示用の文言を持たないためのマーカー例外。
-                    // それ以外はRepository実装が既に安全なメッセージに変換済み(AuthRepositoryのKDoc参照)。
+                    // EmailNotInvitedException / GenericAuthFailureException はdata層がUI表示用の
+                    // 文言を持たないためのマーカー例外。それ以外はRepository実装が既に安全な
+                    // メッセージに変換済み(AuthRepositoryのKDoc参照)。
                     val message =
-                        if (error is GenericAuthFailureException) {
-                            getString(Res.string.login_generic_error_message)
-                        } else {
-                            error.message ?: getString(Res.string.login_generic_error_message)
+                        when (error) {
+                            is EmailNotInvitedException -> getString(Res.string.login_email_not_invited_message)
+                            is GenericAuthFailureException -> getString(Res.string.login_generic_error_message)
+                            else -> error.message ?: getString(Res.string.login_generic_error_message)
                         }
                     _uiState.value =
                         _uiState.value.copy(

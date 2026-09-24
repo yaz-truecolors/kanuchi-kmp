@@ -7,6 +7,8 @@
     <string name="login_sending_button">送信中...</string>
     <string name="login_success_message">メールを送信しました。受信箱をご確認ください。</string>
     <string name="login_error_prefix">エラー: %1$s</string>
+    <!-- 未招待(未登録)のメールアドレスが入力された場合。アカウント作成は管理者による招待でのみ行う運用のため。 -->
+    <string name="login_email_not_invited_message">このメールアドレスは登録されていません。管理者にお問い合わせください。</string>
     <!-- Supabase側から具体的な理由が得られなかった場合のフォールバック文言 -->
     <string name="login_generic_error_message">マジックリンクの送信に失敗しました。しばらくしてから再度お試しください。</string>
 </resources>

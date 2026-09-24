@@ -56,4 +56,19 @@ class SendMagicLinkUseCaseTest {
 
             assertTrue(result.isFailure)
         }
+
+    @Test
+    fun `email not invited failure is propagated as-is`() =
+        runTest {
+            val repository =
+                FakeAuthRepository().apply {
+                    resultToReturn = Result.failure(EmailNotInvitedException())
+                }
+            val useCase = SendMagicLinkUseCase(repository)
+
+            val result = useCase("not-invited@example.com")
+
+            assertTrue(result.isFailure)
+            assertIs<EmailNotInvitedException>(result.exceptionOrNull())
+        }
 }

@@ -3,12 +3,14 @@ package jp.co.yaz.kanuchi.data.auth
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.exception.AuthErrorCode
 import io.github.jan.supabase.auth.exception.AuthRestException
 import io.github.jan.supabase.auth.providers.builtin.OTP
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import jp.co.yaz.kanuchi.domain.auth.AuthRepository
 import jp.co.yaz.kanuchi.domain.auth.EmailAddress
+import jp.co.yaz.kanuchi.domain.auth.EmailNotInvitedException
 import jp.co.yaz.kanuchi.domain.auth.GenericAuthFailureException
 import kotlinx.coroutines.CancellationException
 
@@ -36,16 +38,25 @@ internal class SupabaseAuthRepository(
         try {
             supabaseClient.auth.signInWith(OTP) {
                 this.email = email.value
+                // 「adminが招待したユーザーのみアカウントを作成できる」運用のため、
+                // ログイン画面からの自動サインアップ(新規アカウント作成)を無効化する。
+                // 未登録のメールアドレスを指定した場合、Supabase Authは
+                // AuthErrorCode.OtpDisabled ("otp_disabled") を返す。
+                createUser = false
             }
             Result.success(Unit)
         } catch (e: CancellationException) {
             // 構造化された並行処理のキャンセルはそのまま再送出し、握りつぶさない。
             throw e
         } catch (e: AuthRestException) {
-            // errorDescriptionはSupabase Authが定義するユーザー向けの説明文なので安全に表示できる。
-            // 一方 e.message / e.toString() には認証ヘッダーを含む生のHTTPレスポンス詳細が
-            // 含まれるため、絶対にUIへそのまま渡さないこと。
-            Result.failure(Exception(e.errorDescription))
+            if (e.errorCode == AuthErrorCode.OtpDisabled) {
+                Result.failure(EmailNotInvitedException())
+            } else {
+                // errorDescriptionはSupabase Authが定義するユーザー向けの説明文なので安全に表示できる。
+                // 一方 e.message / e.toString() には認証ヘッダーを含む生のHTTPレスポンス詳細が
+                // 含まれるため、絶対にUIへそのまま渡さないこと。
+                Result.failure(Exception(e.errorDescription))
+            }
         } catch (e: Exception) {
             // data層はUI表示用の文言を持たない。汎用エラーメッセージへの変換はpresentation層に委ねる。
             Result.failure(GenericAuthFailureException())
