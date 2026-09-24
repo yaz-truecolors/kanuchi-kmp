@@ -174,9 +174,9 @@ enable_refresh_token_rotation = true
 # Requires enable_refresh_token_rotation = true.
 refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project.
-# Kanuchi は「adminが招待したユーザーのみアカウントを作成できる」運用のため無効化する。
-# Admin API (inviteUserByEmail等、将来実装予定) はこの設定に関わらず動作する。
-enable_signup = false
+# Kanuchi は招待制だが、招待済みユーザーが初回ログイン時にアカウントを作成できるよう有効にする。
+# 招待リスト (public.invitations) に無いメールアドレスは、下記 [auth.hook.before_user_created] で拒否する。
+enable_signup = true
 # Allow/disallow anonymous sign-ins to your project.
 enable_anonymous_sign_ins = false
 # Allow/disallow testing manual linking of accounts
@@ -221,8 +221,8 @@ web3 = 30
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
-# Kanuchi は「adminが招待したユーザーのみアカウントを作成できる」運用のため無効化する。
-enable_signup = false
+# Kanuchi: [auth] enable_signup と同じ理由で有効にする (未招待の拒否は Hook が担う)。
+enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
@@ -280,9 +280,12 @@ max_frequency = "5s"
 # inactivity_timeout = "8h"
 
 # This hook runs before a new user is created and allows developers to reject the request based on the incoming user object.
-# [auth.hook.before_user_created]
-# enabled = true
-# uri = "pg-functions://postgres/auth/before-user-created-hook"
+# Kanuchi: 招待リストに無いメールアドレスでのアカウント作成を拒否する
+# (supabase/migrations/*_invitations_and_signup_hook.sql)。
+# この設定はローカル環境 (supabase start) 用。本番はダッシュボードで有効化する (supabase/README.md 参照)。
+[auth.hook.before_user_created]
+enabled = true
+uri = "pg-functions://postgres/public/hook_before_user_created"
 
 # This hook runs before a token is issued and allows you to add additional claims based on the authentication method used.
 # [auth.hook.custom_access_token]

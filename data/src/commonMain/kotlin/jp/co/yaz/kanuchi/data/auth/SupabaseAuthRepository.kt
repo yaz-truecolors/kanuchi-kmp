@@ -28,6 +28,14 @@ internal fun createKanuchiSupabaseClient(): SupabaseClient =
     }
 
 /**
+ * 招待リストに無いメールアドレスでのアカウント作成を拒否した際に、
+ * Before User Created Hook (supabase/migrations の hook_before_user_created) が返す固定の識別子。
+ * Supabase Auth はこの値を `msg` としてそのまま返し、supabase-kt では
+ * [AuthRestException.errorDescription] に入る。SQL側の値と必ず一致させること。
+ */
+private const val EMAIL_NOT_INVITED_HOOK_MESSAGE = "email_not_invited"
+
+/**
  * [jp.co.yaz.kanuchi.domain.auth.AuthRepository] のSupabase実装。
  * マジックリンク送信は Auth の OTP プロバイダ (メールリンク方式) を利用する。
  */
@@ -38,18 +46,18 @@ internal class SupabaseAuthRepository(
         try {
             supabaseClient.auth.signInWith(OTP) {
                 this.email = email.value
-                // 「adminが招待したユーザーのみアカウントを作成できる」運用のため、
-                // ログイン画面からの自動サインアップ(新規アカウント作成)を無効化する。
-                // 未登録のメールアドレスを指定した場合、Supabase Authは
-                // AuthErrorCode.OtpDisabled ("otp_disabled") を返す。
-                createUser = false
+                // 招待済み(invitationsに登録済み)の未登録ユーザーは、初回のマジックリンク要求時に
+                // アカウントが作成される必要があるため createUser = true とする。
+                // 招待されていないメールアドレスでのアカウント作成は、サーバー側の
+                // Before User Created Hook が拒否する (クライアント側の設定には依存しない)。
+                createUser = true
             }
             Result.success(Unit)
         } catch (e: CancellationException) {
             // 構造化された並行処理のキャンセルはそのまま再送出し、握りつぶさない。
             throw e
         } catch (e: AuthRestException) {
-            if (e.errorCode == AuthErrorCode.OtpDisabled) {
+            if (e.isEmailNotInvited()) {
                 Result.failure(EmailNotInvitedException())
             } else {
                 // errorDescriptionはSupabase Authが定義するユーザー向けの説明文なので安全に表示できる。
@@ -62,3 +70,15 @@ internal class SupabaseAuthRepository(
             Result.failure(GenericAuthFailureException())
         }
 }
+
+/**
+ * 「このメールアドレスではアカウントを作成できない」ことを示すエラーかどうか。
+ *
+ * - Hook による拒否: 招待リストに無い (通常運用時)
+ * - [AuthErrorCode.SignupDisabled]: Supabase側で新規登録自体が無効 (Hook有効化前の移行期間など)
+ * - [AuthErrorCode.OtpDisabled]: createUser = false で未登録のメールアドレスを指定した場合
+ */
+private fun AuthRestException.isEmailNotInvited(): Boolean =
+    errorDescription == EMAIL_NOT_INVITED_HOOK_MESSAGE ||
+        errorCode == AuthErrorCode.SignupDisabled ||
+        errorCode == AuthErrorCode.OtpDisabled
