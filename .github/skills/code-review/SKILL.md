@@ -39,7 +39,7 @@ description: kanuchi-kmp リポジトリのプルリクエストをレビュー�
 |---|---|---|
 | RLS 違反クエリ | `data` 層の Repository 実装のクエリが RLS 方針（本人データのみ／adminは全件、等）に違反していないか | `.github/instructions/data.instructions.md`「認証・RLS・鍵の扱い」、`docs/requirements.md`「5. 認証・権限設計」 |
 | 新規テーブルの3点セット | 新しいテーブルに RLS 有効化・`authenticated` への grant（`anon` には付与しない）・policy がそろっているか | `.github/instructions/supabase.instructions.md`「マイグレーション運用」 |
-| RLS・トリガー・Hook の SQL | ロール変更トリガーが実行ロール `authenticated` の場合のみチェックしているか、`profiles` の RLS で自己参照による無限再帰を起こしていないか、Hook 関数の `EXECUTE` を `anon` / `authenticated` から剥奪しているか、Hook の message に内部情報を含めていないか | `.github/instructions/supabase.instructions.md`「RLS・トリガー」「招待制アカウント作成（Before User Created Hook）」 |
+| RLS・トリガー・Hook の SQL | ロール変更トリガーが実行ロール `authenticated` の場合のみチェックしているか、`profiles` の RLS で自己参照による無限再帰を起こしていないか、Hook 関数の `EXECUTE` を `PUBLIC` / `anon` / `authenticated` から剥奪しているか（`PUBLIC` を含めないと既定の付与経由で呼び出せる）、Hook の message に内部情報を含めていないか | `.github/instructions/supabase.instructions.md`「RLS・トリガー」「招待制アカウント作成（Before User Created Hook）」 |
 | Hook メッセージと Kotlin 定数の一致 | Hook の SQL が返す message と `SupabaseAuthRepository` の `EMAIL_NOT_INVITED_HOOK_MESSAGE` が一致しているか（片方だけの変更を見逃さない） | `.github/instructions/supabase.instructions.md`・`.github/instructions/data.instructions.md` の招待制の節 |
 | 例外の生メッセージの UI 表示 | supabase-kt 等の例外の `message` / `toString()` を UI にそのまま出していないか（Authorization ヘッダー等の内部情報が漏れる） | `.github/instructions/data.instructions.md`「例外の扱い」、`.github/instructions/presentation.instructions.md`「エラー表示」 |
 | `CancellationException` | コルーチン内の `catch (e: Exception)` の前に `CancellationException` を捕捉して再送出しているか | `copilot-construction.md`「3. コード規約（共通）」 |

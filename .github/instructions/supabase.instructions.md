@@ -71,8 +71,10 @@ RLS の権限方針（誰が何を参照・編集できるか）は `docs/requir
 - HookはSupabase Studioの「Invite user」やAdmin API経由のユーザー作成でも実行される。
   Studioから手動でユーザーを追加する場合も、先に `invitations` への登録が必要。
 - Hook関数は `SECURITY DEFINER` で `invitations` を参照し（`supabase_auth_admin` 用のRLSポリシーを
-  追加しない）、`anon` / `authenticated` からの `EXECUTE` 権限は必ず剥奪する（剥奪しないと
-  Data APIの `rpc` 経由で呼び出せてしまう）。
+  追加しない）、`PUBLIC` / `anon` / `authenticated` からの `EXECUTE` 権限は必ず剥奪する（剥奪しないと
+  Data APIの `rpc` 経由で呼び出せてしまう）。PostgreSQL の関数は作成時に既定で `PUBLIC` に `EXECUTE` が
+  付与されるため、`anon` / `authenticated` だけを剥奪しても `PUBLIC` 経由で呼び出せてしまう。既存の
+  マイグレーションでも `revoke execute on function ... from public, anon, authenticated;` としている。
 - ログイン画面が招待済みかどうかを区別できるエラーを返すことは意図的に許容しているトレードオフ
   （理由は [data.instructions.md](data.instructions.md) を参照）。
 - Edge Function + Admin API（`inviteUserByEmail`）方式は、TypeScript/Deno・secret key管理・

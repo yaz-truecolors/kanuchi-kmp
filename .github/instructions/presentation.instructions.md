@@ -30,9 +30,9 @@ Compose Multiplatform の UI・ViewModel・リソース（`presentation/`）と�
 
 - **外部ライブラリ（supabase-kt 等）の例外の `message`/`toString()` をそのままUIに表示しない。**
   実際に `LoginViewModel` が `error.message` をそのまま表示していたところ、画面に
-  `Headers: {Authorization=[******` が表示されてしまった事故がある。Repository（`AuthRepository` 等）が
-  返す失敗の `message` は「UIにそのまま表示してよい（実装側が安全性を保証する）」契約なので、
-  presentation 層はその `message` か、`strings.xml` 管理下の汎用メッセージを表示する。
+  `Headers: {Authorization=[******` が表示されてしまった事故がある。`AuthRepository` の契約では、
+  `EmailNotInvitedException` / `GenericAuthFailureException` は presentation 層が `strings.xml` 管理下の文言に
+  変換して表示し、それ以外の例外で `message` が非nullの場合は「UIにそのまま表示してよい（実装側が安全性を保証する）」。
   Repository 実装側の変換ルールは [data.instructions.md](data.instructions.md) を参照。
 - ログイン画面が「入力したメールアドレスが招待済みかどうか」を区別できるエラーを表示するのは
   **意図的に許容しているトレードオフ**である。理由は [data.instructions.md](data.instructions.md) の

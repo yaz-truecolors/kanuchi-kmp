@@ -26,14 +26,16 @@ DB側（マイグレーション・RLS・トリガー・Hook の SQL）の規約
 - **supabase-ktの例外をそのままUIに表示しない。** `AuthRestException` 等の `message`/`toString()`
   にはAuthorizationヘッダーを含む生のHTTPレスポンス詳細が含まれており、そのまま
   `errorMessage`としてUIに出すと内部情報が漏れる（実際に発生した事故: `LoginViewModel`が
-  `error.message`をそのまま表示していたところ、画面に`Headers: {Authorization=[******
+  `error.message`をそのまま表示していたところ、画面に`Headers: {Authorization=[******`
   が表示されてしまった）。data層のRepository実装で例外を捕捉し、`AuthRestException.errorDescription`
-  （Supabase Authが提供するユーザー向け説明文）か、汎用的な日本語メッセージのどちらかに
-  変換してから`Result.failure`に包むこと。`AuthRepository`インターフェース側のKDocに
-  「失敗時のmessageはUIにそのまま表示してよい（実装側が安全性を保証する）」という契約を明記している。
-  - `data` 層はUI表示用の文言を持たない。具体的な理由を提示できない失敗は `domain` の無メッセージの
-    マーカー例外（例: `GenericAuthFailureException`）で表し、文言への変換は `presentation` 層が行う
-    （詳細は [presentation.instructions.md](presentation.instructions.md) の「文言・テキスト定数」）。
+  （Supabase Authが提供するユーザー向け説明文）をmessageに持つ例外か、具体的な理由を提示できない場合は
+  `domain` の無メッセージのマーカー例外（例: `GenericAuthFailureException`）のどちらかに
+  変換してから`Result.failure`に包むこと。`data` 層はUI表示用の文言を持たないため、汎用的な日本語メッセージへの
+  変換は `presentation` 層が行う（詳細は [presentation.instructions.md](presentation.instructions.md) の「文言・テキスト定数」）。
+- `AuthRepository`インターフェース側のKDocに、失敗時の例外ごとの表示方法を契約として明記している:
+  `EmailNotInvitedException` と `GenericAuthFailureException` は `presentation` 層が `strings.xml` の文言に変換して
+  表示し、それ以外の例外で message が非nullの場合は「UIにそのまま表示してよい（実装側が認証ヘッダー等の
+  内部詳細を含まない安全なメッセージに変換する責任を持つ）」。
 - コルーチン内で `catch (e: Exception)` する際の `CancellationException` の扱いは
   `copilot-construction.md` の「3. コード規約（共通）」を参照（先に `catch` して再送出する）。
 

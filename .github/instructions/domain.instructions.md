@@ -24,6 +24,7 @@ domain 層の設計原則は領域共通の原則として [copilot-construction
   ドメイン層に無メッセージのマーカー例外（例: `GenericAuthFailureException`）を定義し、
   `presentation` 層がそれを `strings.xml` 管理下の汎用メッセージにマッピングする
   （詳細は [presentation.instructions.md](presentation.instructions.md) の「文言・テキスト定数」）。
-- `AuthRepository` インターフェースのKDocには「失敗時のmessageはUIにそのまま表示してよい
-  （実装側が安全性を保証する）」という契約を明記している。実装側の変換ルールは
-  [data.instructions.md](data.instructions.md) の「例外の扱い」を参照。
+- `AuthRepository` インターフェースのKDocには、失敗時の例外ごとの表示方法を契約として明記している:
+  `EmailNotInvitedException` と `GenericAuthFailureException` は `presentation` 層が文言に変換して表示し、
+  それ以外の例外で message が非nullの場合は「UIにそのまま表示してよい（実装側が安全なメッセージに変換する
+  責任を持つ）」。実装側の変換ルールは [data.instructions.md](data.instructions.md) の「例外の扱い」を参照。
