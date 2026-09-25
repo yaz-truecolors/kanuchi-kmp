@@ -86,12 +86,25 @@ app-wasmjs -> domain
 ## 6. テスト・CI
 
 - テスト範囲は domain + data + ViewModel（presentation）のロジックまで。UI描画テストはスコープ外。
-- ローカル開発でChromeがない環境では `presentation` モジュールのブラウザテストは実行できない。
+- ローカル開発でChromeがない環境では `presentation` モジュールのブラウザテストは実行できない
+  （Karmaが `ChromeHeadless` を起動できず `Errors occurred during launch of browser for testing.` で失敗する）。
+  Chromeを標準の場所に入れていない場合は、環境変数 `CHROME_BIN` にChrome（Chrome for Testing等でも可）の
+  実行ファイルのパスを指定すれば実行できる。
   `domain` / `data` の変更検証には `./gradlew :domain:wasmJsNodeTest` のようにNode.jsテストを使うこと。
+  なお、テストファイルが1つもないモジュールのテストタスクは `SKIPPED` になるため、その場合はChromeが無くても失敗しない。
 - CI（`.github/workflows/ci.yml`）では `browser-actions/setup-chrome` でChromeをセットアップしてから
   テストを実行する。ローカルで再現できない場合はこのステップの有無を疑う。
-- PRでは `ktlintCheck` → `detekt` → `allTests` → `wasmJsBrowserDistribution` の順にCIが実行される。
-  `main` マージ時は追加でGitHub Pagesへの自動デプロイが走る。
+- **CIと同じ検証はルートの集約タスク `./gradlew verify` で1コマンドで実行できる。** PR作成前に必ず実行して成功させること。
+  中身は「全プロジェクトの `check`（= `ktlintCheck` + `detekt` + `allTests`）」＋ `:app-wasmjs:wasmJsBrowserDistribution`。
+  CIの `build-lint-test` ジョブも `./gradlew verify --continue` を実行しているので、検証内容を変えたい場合は
+  `ci.yml` ではなくルート `build.gradle.kts` の `verify` タスクを変更する（ローカルとCIの差異を作らないため）。
+  `check` がすでに lint とテストを含むので、`verify` に `ktlintCheck` 等を個別に足して重複させないこと。
+- `main` へのマージ時は追加でGitHub Pagesへの自動デプロイが走る。
+- **`main` はルールセット（main-protect）で保護されており、直接pushできない。** 変更は必ずPR経由でマージする
+  （承認数は0件でよいが、ステータスチェック `build-lint-test` の成功が必須。最新 `main` との同期は不要）。
+  必須チェックはジョブ名で照合されるため、**`ci.yml` のジョブ名 `build-lint-test` を変更すると必須チェックが
+  永久に満たされずPRがマージできなくなる。** ジョブ名を変える必要がある場合は、先にルールセット側の
+  必須チェック名を変更すること。
 
 ## 7. Supabase連携時の注意（今後の実装で参照）
 

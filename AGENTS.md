@@ -18,6 +18,18 @@
 
 エージェントが PR を作成する場合は、必ず以下の手順に従うこと。
 
+### 0. PR 作成前の準備
+
+- PR を作成する前に、CI と同じ検証を行う集約タスクをローカルで実行し、成功させる。
+
+  ```sh
+  ./gradlew verify
+  ```
+
+  （Chrome が無い環境の扱いは `copilot-construction.md` の「6. テスト・CI」を参照）
+- PR の本文は `.github/pull_request_template.md` の構成に従って書く
+  （該当しないチェック項目は削除してよい）。
+
 ### 1. Draft 状態で PR を作成する
 
 - PR は **必ず Draft で作成する**。いきなり Open（Ready for review）で作成しない。
