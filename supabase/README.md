@@ -150,9 +150,19 @@ Studioから直接ユーザーを追加する場合も、先に `invitations` �
 | allocations | 本人 or admin（参照のみ、work_records経由で判定） | 本人のみ（work_records経由で判定） |
 | invitations | admin のみ | admin のみ（追加・削除。アプリ経由の追加は email 列のみで、invited_by は登録したadminに自動設定。Studioからの登録は invited_by が空になる） |
 
-未ログイン（`anon`ロール）には一切のテーブル権限（参照・追加・変更・削除）を付与していない
+未ログイン（`anon`ロール）には一切のテーブル権限（参照・追加・変更・削除を含むすべて）を付与していない
 （マジックリンク認証必須のため、`authenticated`ロールにのみGRANTしている）。
-ただし Supabase の既定権限による `TRUNCATE` 等は残っている（下記「動作検証について（DBテスト）」の既知の問題を参照）。
+`authenticated` にもアプリが使う参照・追加・変更・削除（列単位を含む）以外の権限は付与していない。
+
+Supabase の既定権限（`ALTER DEFAULT PRIVILEGES`）により、`public` スキーマに作ったテーブルには
+`anon` / `authenticated` へ `TRUNCATE`（RLS を迂回する）・`REFERENCES`・`TRIGGER`・`MAINTAIN` が、
+シーケンスには `anon` へ `UPDATE` が自動で付与される。これらは
+`migrations/20260925090000_revoke_excess_table_privileges.sql` で既存のオブジェクトから剥奪し、
+マイグレーションを実行する `postgres` ロールの既定権限からも取り除いている
+（今後 `postgres` が `public` に作るテーブル・シーケンスには付与されない）。
+`supabase_admin` ロールの既定権限は `postgres` から変更できないため調整していない
+（`supabase_admin` が `public` にオブジェクトを作ると `anon` に権限が付与される。マイグレーションで `postgres` が作るテーブル等は該当しない）。
+関数の `EXECUTE` 権限（PostgreSQL の既定で `PUBLIC` に付与される）と `service_role` の権限は変更していない。
 
 ## 動作検証について（DBテスト）
 
@@ -186,7 +196,7 @@ Docker（起動済み）と [Supabase CLI](https://supabase.com/docs/guides/loca
 | ファイル | 検証内容 |
 |---|---|
 | `helpers.psql` | 共通ヘルパー（テストではない）。テストユーザーの作成（`auth.users` への INSERT で実際のトリガーを発火させる）、ログイン状態の再現（実行ロールを `authenticated` / `anon` に切り替え、`request.jwt.claims` を設定する。PostgREST がリクエストごとに行っている設定と同じ） |
-| `00_schema_security.test.sql` | `public` スキーマの全テーブルを動的に走査し、RLS が有効・ポリシーがある・`authenticated` に権限がある・`anon` に参照/追加/変更/削除の権限が無い（列単位も含む）・`anon` / `PUBLIC` 向けのポリシーが無い・ビューが `security_invoker` であることを検証する。テーブル一覧（`tables_are`）も検証するため、テーブルを追加するとテストの追加を促す形で失敗する |
+| `00_schema_security.test.sql` | `public` スキーマの全テーブルを動的に走査し、RLS が有効・ポリシーがある・`authenticated` に権限がある・`anon` に一切の権限が無い（列単位も含む）・`authenticated` に `TRUNCATE` 等の余分な権限が無く、アプリが使う権限（列単位を含む）の一覧が想定どおり・`anon` / `PUBLIC` 向けのポリシーが無い・ビューが `security_invoker` であることを検証する。`postgres` ロールの既定権限が調整済みであること（実際にテーブルを作って確認する）も検証する。テーブル一覧（`tables_are`）と `authenticated` の権限の一覧も検証するため、テーブルや grant を追加するとテストの追加・更新を促す形で失敗する |
 | `01_profiles.test.sql` | `profiles` 行の自動作成（`display_name` の初期値含む）・`auth.users.email` 変更の同期、直接DB接続では role を変更できること、member は自分の role を昇格できないこと、admin は他ユーザーを昇格・降格できること、`email` 列を直接変更できないこと、RLS（本人/他人/admin/anon × 参照/追加/変更/削除） |
 | `02_projects.test.sql` | RLS（member/admin/anon × 参照/追加/変更/削除） |
 | `03_user_projects.test.sql` | RLS（本人/他人/admin/anon × 参照/追加/変更/削除） |
@@ -195,11 +205,6 @@ Docker（起動済み）と [Supabase CLI](https://supabase.com/docs/guides/loca
 | `06_allocations.test.sql` | RLS（work_records 経由の所有者判定。本人/他人/admin/anon × 参照/追加/変更/削除、他人の work_records への付け替え不可）、CHECK・一意・外部キー（`on delete restrict` / `cascade`）制約 |
 | `07_invitations.test.sql` | RLS（admin/member/anon × 参照/追加/変更/削除）、メールアドレスの正規化（追加・変更時）、`invited_by` の自動設定と偽装の拒否、直接DB接続での登録（`invited_by` が空）、CHECK制約（形式・正規化）、重複の拒否、招待したadmin削除時の `on delete set null` |
 | `08_hook_before_user_created.test.sql` | Hook 関数を SQL から直接呼び出し、招待済みは許可（`{}`）・未招待は拒否（`{"error": {"http_code": 403, "message": "email_not_invited"}}`）、正規化した照合、メールアドレスが無い/空のイベントの拒否、招待取り消し後の拒否。`PUBLIC` / `anon` / `authenticated` に `EXECUTE` 権限が無く呼び出すと権限エラーになること、`supabase_auth_admin` は実行できること、`SECURITY DEFINER` であること |
-
-`00_schema_security.test.sql` には既知の問題を `todo`（失敗してもテスト全体は成功扱い）として記録している:
-Supabase の既定権限により、`public` スキーマのテーブルには `anon` / `authenticated` に `TRUNCATE`・`REFERENCES`・
-`TRIGGER`・`MAINTAIN` が付与されている（Data API からは実行できないため実害は無い）。
-剥奪するマイグレーションを追加したら `todo` を外すこと。
 
 ### 自動テストでは検証していないもの
 

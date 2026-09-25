@@ -31,7 +31,27 @@ RLS の権限方針（誰が何を参照・編集できるか）は `docs/requir
   3. 用途に応じた `create policy ...`
 
   3点セットの漏れは DBテストの `supabase/tests/database/00_schema_security.test.sql` が `public` スキーマの
-  全テーブルを走査して検知する（同ファイルのテーブル一覧 `tables_are` も更新すること）。
+  全テーブルを走査して検知する（同ファイルのテーブル一覧 `tables_are` と、`authenticated` の権限の一覧
+  （`set_eq`）も更新すること）。
+- **Supabase の既定権限は余分な権限を付ける（ハマりどころ）。** Supabase は `ALTER DEFAULT PRIVILEGES` で、
+  `public` スキーマに作ったテーブルへ `anon` / `authenticated` の `TRUNCATE`（RLS を迂回する）・`REFERENCES`・
+  `TRIGGER`・`MAINTAIN` を、シーケンスへ `anon` の `UPDATE` を自動で付与する（`config.toml` の
+  `auto_expose_new_tables = false` でも、参照・追加・変更・削除以外はこのとおり付与されることをローカルで確認済み）。
+  マイグレーションを実行する `postgres` ロールの既定権限は `*_revoke_excess_table_privileges.sql` で調整済みのため、
+  新しいテーブルを追加しても `anon` には何も付与されず、`authenticated` にも余分な権限は付かない
+  （その分、`authenticated` への grant は上記2のとおり明示的に行う必要がある）。既定権限の調整・権限の剥奪を
+  追加で行う場合は以下に注意する（本番の `supabase db push` が失敗すると、以降のマイグレーションが適用されなくなる）。
+  - 既定権限は「誰が作るオブジェクトに対するものか」（`for role <作成ロール>`）ごとに別物。マイグレーションは
+    `postgres`（スーパーユーザーではない）で実行されるため、変更できるのは `for role postgres` だけ。
+    `for role supabase_admin` 等を変更しようとすると `permission denied to change default privileges` で失敗する。
+    現状は `pg_default_acl` で確認する。
+  - `MAINTAIN` 権限は PostgreSQL 17 以降にしか無い（16 以前では構文エラー）。ローカルは `config.toml` の
+    `major_version` のバージョンで動くが、本番のバージョンと一致している保証は無いため、`MAINTAIN` を書く場合は
+    `current_setting('server_version_num')` で判定して動的 SQL で実行する。
+  - `revoke all on table ...` はテーブルに対する列単位の grant（`profiles` の `update (display_name, role)` 等）も
+    剥奪してしまう。`authenticated` からは剥奪する権限を列挙して `revoke` する。
+  - 所有していないオブジェクトに権限を一切持たない場合、`revoke` はエラーになる。スキーマ内の全オブジェクトを
+    対象にする場合は、実行ロールが所有するものに絞る（`pg_has_role(current_user, relowner, 'USAGE')`）。
 - **適用済み（`main` にマージ済み）のマイグレーションファイルは変更しない。** 本番に適用済みのため、
   修正は新しいマイグレーションファイルを追加して行う。
 
