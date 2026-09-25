@@ -99,18 +99,22 @@ Domain Service側で都度計算する「導出値」として扱う。
 
 - 認証方式：**マジックリンク**（メールアドレスのみ、パスワード不要）
 - ロール：`member` / `admin` の2種類
-- **アカウント作成方針：招待制**。ログイン画面（マジックリンク送信）から未登録のメールアドレスで
-  新規アカウントが作成されることはない。本番Supabaseの Auth 設定「Allow new users to sign up」を
-  OFFにすることでサーバー側で強制する（アプリ側の`createUser = false`は表示上の挙動を揃えるためのもので、
-  それ単体ではアクセス制御にならない）。
-  アカウントは以下のいずれかの方法でのみ作成される：
-  - （v1時点）Supabase管理画面（Supabase Studio）からadminが手動で招待
-  - （将来実装）アプリ内の管理者用「ユーザー招待」画面から、adminが新規メールアドレスを指定して招待。
-    Supabase AuthのAdmin API（`inviteUserByEmail`等）はservice_role keyを要するため、クライアントから
-    直接呼び出せず、Supabase Edge Function等のサーバーサイドコンポーネントの追加が必要になる見込み。
-    設計・実装は別タスクとする。
-  - ログイン画面は「入力されたメールアドレスが登録済みかどうか」を区別するエラーを返す。
-    メール列挙（登録済みアドレスの推測）に悪用され得るが、社内チーム向けツールであり、
+- **アカウント作成方針：招待制（招待リスト方式）**。adminが招待リスト（`invitations`テーブル）に
+  メールアドレスを登録し、招待された本人がログイン画面からマジックリンクを要求した時点で
+  アカウントが作成される。招待リストに無いメールアドレスでは、ログイン画面から新規アカウントが
+  作成されることはない。
+  - 未招待メールアドレスの拒否は、Supabase Authの**Before User Created Hook**（ユーザー作成直前に
+    呼ばれるPostgres関数）でサーバー側に強制する。クライアント側の実装や設定には依存しない。
+  - サーバーレス関数（Edge Function）＋Admin API（`inviteUserByEmail`）による招待方式も検討したが、
+    TypeScript/Denoの導入・secret keyの取り扱い・デプロイ経路の追加が必要になるため採用しなかった。
+    本方式はSQL（マイグレーション）とRLSのみで完結する。
+  - 招待メールは自動送信されない。admin は招待リスト登録後、アプリのURLを本人へ別途（Slack等で）伝える。
+  - 招待リストへの登録方法：
+    - （招待画面の実装までの暫定運用）Supabase管理画面（Supabase Studio）のTable Editorから`invitations`に行を追加
+    - （v1で実装予定）アプリ内の管理者用「ユーザー招待」画面から登録（RLSによりadminのみ登録可）。
+      ログイン後のセッション管理の実装後に追加する
+  - ログイン画面は「入力されたメールアドレスが招待済みかどうか」を区別するエラーを返す。
+    メール列挙（招待済みアドレスの推測）に悪用され得るが、社内チーム向けツールであり、
     入力ミス・未招待をその場で本人に伝えるUXを優先して**意図的に許容する**。
     完全に防ぐにはAuth APIの前にサーバー側の中継エンドポイントが必要になるため、採用しない。
 - 権限昇格：アプリ内に「管理者権限付与」画面を用意し、adminが**既存の**他ユーザーをadminに昇格させる
@@ -130,14 +134,12 @@ Domain Service側で都度計算する「導出値」として扱う。
 | `shift_settings` | id, user_id(unique), start_time, end_time, break_hours, min_hours, max_hours | ユーザーごとの勤務時間設定 |
 | `work_records` | id, user_id, work_date, clock_in, clock_out, break_hours, flag(祝/欠/null), note | 日次実績（unique: user_id + work_date） |
 | `allocations` | id, work_record_id, project_id, hours | 日×案件の工数配分 |
+| `invitations` | email(PK), invited_by, created_at | 招待リスト（ここに登録されたメールアドレスのみアカウント作成可、admin管理） |
 
 ### v1のスコープ外（将来検討）
 
 - 案件別「予定割合・予定時間」による計画値管理（Excelの(予)割合・(予)時間に相当）。
   v1では日々の実績入力と集計のみを提供し、将来的に追加を検討する。
-- アプリ内「ユーザー招待」画面（管理者が新規メールアドレスを指定してアカウントを作成する機能）。
-  Supabase Edge Function等のサーバーサイドコンポーネント追加が前提となるため別タスクとする
-  （詳細は5節参照）。v1時点では引き続きSupabase管理画面からの手動招待で運用する。
 
 ## 7. 開発環境・規約
 
@@ -158,5 +160,5 @@ Domain Service側で都度計算する「導出値」として扱う。
 2. Supabaseプロジェクト作成・DBスキーマ適用・RLSポリシー設定
 3. domain層の実装（Entity/Value Object/UseCase/Domain Service）とテスト
 4. data層の実装（Supabase連携）とテスト
-5. presentation層の実装（画面：ログイン、日次入力、案件別集計、管理者ダッシュボード、権限付与）
+5. presentation層の実装（画面：ログイン、日次入力、案件別集計、管理者ダッシュボード、権限付与、ユーザー招待）
 6. GitHub Pagesへのデプロイ確認・動作検証
