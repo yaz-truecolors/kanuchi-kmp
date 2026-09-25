@@ -33,7 +33,7 @@
     の順に決まるため、リポジトリ設定（Settings → Copilot → Code review → Review effort level）
     または依頼者の個人設定で **Balanced** を設定しておくことを前提とする。
   - レビュー完了後、Copilot のレビュー概要コメントに表示される effort level が Balanced であることを確認する。
-    **Lite で実行されていた場合は、フィードバック対応に進まずユーザーに報告する**
+    **Balanced 以外（Lite 等）で実行されていた場合は、フィードバック対応に進まずユーザーに報告する**
     （GitHub の PR 画面の Reviewers から Balanced を選んで再依頼してもらう）。
 
 ### 3. レビューフィードバックに対応する
