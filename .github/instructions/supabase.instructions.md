@@ -49,7 +49,9 @@ RLS の権限方針（誰が何を参照・編集できるか）は `docs/requir
     `major_version` のバージョンで動くが、本番のバージョンと一致している保証は無いため、`MAINTAIN` を書く場合は
     `current_setting('server_version_num')` で判定して動的 SQL で実行する。
   - `revoke all on table ...` はテーブルに対する列単位の grant（`profiles` の `update (display_name, role)` 等）も
-    剥奪してしまう。`authenticated` からは剥奪する権限を列挙して `revoke` する。
+    剥奪してしまう（PostgreSQL の REVOKE のドキュメント: テーブルの権限を剥奪すると、各列の同じ権限も自動で剥奪される。
+    「列単位の ACL は残る」というレビュー指摘は誤り）。`authenticated` からは剥奪する権限を列挙して `revoke` する。
+    逆に `anon` には `revoke all on table ...` で列単位の権限まで剥奪できる。
   - 所有していないオブジェクトに権限を一切持たない場合、`revoke` はエラーになる。スキーマ内の全オブジェクトを
     対象にする場合は、実行ロールが所有するものに絞る（`pg_has_role(current_user, relowner, 'USAGE')`）。
 - **適用済み（`main` にマージ済み）のマイグレーションファイルは変更しない。** 本番に適用済みのため、
