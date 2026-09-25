@@ -27,7 +27,10 @@ complexity:
 naming:
   FunctionNaming:
     active: true
-    # Compose の @Composable 関数はPascalCase許容、テストのバッククォート関数名も許容する
+    # Compose の @Composable 関数は PascalCase で命名する慣習（公式 API ガイドライン）と衝突するため、
+    # @Composable が付いた関数は対象外にする（ktlint 側も .editorconfig で同様に許可している）。
+    ignoreAnnotated: ["Composable"]
+    # テストのバッククォート関数名を許容する
     excludes: ["**/commonTest/**", "**/*Test.kt"]
 
 comments:

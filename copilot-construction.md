@@ -37,6 +37,24 @@ app-wasmjs -> domain
 - **命名・フォーマット**：ktlint。@Composable関数のPascalCase命名は `.editorconfig` で許可済み
   （`ktlint_function_naming_ignore_when_annotated_with = Composable`）。
 - **静的解析**：detekt。設定は `config/detekt/detekt.yml`。
+  - **KMPでは detekt の既定 `source` がソースセットを拾わない（ハマりどころ）。** detekt Gradle プラグインの
+    既定 `source` は `src/main/java` / `src/main/kotlin` / `src/test/java` / `src/test/kotlin` のJVMレイアウトで、
+    KMPの `src/commonMain/kotlin` / `src/commonTest/kotlin` / `src/wasmJsMain/kotlin` 等は対象外。そのため
+    `check` から呼ばれる `detekt` タスクが `NO-SOURCE` になり、CIが成功していても何も解析されていなかった。
+  - 対処として、ルート `build.gradle.kts` の `subprojects` ブロックで `detekt { source.setFrom(fileTree("src") { include("*/kotlin/**/*.kt", ...) }) }`
+    を設定し、全モジュールの `src/<ソースセット名>/kotlin` を一括で解析対象にしている（main系・test系とも。
+    ソースセットを追加しても自動で追従する）。
+  - `build/` 配下の生成コード（Compose Resources の `Res.kt` 等）は解析対象外。`detektMetadataMain` /
+    `detektWasmJsMain` 等のソースセット別タスクは生成ディレクトリそのものを source ルートに持つため
+    `"**/build/**"` のような相対パターンでは除外できず、`Detekt` タスクに絶対パス（`layout.buildDirectory` 配下か）
+    で判定する `exclude { ... }` を設定している。
+  - detekt 関連の設定を変えたら `./gradlew detekt --rerun-tasks` を実行し、各モジュールの `detekt` タスクが
+    **`NO-SOURCE` になっていないこと**を必ず確認する（ルートプロジェクトの `:detekt` はソースを持たないので `NO-SOURCE` で正常）。
+  - `@Composable` 関数の PascalCase 命名は detekt 側でも `FunctionNaming.ignoreAnnotated: ["Composable"]` で許可している。
+  - ルール違反は原則コード側を直す。ルールがプロジェクトの設計と衝突する場合のみ、理由をコメントに残して
+    `detekt.yml` を調整するか、該当箇所に限定して `@Suppress` する（例: `SupabaseAuthRepository` は
+    「失敗は必ず `Result` で返す」契約のため `Exception` を一括捕捉しており、`TooGenericExceptionCaught` のみ抑制）。
+    baseline ファイルでの一括抑制は使わない。
 - **生成コードの扱い**：Compose Multiplatformのリソースジェネレータ等、`build/` 配下に生成される
   Kotlinコードは lint 対象外にしている（`.editorconfig` の `[**/build/**/*.{kt,kts}]` セクションで
   `ktlint_standard = disabled`）。Gradle側の `ktlint { filter { exclude(...) } }` はKMPの
