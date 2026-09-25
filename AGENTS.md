@@ -1,5 +1,10 @@
 # AGENTS.md
 
+## Language
+
+- Think and reason in English.
+- Use Japanese when communicating with the user.
+
 このリポジトリで作業するコーディングエージェント（GitHub Copilot 等）向けの指示です。
 
 ## 必読ドキュメント
