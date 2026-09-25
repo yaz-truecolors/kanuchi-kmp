@@ -51,6 +51,17 @@ kanuchi-kmp/
 ./gradlew build
 ```
 
+### CIと同じ検証をまとめて実行（PR作成前に推奨）
+
+```sh
+./gradlew verify
+```
+
+`ktlintCheck` / `detekt` / `allTests` / `:app-wasmjs:wasmJsBrowserDistribution` を1コマンドで実行します
+（CI の `build-lint-test` ジョブも同じタスクを実行しています）。
+失敗箇所をまとめて確認したい場合は `./gradlew verify --continue` を使ってください。
+個別に実行したい場合は以下の各コマンドを使います。
+
 ### Lint
 
 ```sh
@@ -67,6 +78,8 @@ kanuchi-kmp/
 
 `presentation` モジュールは Compose UI テストのために Chrome ブラウザが必要です
 （`domain` / `data` はブラウザ不要な Node.js 上でテストされます）。
+Chrome を標準の場所にインストールしていない場合は、環境変数 `CHROME_BIN` に Chrome
+（Chrome for Testing 等でも可）の実行ファイルのパスを指定してください。
 
 ### ローカルでブラウザ実行（開発サーバー）
 

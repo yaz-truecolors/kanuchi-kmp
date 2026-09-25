@@ -7,6 +7,8 @@ on:
     branches: [main]
 
 jobs:
+  # ジョブ名 build-lint-test は main のルールセットで必須ステータスチェックに指定されている。
+  # 名前を変えると必須チェックが満たされずPRをマージできなくなるため、変更しないこと。
   build-lint-test:
     runs-on: ubuntu-latest
     steps:
@@ -24,17 +26,10 @@ jobs:
       - name: Setup Chrome (for wasmJs browser tests)
         uses: browser-actions/setup-chrome@v2
 
-      - name: ktlint check
-        run: ./gradlew ktlintCheck
-
-      - name: detekt
-        run: ./gradlew detekt
-
-      - name: Test
-        run: ./gradlew allTests
-
-      - name: Build wasmJs distribution
-        run: ./gradlew :app-wasmjs:wasmJsBrowserDistribution
+      # ローカルと同じ集約タスク（ルートの build.gradle.kts の verify）を実行する。
+      # --continue で失敗しても残りのタスクを実行し、失敗したタスクをまとめて報告させる。
+      - name: Verify (ktlintCheck / detekt / allTests / wasmJsBrowserDistribution)
+        run: ./gradlew verify --continue
 
   deploy-pages:
     needs: build-lint-test
