@@ -17,11 +17,12 @@ GitHub Copilot（cloud agent / code review）はフロントマターの `applyT
 
 | 触るパス | 読むファイル | 主な内容 |
 |---|---|---|
-| `**/*.gradle.kts`, `gradle/**`, `gradle.properties`, `config/detekt/**`, `.editorconfig` | [.github/instructions/build.instructions.md](.github/instructions/build.instructions.md) | モジュールごとの wasmJs ターゲット設定、detekt/ktlint のビルド設定（KMPのソースセット・生成コード除外）、集約タスク `verify`、Version Catalog・BOM、wasmJs の Gradle DSL の注意点 |
+| `**/*.gradle.kts`, `gradle/**`, `gradle.properties`, `config/detekt/**`, `.editorconfig`, `renovate.json` | [.github/instructions/build.instructions.md](.github/instructions/build.instructions.md) | モジュールごとの wasmJs ターゲット設定、detekt/ktlint のビルド設定（KMPのソースセット・生成コード除外）、集約タスク `verify`（スモークテストのタスク構成）、Node.js のバージョン固定と Renovate、Version Catalog・BOM、wasmJs の Gradle DSL の注意点 |
 | `presentation/**`, `app-wasmjs/**` | [.github/instructions/presentation.instructions.md](.github/instructions/presentation.instructions.md) | 文言の `strings.xml` 集約、エラー表示、フォント（Noto Sans JP）、アクセシビリティ対応を行わない方針、Chrome基準、`index.html` の `type="module"` などブラウザ実行時の注意点 |
 | `data/**` | [.github/instructions/data.instructions.md](.github/instructions/data.instructions.md) | 認証方式・RLS準拠クエリ・鍵の扱い、supabase-kt 例外の変換、招待制のクライアント側（`createUser`・例外変換・Hookメッセージ定数・意図的なトレードオフ） |
 | `supabase/**` | [.github/instructions/supabase.instructions.md](.github/instructions/supabase.instructions.md) | マイグレーション運用、新規テーブルの RLS/grant/policy の3点セット、ロール変更トリガー・`is_admin()`・ローカル検証、Before User Created Hook のサーバー側規約 |
-| `.github/workflows/**` | [.github/instructions/ci.instructions.md](.github/instructions/ci.instructions.md) | `ci.yml`（Chromeセットアップ・`verify`・Pagesデプロイ・必須チェックのジョブ名）、`supabase-deploy.yml`（Secrets・トークン有効期限） |
+| `.github/workflows/**` | [.github/instructions/ci.instructions.md](.github/instructions/ci.instructions.md) | `ci.yml`（Chromeセットアップ・`verify`・スモークテストの artifact・Pagesデプロイ・必須チェックのジョブ名）、`supabase-deploy.yml`（Secrets・トークン有効期限） |
+| `e2e/**` | [.github/instructions/e2e.instructions.md](.github/instructions/e2e.instructions.md) | UI 描画スモークテスト（Playwright）の位置付け（起動して描画されるかだけを見る）、実行方法、外部通信の遮断と許容する `console.error`、Canvas 描画の判定方法 |
 | `domain/**` | [.github/instructions/domain.instructions.md](.github/instructions/domain.instructions.md) | domain 層に関わるアーキテクチャ原則（本ファイル1節）への参照、UI文言を持たない・マーカー例外、`AuthRepository` の契約 |
 
 コードレビュー時の観点（指摘しない事項・重点的に確認すべき事項）は
@@ -68,7 +69,13 @@ app-wasmjs -> domain
 
 ## 4. テスト・検証（共通）
 
-- テスト範囲は domain + data + ViewModel（presentation）のロジックまで。UI描画テストはスコープ外。
+- テスト範囲は domain + data + ViewModel（presentation）のロジックまで。UIの見た目や操作（レイアウト・文言・入力・画面遷移）の
+  テストはスコープ外。
+  - 例外として、本番ビルドがブラウザで**起動して `<canvas>` に描画されるかだけ**を確認するスモークテスト
+    （`e2e/`、`./gradlew :app-wasmjs:smokeTest`）がある。`index.html` の不備や起動時の例外で画面が真っ白になる事故を
+    検知するためのもので、UIの見た目や振る舞いは検証しない（規約は [e2e.instructions.md](.github/instructions/e2e.instructions.md)）。
+    Node.js は Kotlin Gradle プラグインがダウンロードするもの、ブラウザは Playwright 同梱の Chromium を使うため、
+    Node.js や Chrome を入れていない端末でも実行できる（初回はブラウザのダウンロードのためネットワークが必要）。
 - ローカル開発でChromeがない環境では `presentation` モジュールのブラウザテストは実行できない
   （Karmaが `ChromeHeadless` を起動できず `Errors occurred during launch of browser for testing.` で失敗する）。
   Chromeを標準の場所に入れていない場合は、環境変数 `CHROME_BIN` にChrome（Chrome for Testing等でも可）の
@@ -76,13 +83,16 @@ app-wasmjs -> domain
   `domain` / `data` の変更検証には `./gradlew :domain:wasmJsNodeTest` のようにNode.jsテストを使うこと。
   なお、テストファイルが1つもないモジュールのテストタスクは `SKIPPED` になるため、その場合はChromeが無くても失敗しない。
 - **CIと同じ検証はルートの集約タスク `./gradlew verify` で1コマンドで実行できる。** PR作成前に必ず実行して成功させること。
-  中身は「全プロジェクトの `check`（= `ktlintCheck` + `detekt` + `allTests`）」＋ `:app-wasmjs:wasmJsBrowserDistribution`。
+  中身は「全プロジェクトの `check`（= `ktlintCheck` + `detekt` + `allTests`）」＋ `:app-wasmjs:wasmJsBrowserDistribution`
+  ＋ UI 描画スモークテスト `:app-wasmjs:smokeTest`。
   `verify` タスク自体を変更する際の注意（`ci.yml` ではなく `build.gradle.kts` 側を変える、`check` と重複させない）は
   [build.instructions.md](.github/instructions/build.instructions.md) の「集約タスク `verify`」を参照。
 - CI（Chromeのセットアップ、Pagesデプロイ、`main` のルールセットと必須チェック名）については
   [ci.instructions.md](.github/instructions/ci.instructions.md) を参照。
-- UIに関わる変更をしたら、ビルド・lint・テストの成功だけでなく実ブラウザで「実際に描画されるか」を確認すること
-  （理由と確認方法は [presentation.instructions.md](.github/instructions/presentation.instructions.md) の「ブラウザ実行時の注意点（wasmJs）」）。
+- 「起動して描画されるか」はスモークテスト（`verify` に含まれる）で自動確認される。UIに関わる変更をしたら、それに加えて
+  変更した画面・操作が意図どおりに表示・動作するかを実ブラウザ（Chrome）で確認すること（スモークテストは起動直後の画面が
+  描画されるかしか見ないため。理由と確認方法は [presentation.instructions.md](.github/instructions/presentation.instructions.md) の
+  「ブラウザ実行時の注意点（wasmJs）」）。
 
 ## 5. コードレビューで指摘しない事項
 

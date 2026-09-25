@@ -15,6 +15,14 @@ applyTo: ".github/workflows/**"
 - CIの `build-lint-test` ジョブは `./gradlew verify --continue` を実行している。検証内容を変えたい場合は
   `ci.yml` ではなくルート `build.gradle.kts` の `verify` タスクを変更する（ローカルとCIの差異を作らないため。
   詳細は [build.instructions.md](build.instructions.md) の「集約タスク `verify`」）。
+- UI 描画スモークテスト（`:app-wasmjs:smokeTest`）も `verify` 経由で `build-lint-test` ジョブ内で実行されるため、
+  失敗すると必須チェックが通らずマージできない。Node.js（Kotlin Gradle プラグインがダウンロード）・`npm ci`・
+  Playwright 同梱 Chromium のダウンロードはすべて Gradle タスク側で行うので、`ci.yml` に `actions/setup-node` や
+  `npm ci` のステップを足さないこと（`browser-actions/setup-chrome` の Chrome は `presentation` の Karma テスト用で、
+  スモークテストは使わない）。
+- スモークテスト失敗時は、`e2e/test-results/`（スクリーンショット・コンソールログ・Playwright トレース）を
+  `actions/upload-artifact` で artifact `smoke-test-results` としてアップロードする（`if: failure()`）。
+  CI で失敗したらまずこの artifact を確認する（読み方は [e2e.instructions.md](e2e.instructions.md)）。
 - `main` へのマージ時は追加でGitHub Pagesへの自動デプロイが走る。
 - **`main` はルールセット（main-protect）で保護されており、直接pushできない。** 変更は必ずPR経由でマージする
   （承認数は0件でよいが、ステータスチェック `build-lint-test` の成功が必須。最新 `main` との同期は不要）。

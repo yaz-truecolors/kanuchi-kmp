@@ -70,15 +70,21 @@ Compose Multiplatform の UI・ViewModel・リソース（`presentation/`）と�
 ## ブラウザ実行時の注意点（wasmJs）
 
 - `app-wasmjs/src/wasmJsMain/resources/index.html` の `<script>` タグには
-  **`type="module"` が必須**。付け忘れると、ブラウザで実行した際に
+  **`type="module"` を付けておく（外さない）**。過去に付け忘れで、ブラウザで実行した際に
   `SyntaxError: Cannot use 'import.meta' outside a module` が発生し、アプリが
-  真っ白のまま何も描画されない（Kotlin/Wasmの出力がESモジュール前提のため）。
-  `./gradlew build` や `ktlintCheck`/`detekt` はこの種のランタイムエラーを検知できないため、
-  UIに関わる変更をしたら必ず実ブラウザ（またはPuppeteer等のヘッドレスブラウザ）で
-  「実際に描画されるか」を確認すること。
+  真っ白のまま何も描画されない事故があった（Kotlin/Wasm のコンパイラ出力 `kanuchi.mjs` は
+  `import.meta` を使う ES モジュール）。
+  - 2026年9月時点の構成（Kotlin 2.4.20）では webpack が UMD 形式にバンドルし `import.meta` が残らないため、
+    外しても描画されることをスモークテストで確認している。ただしバンドル形式や設定が変われば再発しうるので付けたままにする。
+- `./gradlew build` や `ktlintCheck`/`detekt`、単体テストはこの種のランタイムエラーを検知できない。
+  **本番ビルドが起動して `<canvas>` に描画されるかは、UI 描画スモークテスト（`./gradlew :app-wasmjs:smokeTest`。
+  `verify` に含まれる）が自動で確認する**（規約は [e2e.instructions.md](e2e.instructions.md)）。
+  スモークテストは起動直後の画面が描画されるかしか見ないので、UIに関わる変更をしたら、変更した画面・操作が
+  意図どおりに表示・動作するかを実ブラウザ（Chrome）で確認すること。
 - Compose for Web/Wasmは `<canvas>` に直接描画するため、`document.querySelectorAll('input')`
-  等のDOM検査では要素を検出できない。UI検証はスクリーンショット比較や、要素の推定座標への
-  クリック/キー入力シミュレーションで行う。
+  等のDOM検査では要素を検出できない（`<canvas>` 自体も Shadow DOM 内にある）。手動・ヘッドレスブラウザでの
+  UI検証はスクリーンショットの目視や、要素の推定座標へのクリック/キー入力シミュレーションで行う
+  （自動テストとしての見た目・操作の検証はスコープ外。`copilot-construction.md` の「4. テスト・検証（共通）」）。
 - `wasmJsBrowserDevelopmentRun`（webpack-dev-server経由）はコンテンツキャッシュや
   ライブリロードの都合でリソース変更が反映されないことがある。挙動を疑ったら
   `wasmJsBrowserDistribution` の成果物 (`build/dist/wasmJs/productionExecutable`) を

@@ -2,5 +2,19 @@
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": [
         "config:recommended"
+    ],
+    "customManagers": [
+        {
+            "customType": "regex",
+            "description": "Kotlin Gradle プラグインにダウンロードさせる Node.js のバージョン（gradle/libs.versions.toml の nodejs）",
+            "managerFilePatterns": [
+                "/^gradle/libs\\.versions\\.toml$/"
+            ],
+            "matchStrings": [
+                "\\nnodejs = \"(?<currentValue>[^\"]+)\""
+            ],
+            "depNameTemplate": "node",
+            "datasourceTemplate": "node-version"
+        }
     ]
 }

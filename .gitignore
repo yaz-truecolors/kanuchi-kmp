@@ -18,3 +18,7 @@ local.properties
 
 # Kotlin/JS
 kotlin-js-store/
+
+# Node.js / Playwright（e2e/ のスモークテスト）
+node_modules/
+e2e/test-results/

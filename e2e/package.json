@@ -1,0 +1,15 @@
+{
+  "name": "kanuchi-e2e",
+  "private": true,
+  "description": "wasmJs 本番ビルドがヘッドレスブラウザで起動・描画されるかを確認するスモークテスト",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

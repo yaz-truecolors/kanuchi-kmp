@@ -1,4 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsEnvSpec
+import org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsPlugin
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform) apply false
@@ -14,16 +16,24 @@ allprojects {
         google()
         mavenCentral()
     }
+
+    // Kotlin Gradle プラグインがダウンロードする Node.js（wasmJs の Node テストと :app-wasmjs:smokeTest で使う）のバージョンを固定する。
+    // バージョンは gradle/libs.versions.toml の nodejs で管理する（Renovate の customManagers で更新を検知する）。
+    plugins.withType<WasmNodeJsPlugin> {
+        the<WasmNodeJsEnvSpec>().version.set(libs.versions.nodejs)
+    }
 }
 
 // CI（.github/workflows/ci.yml の build-lint-test ジョブ）と同じ検証を1コマンドで実行する集約タスク。
-// 各プロジェクトの `check` が ktlintCheck / detekt / allTests を含むため、それに本番ビルドを加えるだけにして重複定義を避ける。
+// 各プロジェクトの `check` が ktlintCheck / detekt / allTests を含むため、それに本番ビルドと、本番ビルドを実ブラウザで開く
+// スモークテスト（:app-wasmjs:smokeTest。wasmJsBrowserDistribution に依存する）を加えるだけにして重複定義を避ける。
 tasks.register("verify") {
     group = LifecycleBasePlugin.VERIFICATION_GROUP
-    description = "CIと同じ検証（ktlintCheck / detekt / allTests / wasmJsBrowserDistribution）を実行する。"
+    description = "CIと同じ検証（ktlintCheck / detekt / allTests / wasmJsBrowserDistribution / smokeTest）を実行する。"
     dependsOn(tasks.named(LifecycleBasePlugin.CHECK_TASK_NAME))
     dependsOn(subprojects.map { "${it.path}:${LifecycleBasePlugin.CHECK_TASK_NAME}" })
     dependsOn(":app-wasmjs:wasmJsBrowserDistribution")
+    dependsOn(":app-wasmjs:smokeTest")
 }
 
 subprojects {

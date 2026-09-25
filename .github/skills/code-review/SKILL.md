@@ -25,7 +25,7 @@ description: kanuchi-kmp リポジトリのプルリクエストをレビュー�
 | 多言語対応 | 文言の多言語化（i18n）や、日本語以外のフォント・フォールバックの追加 | `docs/requirements.md`「2. アプリ概要」UI/UX方針（言語・フォント） |
 | 外部システムのエラー説明文 | `AuthRestException.errorDescription` 等、外部システム（Supabase）が返すユーザー向け説明文をそのまま表示していることを「`strings.xml` への集約漏れ」とする指摘 | `.github/instructions/presentation.instructions.md`「文言・テキスト定数」 |
 | 公開可能な Supabase の値 | Supabase の URL・publishable key（anon key）がクライアントコードに含まれていること（RLSで保護される前提の公開可能な値） | `docs/requirements.md`「7. 開発環境・規約」（Secrets管理）、`.github/instructions/data.instructions.md`「認証・RLS・鍵の扱い」 |
-| UI描画テスト | UI描画テストが無いこと（テスト範囲は domain + data + ViewModel のロジックまで） | `docs/requirements.md`「7. 開発環境・規約」（テスト方針）、`copilot-construction.md`「4. テスト・検証（共通）」 |
+| UI描画テスト | UIの見た目や操作（レイアウト・文言・入力・画面遷移）の自動テストが無いこと、スモークテスト（`e2e/`）に画面ごとの検証・操作シナリオ・スナップショット比較を足すべきという提案（テスト範囲は domain + data + ViewModel のロジックまでで、スモークテストは起動して描画されるかだけを見る） | `docs/requirements.md`「7. 開発環境・規約」（テスト方針）、`copilot-construction.md`「4. テスト・検証（共通）」、`.github/instructions/e2e.instructions.md`「位置付け」 |
 
 これらに該当する指摘をしてしまった場合、PR作成者は根拠ファイルの該当箇所を示して「採用しない」と返信する
 （手順は `AGENTS.md` の「3. レビューフィードバックに対応する」）。
@@ -50,4 +50,5 @@ description: kanuchi-kmp リポジトリのプルリクエストをレビュー�
 | フォント | 画面のルートが `MaterialTheme` ではなく `KanuchiTheme` でラップされているか、`composeResources/font/` にフォント以外のファイルを置いていないか | `.github/instructions/presentation.instructions.md`「フォント」 |
 | バージョン管理 | `build.gradle.kts` にバージョン文字列を直書きしていないか（`gradle/libs.versions.toml` で管理） | `.github/instructions/build.instructions.md`「依存関係・バージョン管理」 |
 | lint 設定の変更 | detekt の設定変更で解析対象が `NO-SOURCE` になっていないか、baseline での一括抑制を使っていないか | `.github/instructions/build.instructions.md`「lint（ktlint / detekt）のビルド設定」、`copilot-construction.md`「3. コード規約（共通）」 |
+| スモークテストの外部通信遮断・許容エラー | `e2e/` のテストが localhost 以外への通信を遮断したままか（本番 Supabase にリクエストを投げない）、`console.error` の許容条件が理由付きで限定されているか（広すぎる許容で実行時エラーを見逃さないか） | `.github/instructions/e2e.instructions.md`「外部通信の遮断と console.error の扱い」 |
 | CI の必須チェック・検証内容 | `ci.yml` のジョブ名 `build-lint-test` を変更していないか、検証内容を `ci.yml` 側で変えていないか（`verify` タスク側で変える） | `.github/instructions/ci.instructions.md`「`ci.yml`」 |
