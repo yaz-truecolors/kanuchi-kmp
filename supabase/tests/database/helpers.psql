@@ -1,0 +1,118 @@
+-- DBテスト共通のヘルパー。各テストファイルの先頭（begin の直後）で `\ir helpers.psql` として読み込む。
+--
+-- 拡張子を .sql にしていないのは、`supabase test db`（pg_prove）にテストファイルとして実行させないため。
+-- ここで作る tests スキーマ・関数・テストデータは各テストファイルのトランザクション内で作成され、
+-- 末尾の rollback で消える（ローカルDBに残らない）。
+--
+-- ログイン状態の再現は、PostgREST がリクエストごとに行っているのと同じく
+-- 「実行ロールを authenticated / anon に切り替え、JWT のクレームを request.jwt.claims に設定する」ことで行う。
+-- auth.uid() は Supabase の実物（request.jwt.claims の sub を読む）をそのまま使う。
+--
+-- テストデータのメールアドレスは、ローカルの開発用データと衝突しないよう `@db-test.invalid` を使う。
+
+-- supabase test db が事前に pgtap を作成しているため、「already exists」の NOTICE を出さないようにする。
+set local client_min_messages = warning;
+create extension if not exists pgtap with schema extensions;
+reset client_min_messages;
+
+create schema tests;
+grant usage on schema tests to anon, authenticated;
+
+-- auth.users に行を追加してユーザーを作成する（Supabase Auth がユーザー作成時に行う INSERT に相当）。
+-- auth.users の実際のトリガー（handle_new_user による profiles 自動作成）がそのまま発火する。
+create function tests.create_user(email text, display_name text default null)
+returns uuid
+language plpgsql
+as $$
+declare
+  new_id uuid := gen_random_uuid();
+begin
+  insert into auth.users (instance_id, id, aud, role, email, raw_user_meta_data, created_at, updated_at)
+  values (
+    '00000000-0000-0000-0000-000000000000',
+    new_id,
+    'authenticated',
+    'authenticated',
+    email,
+    case when display_name is null then '{}'::jsonb else jsonb_build_object('display_name', display_name) end,
+    now(),
+    now()
+  );
+  return new_id;
+end;
+$$;
+
+-- 標準のテストユーザーを作成する。
+--   admin@db-test.invalid : admin（直接DB接続で role を昇格させる。初期adminの手動設定に相当）
+--   alice@db-test.invalid : member（「本人」役）
+--   bob@db-test.invalid   : member（「他人」役）
+create function tests.create_standard_users()
+returns void
+language plpgsql
+as $$
+declare
+  admin_id uuid := tests.create_user('admin@db-test.invalid');
+begin
+  perform tests.create_user('alice@db-test.invalid');
+  perform tests.create_user('bob@db-test.invalid');
+  update public.profiles set role = 'admin' where id = admin_id;
+end;
+$$;
+
+-- メールアドレスからユーザーIDを引く。authenticated / anon に切り替えた後でも使えるよう
+-- SECURITY DEFINER にしている（auth.users は authenticated / anon から参照できないため）。
+create function tests.user_id(email text)
+returns uuid
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select u.id from auth.users as u where u.email = user_id.email;
+$$;
+
+-- 指定したユーザーとしてログインした状態（PostgREST 経由のリクエスト）にする。
+-- SET ROLE の可否はセッションユーザー（postgres）で判定されるため、authenticated / anon に
+-- 切り替えた後でも別のユーザー・ロールへ切り替えられる。
+create function tests.authenticate_as(email text)
+returns void
+language plpgsql
+as $$
+declare
+  target_id uuid := tests.user_id(email);
+begin
+  if target_id is null then
+    raise exception 'test user % does not exist', email;
+  end if;
+  perform set_config('role', 'authenticated', true);
+  perform set_config(
+    'request.jwt.claims',
+    jsonb_build_object('sub', target_id, 'role', 'authenticated', 'email', email)::text,
+    true
+  );
+end;
+$$;
+
+-- 未ログイン（publishable key だけで PostgREST にアクセスした状態）にする。
+create function tests.authenticate_as_anon()
+returns void
+language plpgsql
+as $$
+begin
+  perform set_config('role', 'anon', true);
+  perform set_config('request.jwt.claims', jsonb_build_object('role', 'anon')::text, true);
+end;
+$$;
+
+-- ログイン状態を解除し、直接DB接続（SQL Editor・Table Editor 等。実行ロール postgres）に戻す。
+create function tests.clear_authentication()
+returns void
+language plpgsql
+as $$
+begin
+  perform set_config('role', 'none', true);
+  perform set_config('request.jwt.claims', '', true);
+end;
+$$;
+
+grant execute on all functions in schema tests to anon, authenticated;

@@ -42,6 +42,28 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  # DBテスト（supabase/tests/database/ の pgTAP テスト）。RLS・トリガー・招待制Hook のアクセス制御ルールを、
+  # Supabase の実際の Postgres イメージにマイグレーションを適用した状態で検証する。
+  # ジョブ名 db-test は、main のルールセットの必須ステータスチェックに追加する予定（追加後は名前を変更しないこと）。
+  # 必須チェックはスキップされると pending のままになりマージできなくなるため、paths フィルタは使わず全PRで実行する。
+  db-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Renovate が更新する（renovate.json の customManagers）。supabase-deploy.yml と同じバージョンにそろえること。
+      SUPABASE_CLI_VERSION: 2.117.0
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      # ローカルと同じスクリプトを実行する（Postgres のみ起動 → マイグレーション適用 → supabase test db）
+      - name: Run database tests (pgTAP)
+        run: ./supabase/tests/run.sh
+
   deploy-pages:
     needs: build-lint-test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
