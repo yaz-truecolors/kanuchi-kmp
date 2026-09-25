@@ -5,6 +5,7 @@
 
 背景・要件の全体像は [docs/requirements.md](docs/requirements.md) を参照してください。
 このファイルはそれを踏まえた「実装時の具体的な決め事・注意点」を記録します。
+PR作成〜レビュー対応の手順は [AGENTS.md](AGENTS.md) を参照してください。
 
 ## 1. アーキテクチャ原則
 
