@@ -1,4 +1,5 @@
-// wasmJsBrowserDistribution の成果物を静的配信する最小限のサーバー（スモークテスト専用）。
+// wasmJsBrowserDistribution の成果物を静的配信する最小限のサーバー。
+// スモークテストと、手動確認用の :app-wasmjs:serveDistribution（キャッシュ無効で本番ビルドを配信する）で使う。
 // 依存を増やさないため Node.js 標準モジュールのみで実装し、127.0.0.1 にだけ bind する。
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';

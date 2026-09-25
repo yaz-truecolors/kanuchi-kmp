@@ -61,6 +61,35 @@ Gradle ビルドスクリプト（`**/*.gradle.kts`）、Version Catalog（`grad
   - `smokeTest` は本番ビルドの成果物と `e2e/` のソースを入力に宣言しているので、変更が無ければ `UP-TO-DATE` になる。
     再実行したい場合は `--rerun` を付ける。
   - スモークテストだけ飛ばしたい場合は `./gradlew verify -x :app-wasmjs:smokeTest`（PR 作成前は飛ばさないこと）。
+- `verify` に外部からのダウンロードを伴うタスク（新しいツール・ブラウザ等）を追加した場合は、Copilot cloud agent の
+  `copilot-setup-steps.yml` と GitHub Copilot app の `.github/github-app.yml`（Setup スクリプト）でも取得されるか確認する
+  （[ci.instructions.md](ci.instructions.md) の「検証環境の3箇所をそろえる」）。
+
+## JDK（Gradle デーモンの JVM）
+
+- Gradle デーモンは **JDK 17** で起動する（CI の `actions/setup-java` と同じバージョン）。`gradle/gradle-daemon-jvm.properties`
+  （Gradle の Daemon JVM criteria）の `toolchainVersion=17` で指定している。
+  - `./gradlew` を実行する JDK（`JAVA_HOME` または PATH の `java`）が 17 以外でも、デーモンは JDK 17 で起動する。
+    Gradle 8.14 がデーモンの実行に対応する JDK は 24 までで、この設定が無いと JDK 26 では `./gradlew` がビルドスクリプトの読み込みで失敗する
+    （確認済み）。この設定があれば `./gradlew` を起動する JDK は 26 でもよい（デーモンだけが JDK 17 で動く）。
+  - JDK 17 は、実行中の JDK・`JAVA_HOME`・`/Library/Java/JavaVirtualMachines`・SDKMAN! 等から自動検出される
+    （Homebrew の keg-only な `openjdk@17` は検出されない）。見つからなければ `toolchainUrl.*` の URL から
+    Temurin 17 を `~/.gradle/jdks` に自動取得する（初回のみ。ネットワークが必要）。
+  - `toolchainUrl.*` は `settings.gradle.kts` の `org.gradle.toolchains.foojay-resolver-convention` プラグインを使って
+    `./gradlew updateDaemonJvm --jvm-version=17` で生成したもの（手で編集しない）。JDK のバージョンを変える場合はこのコマンドで再生成し、
+    CI（`ci.yml` の `setup-java` 等）と `copilot-setup-steps.yml` もそろえる（[ci.instructions.md](ci.instructions.md) の「検証環境の3箇所をそろえる」）。
+  - `settings.gradle.kts` の `plugins {}` では Version Catalog を参照できないため、foojay プラグインのバージョンだけは
+    `settings.gradle.kts` に直接書いている（Renovate の Gradle マネージャーが検知する）。
+- `JAVA_HOME` も PATH の `java` も無い場合は `./gradlew` 自体が起動できない（何らかの JDK は必要）。
+
+## 本番ビルドの静的配信（`serveDistribution`）
+
+- `./gradlew :app-wasmjs:serveDistribution` は本番ビルド（`wasmJsBrowserDistribution`）の成果物を
+  `http://127.0.0.1:8081/`（環境変数 `SERVE_PORT` で変更可）でキャッシュ無効（`Cache-Control: no-store`）で配信する。
+  配信にはスモークテストと同じ `e2e/serve.js` と、Kotlin Gradle プラグインがダウンロードした Node.js を使う（Node.js のインストール不要）。
+  停止するまで終了しない（`verify` には含めない）。
+- 起動時に出力する `serving <dir> at http://127.0.0.1:<port>/` は `.github/github-app.yml` の `server_ready_pattern` で
+  URL の検出に使っているため、`e2e/serve.js` のこのログの書式を変えたらパターンも直すこと。
 
 ## Node.js のバージョン
 
@@ -73,11 +102,12 @@ Gradle ビルドスクリプト（`**/*.gradle.kts`）、Version Catalog（`grad
 
 ## Supabase CLI のバージョン（Renovate）
 
-- GitHub Actions で使う Supabase CLI のバージョンは、`ci.yml`（`db-test` ジョブ）と `supabase-deploy.yml` の
+- GitHub Actions で使う Supabase CLI のバージョンは、`ci.yml`（`db-test` ジョブ）・`supabase-deploy.yml`・`copilot-setup-steps.yml` の
   環境変数 `SUPABASE_CLI_VERSION` で固定している（理由は [ci.instructions.md](ci.instructions.md)）。
   `with: version:` の値は Renovate の github-actions マネージャーでは検知されないため、`renovate.json` の
   `customManagers`（regex、datasource `github-releases`、depName `supabase/cli`）で更新を検知させている。
-  同じ depName のため2ファイルは同じPRで更新される。変数名や書式（`SUPABASE_CLI_VERSION: x.y.z`）を変えたら
+  同じ depName のため3ファイルは同じPRで更新される（`.github/workflows/` 配下の全ワークフローが対象。ファイルを増やしても追従する）。
+  変数名や書式（`SUPABASE_CLI_VERSION: x.y.z`）を変えたら
   `matchStrings` も合わせて直すこと。`supabase/cli` のリリースには `config-v*` など CLI 以外のタグも混在するため、
   `extractVersionTemplate` で `v<semver>` のタグだけを対象にしている。
 

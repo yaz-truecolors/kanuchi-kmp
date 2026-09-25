@@ -43,7 +43,11 @@ kanuchi-kmp/
 
 ### 前提条件
 
-- JDK 17以上（[Temurin](https://adoptium.net/) 推奨）
+- JDK（[Temurin](https://adoptium.net/) 推奨）。`JAVA_HOME` を設定するか、`java` を PATH に通してください。
+  - Gradle デーモンは常に JDK 17 で動きます（`gradle/gradle-daemon-jvm.properties`）。`./gradlew` を起動する JDK は 17 以外
+    （21・26 等）でもよく、JDK 17 が見つからなければ Gradle が Temurin 17 を `~/.gradle/jdks` に自動でダウンロードします（初回のみ）。
+  - Homebrew で入れた JDK（keg-only）は PATH に通らないため、`~/.zshrc` 等で `export JAVA_HOME="$(brew --prefix openjdk@17)"`
+    のように設定してください（GitHub Copilot app のスクリプト・エージェントもこの設定を引き継ぎます）。
 - IDE: [Android Studio](https://developer.android.com/studio) または [IntelliJ IDEA](https://www.jetbrains.com/idea/)
   （Kotlin Multiplatform プラグインが必要な場合はIDE側の指示に従ってインストールしてください）
 
@@ -119,6 +123,14 @@ Docker と [Supabase CLI](https://supabase.com/docs/guides/local-development/cli
 ./gradlew :app-wasmjs:wasmJsBrowserDevelopmentRun
 ```
 
+`http://localhost:8080/` で起動し、既定のブラウザも開きます。開発サーバーはキャッシュの都合で変更が反映されないことがあるため、
+確実に最新の状態を確認したい場合は、本番ビルドをキャッシュ無効で静的配信する次のコマンドを使ってください
+（`http://127.0.0.1:8081/`。ポートは環境変数 `SERVE_PORT` で変更できます）。
+
+```sh
+./gradlew :app-wasmjs:serveDistribution
+```
+
 ### 本番用ビルド（GitHub Pages配信物）
 
 ```sh
@@ -127,6 +139,46 @@ Docker と [Supabase CLI](https://supabase.com/docs/guides/local-development/cli
 
 成果物は `app-wasmjs/build/dist/wasmJs/productionExecutable` に出力されます。
 `main` ブランチへのマージ時、GitHub Actions が自動的にこの成果物をGitHub Pagesへデプロイします。
+
+## GitHub Copilot app / Copilot cloud agent での開発環境
+
+検証（`./gradlew verify` と `./supabase/tests/run.sh`）は、CI（`.github/workflows/ci.yml`）に加えて、
+GitHub Copilot app（ローカル）と Copilot cloud agent でもすぐ実行できるように設定しています。
+検証に使うツールや手順を追加・変更したときは、3箇所をそろえてください
+（[.github/instructions/ci.instructions.md](.github/instructions/ci.instructions.md) の「検証環境の3箇所をそろえる」）。
+
+### GitHub Copilot app（`.github/github-app.yml`）
+
+[GitHub Copilot app のリポジトリ設定](https://docs.github.com/copilot/reference/github-copilot-app-reference/repository-configuration)で、
+セッション作成時のセットアップと手動スクリプトを定義しています。
+
+- **このファイルは、各開発者がアプリ上でレビュー・承認するまで適用されません。** アプリがリポジトリの設定を検出すると確認が表示されるので、
+  各スクリプトのコマンドを確認してから承認してください。ファイルが変更されるたびに（空白・コメントだけの変更でも）再承認が必要です。
+- スクリプトには GitHub の資格情報（`GH_TOKEN` 等）が環境変数で渡されます。環境変数を出力・保存するコマンドを追加しないでください。
+- スクリプトは `~/.zshrc` 等で設定した `JAVA_HOME` を引き継ぎます（前提条件の JDK を参照）。
+
+| スクリプト | 実行タイミング | 内容 |
+|---|---|---|
+| Setup（依存の事前取得） | セッション作成時（自動） | Gradle 依存、Kotlin/Wasm 用の Node.js・Yarn・npm 依存・binaryen、スモークテストの npm 依存と Playwright の Chromium を取得する（ビルド・テストはしない） |
+| 開発サーバー | 手動 | `./gradlew :app-wasmjs:wasmJsBrowserDevelopmentRun`（アプリ内ブラウザで `http://localhost:8080/` を開く） |
+| 本番ビルドを静的配信 | 手動 | `./gradlew :app-wasmjs:serveDistribution`（アプリ内ブラウザで `http://127.0.0.1:8081/` を開く） |
+| CIと同じ検証 | 手動 | `./gradlew verify --continue` |
+| UI 描画スモークテスト | 手動 | `./gradlew :app-wasmjs:smokeTest --rerun` |
+| DBテスト | 手動 | `./supabase/tests/run.sh`（Docker と Supabase CLI が必要） |
+
+エージェント向けの指示は `AGENTS.md` にまとめているため、`github-app.yml` の `instructions` は設定していません。
+
+### Copilot cloud agent（`.github/workflows/copilot-setup-steps.yml`）
+
+Copilot cloud agent は作業開始前にこのワークフローの `copilot-setup-steps` ジョブを実行します
+（[公式ドキュメント](https://docs.github.com/copilot/how-tos/use-copilot-agents/cloud-agent/customize-the-agent-environment)）。
+JDK 17・Gradle・Chrome・Supabase CLI をセットアップし、DBテスト（Docker イメージの取得を含む）と `./gradlew verify` を1回ずつ実行して、
+エージェントが追加のダウンロードなしで検証できる状態にします（エージェントの実行中はファイアウォールで外部への通信が制限されるため）。
+
+- `main` にマージされるまで cloud agent には使われません。このファイルを変更した PR ではワークフローが自動で実行されるので、成功することを確認してください。
+  マージ後は Actions タブから手動実行（`workflow_dispatch`）もできます。
+- Copilot code review は、ビルド・テストを行わない軽量な `.github/workflows/copilot-code-review.yml`（チェックアウトのみ）を使います
+  （無いと `copilot-setup-steps.yml` が使われ、レビューのたびに数分かかるため）。
 
 ## ライセンス・その他
 

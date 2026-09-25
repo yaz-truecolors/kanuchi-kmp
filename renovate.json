@@ -18,7 +18,7 @@
         },
         {
             "customType": "regex",
-            "description": "GitHub Actions で使う Supabase CLI のバージョン（.github/workflows/*.yml の SUPABASE_CLI_VERSION。ci.yml と supabase-deploy.yml を同じPRで更新する）",
+            "description": "GitHub Actions で使う Supabase CLI のバージョン（.github/workflows/*.yml の SUPABASE_CLI_VERSION。ci.yml・supabase-deploy.yml・copilot-setup-steps.yml を同じPRで更新する）",
             "managerFilePatterns": [
                 "/^\\.github/workflows/[^/]+\\.ya?ml$/"
             ],

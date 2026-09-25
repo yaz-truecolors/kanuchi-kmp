@@ -1,0 +1,33 @@
+# GitHub Copilot app のリポジトリ設定（仕様: https://docs.github.com/copilot/reference/github-copilot-app-reference/repository-configuration）
+#
+# - このファイルは、各開発者がアプリ上でレビュー・承認するまで適用されない（変更されるたびに再承認が必要）。
+# - スクリプトには GH_TOKEN・COPILOT_GH_ACCOUNT_* 等の資格情報が環境変数で渡される。env / printenv / set -x など、
+#   環境変数をログに出力・ファイルに保存するコマンドは絶対に追加しないこと。
+# - instructions は設定しない（エージェント向けの指示は AGENTS.md に一元化し、二重管理しない）。
+# - 検証に使うツール・手順を追加・変更したら、.github/workflows/ci.yml・copilot-setup-steps.yml もあわせて更新する
+#   （規約は .github/instructions/ci.instructions.md の「検証環境の3箇所をそろえる」）。
+# - アプリの設定画面で編集すると、このファイルに書き戻される（コメントが失われることがある）。編集はファイルで行うこと。
+scripts:
+  # 新しい worktree ですぐ作業・検証できるよう、ダウンロードを伴う準備だけを行う（Gradle 依存・Kotlin/Wasm 用の Node.js・Yarn・
+  # npm 依存・binaryen、スモークテストの npm 依存と Playwright の Chromium）。ビルド・テストは行わない。
+  # Gradle デーモンは gradle/gradle-daemon-jvm.properties により JDK 17 で起動する（見つからなければ自動取得する）。
+  - name: Setup（依存の事前取得）
+    command: ./gradlew kotlinWasmNpmInstall kotlinWasmToolingSetup kotlinWasmBinaryenSetup :app-wasmjs:smokeTestInstallBrowser
+    triggers:
+      - session.create
+  - name: 開発サーバー（wasmJsBrowserDevelopmentRun）
+    command: ./gradlew :app-wasmjs:wasmJsBrowserDevelopmentRun
+  # 開発サーバーはキャッシュやライブリロードの都合で変更が反映されないことがあるため、確実に確認したいときはこちらを使う
+  - name: 本番ビルドを静的配信（serveDistribution）
+    command: ./gradlew :app-wasmjs:serveDistribution
+  - name: CIと同じ検証（verify）
+    command: ./gradlew verify --continue
+  - name: UI 描画スモークテスト（smokeTest）
+    command: ./gradlew :app-wasmjs:smokeTest --rerun
+  # Docker（起動済み）と Supabase CLI が必要
+  - name: DBテスト（supabase/tests/run.sh）
+    command: ./supabase/tests/run.sh
+
+# 1つ目のキャプチャが URL。開発サーバー（webpack-dev-server）の「Loopback: http://localhost:8080/, ...」と、
+# serveDistribution（e2e/serve.js）の「serving <dir> at http://127.0.0.1:8081/」の両方に一致させる。
+server_ready_pattern: '(?:Loopback:|serving .+ at) (https?://[^\s,]+)'

@@ -1,0 +1,66 @@
+name: Copilot Setup Steps
+
+# Copilot cloud agent の作業環境のセットアップ（仕様: https://docs.github.com/copilot/how-tos/use-copilot-agents/cloud-agent/customize-the-agent-environment）。
+# エージェントの作業開始前に、このジョブの steps が同じランナー上で実行される。
+# cloud agent のファイアウォールはエージェントが起動したプロセスにだけ適用され、ここでの手順には適用されない。
+# エージェントが検証（./gradlew verify と ./supabase/tests/run.sh）を追加のダウンロードなしで実行できるよう、必要なものをここで取得しておく。
+# 検証に使うツール・手順を追加・変更したら、ci.yml と .github/github-app.yml もあわせて更新する
+# （規約は .github/instructions/ci.instructions.md の「検証環境の3箇所をそろえる」）。
+#
+# このファイル自身を変更したときは push / pull_request で実行し、PR 上で成功することを確認する（paths 指定のため必須チェックには追加しない）。
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # ジョブ名は copilot-setup-steps でなければ Copilot に認識されない（変更しないこと）。
+  # このジョブで設定できるのは steps / permissions / runs-on / services / snapshot / timeout-minutes だけ（それ以外は無視される）。
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Copilot には別途トークンが渡されるため、ここではチェックアウトに必要な最小限の権限だけにする
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # presentation の Karma テスト（wasmJsBrowserTest）用。ci.yml と同じ
+      - name: Setup Chrome (for wasmJs browser tests)
+        uses: browser-actions/setup-chrome@v2
+
+      # ジョブレベルの env はこのファイルでは無視されるため、ステップの env でバージョンを指定する
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        env:
+          # Renovate が更新する（renovate.json の customManagers）。ci.yml・supabase-deploy.yml と同じバージョンにそろえること。
+          SUPABASE_CLI_VERSION: 2.117.0
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      # DBテストに使う Supabase の Docker イメージを取得し、DBテストを1回実行しておく（ランナーの Docker を使う）。
+      # 検証後は停止してメモリを空ける（イメージは残るので、エージェントの実行時は取得なしで起動できる）。
+      - name: Pull Supabase images and run database tests
+        run: |
+          supabase --version
+          ./supabase/tests/run.sh
+          supabase stop
+
+      # verify を1回実行し、実行時に取得するもの（Gradle 依存、Kotlin/Wasm 用の Node.js・Yarn・npm 依存・binaryen、
+      # スモークテストの npm 依存と Playwright の Chromium）をすべて取得する。ビルド結果も残るため、エージェントの verify も速くなる。
+      # 失敗しても他の準備が飛ばされないよう最後に置く。
+      - name: Prefetch dependencies by running verify
+        run: ./gradlew verify --continue
