@@ -42,6 +42,10 @@ private const val EMAIL_NOT_INVITED_HOOK_MESSAGE = "email_not_invited"
 internal class SupabaseAuthRepository(
     private val supabaseClient: SupabaseClient,
 ) : AuthRepository {
+    // AuthRepository の契約上、失敗は例外を送出せず必ず Result で返す。supabase-kt はネットワーク・
+    // シリアライズ等で多様な例外を投げ得るため、境界で Exception を一括捕捉して GenericAuthFailureException に
+    // 変換する意図的な実装であり、TooGenericExceptionCaught のみ抑制する。
+    @Suppress("TooGenericExceptionCaught")
     override suspend fun sendMagicLink(email: EmailAddress): Result<Unit> =
         try {
             supabaseClient.auth.signInWith(OTP) {
@@ -67,7 +71,8 @@ internal class SupabaseAuthRepository(
             }
         } catch (e: Exception) {
             // data層はUI表示用の文言を持たない。汎用エラーメッセージへの変換はpresentation層に委ねる。
-            Result.failure(GenericAuthFailureException())
+            // 元の例外は調査用に cause として保持する (message は持たないためUIには表示されない)。
+            Result.failure(GenericAuthFailureException(e))
         }
 }
 
