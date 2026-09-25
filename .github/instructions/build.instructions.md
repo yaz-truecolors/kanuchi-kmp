@@ -71,6 +71,16 @@ Gradle ビルドスクリプト（`**/*.gradle.kts`）、Version Catalog（`grad
   `renovate.json` の `customManagers`（regex、datasource `node-version`）で更新を検知させている。キー名や書式を変えたら
   `matchStrings` も合わせて直すこと。
 
+## Supabase CLI のバージョン（Renovate）
+
+- GitHub Actions で使う Supabase CLI のバージョンは、`ci.yml`（`db-test` ジョブ）と `supabase-deploy.yml` の
+  環境変数 `SUPABASE_CLI_VERSION` で固定している（理由は [ci.instructions.md](ci.instructions.md)）。
+  `with: version:` の値は Renovate の github-actions マネージャーでは検知されないため、`renovate.json` の
+  `customManagers`（regex、datasource `github-releases`、depName `supabase/cli`）で更新を検知させている。
+  同じ depName のため2ファイルは同じPRで更新される。変数名や書式（`SUPABASE_CLI_VERSION: x.y.z`）を変えたら
+  `matchStrings` も合わせて直すこと。`supabase/cli` のリリースには `config-v*` など CLI 以外のタグも混在するため、
+  `extractVersionTemplate` で `v<semver>` のタグだけを対象にしている。
+
 ## 依存関係・バージョン管理
 
 - すべてのバージョンは `gradle/libs.versions.toml`（Version Catalog）で一元管理する。

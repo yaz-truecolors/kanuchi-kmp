@@ -150,33 +150,67 @@ Studioから直接ユーザーを追加する場合も、先に `invitations` �
 | allocations | 本人 or admin（参照のみ、work_records経由で判定） | 本人のみ（work_records経由で判定） |
 | invitations | admin のみ | admin のみ（追加・削除。アプリ経由の追加は email 列のみで、invited_by は登録したadminに自動設定。Studioからの登録は invited_by が空になる） |
 
-未ログイン（`anon`ロール）には一切のテーブル権限を付与していない
+未ログイン（`anon`ロール）には一切のテーブル権限（参照・追加・変更・削除）を付与していない
 （マジックリンク認証必須のため、`authenticated`ロールにのみGRANTしている）。
+ただし Supabase の既定権限による `TRUNCATE` 等は残っている（下記「動作検証について（DBテスト）」の既知の問題を参照）。
 
-## 動作検証について
+## 動作検証について（DBテスト）
 
-上記マイグレーションは、ローカルのDocker上に一時的なPostgresコンテナを立て、
-Supabaseの `auth.users` / `auth.uid()` / `auth.role()` を模した最小限のシムを用意した上で、
-以下のシナリオを実際に実行して検証済み：
+マイグレーションのアクセス制御ルール（RLS・トリガー・招待制Hook）は、pgTAP によるDBテスト
+（`supabase/tests/database/*.test.sql`）で自動検証している。Supabase CLI の `supabase test db` を使い、
+Supabase の実際の Postgres イメージ（`auth.users` / `auth.uid()` / `supabase_auth_admin` 等が本物）に
+全マイグレーションを適用した状態でテストする。CI（`.github/workflows/ci.yml` の `db-test` ジョブ）で
+全PR・`main` へのpushごとに実行される。
 
-- 新規ユーザー作成時に `profiles` 行が自動作成される
-- 直接DB接続（初期admin設定を想定）ではrole変更が制限なく行える
-- 一般ユーザーが自分の `role` を昇格しようとすると拒否される
-- adminは他ユーザーを昇格できる
-- `projects` の作成はadminのみ、参照は全員可能
-- `work_records` / `allocations` は本人のみ編集可、adminは参照のみ可能、他人はアクセス不可
-- `shift_settings` は本人のみ（adminの例外なし）
-- `shift_settings` の不正な値（終業 <= 始業 等）はCHECK制約で拒否される
+### 実行方法（ローカル）
 
-招待リスト・Hook（`20260924150000_invitations_and_signup_hook.sql`）は、`supabase start` による
-ローカルのSupabase一式（実物のSupabase Auth）で以下を検証済み：
+Docker（起動済み）と [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started) が必要。
+リポジトリのルートで以下を実行する（Postgres だけを起動し、未適用のマイグレーションを適用してからテストする）。
 
-- 未招待のメールアドレスでのマジックリンク要求は HTTP 403（`msg: "email_not_invited"`）で拒否され、
-  アカウントは作成されない。アプリ画面には「このメールアドレスは登録されていません」と表示される
-- 招待済みのメールアドレスでは、アカウントと `profiles` 行が作成され、マジックリンクが送信される
-- 大文字・前後空白を含む登録も正規化され、照合できる
-- Admin API（Studioの「Invite user」相当）でも、未招待のメールアドレスは拒否される
-- `invitations` の参照・追加・削除はadminのみ。一般ユーザー・未ログインはアクセス不可
-- アプリ経由（`authenticated`）での登録では `invited_by` が自動で登録者本人になり、他人のIDを指定した偽装は拒否される
-  （Studioからの直接登録では `invited_by` は空になる）
-- Hook関数は Data API（`rpc`）から `anon` / `authenticated` で呼び出せない
+```sh
+./supabase/tests/run.sh
+```
+
+- CI は Supabase CLI のバージョンを固定している（`ci.yml` / `supabase-deploy.yml` の `SUPABASE_CLI_VERSION`）。
+  ローカルの CLI が大きく異なる場合に結果が変わるときは、同じバージョンに合わせる。
+- 各テストファイルは `begin; ... rollback;` で実行されるため、ローカルDBのデータは変更しない。
+  テストデータのメールアドレスは `@db-test.invalid` を使う。
+- 適用済みのマイグレーションファイルを書き換えた場合は反映されないため、`supabase db reset` してから再度実行する
+  （`db reset` はローカルDBのデータを消す）。
+- 終わったら `supabase stop` で停止できる。
+- Docker が必要なため、`./gradlew verify` には含めていない（`verify` は Docker の無い環境でも実行できるようにしている）。
+  `supabase/` 配下を変更したPRでは、PR作成前にこのスクリプトも実行すること。
+
+### テストの構成
+
+| ファイル | 検証内容 |
+|---|---|
+| `helpers.psql` | 共通ヘルパー（テストではない）。テストユーザーの作成（`auth.users` への INSERT で実際のトリガーを発火させる）、ログイン状態の再現（実行ロールを `authenticated` / `anon` に切り替え、`request.jwt.claims` を設定する。PostgREST がリクエストごとに行っている設定と同じ） |
+| `00_schema_security.test.sql` | `public` スキーマの全テーブルを動的に走査し、RLS が有効・ポリシーがある・`authenticated` に権限がある・`anon` に参照/追加/変更/削除の権限が無い（列単位も含む）・`anon` / `PUBLIC` 向けのポリシーが無い・ビューが `security_invoker` であることを検証する。テーブル一覧（`tables_are`）も検証するため、テーブルを追加するとテストの追加を促す形で失敗する |
+| `01_profiles.test.sql` | `profiles` 行の自動作成（`display_name` の初期値含む）・`auth.users.email` 変更の同期、直接DB接続では role を変更できること、member は自分の role を昇格できないこと、admin は他ユーザーを昇格・降格できること、`email` 列を直接変更できないこと、RLS（本人/他人/admin/anon × 参照/追加/変更/削除） |
+| `02_projects.test.sql` | RLS（member/admin/anon × 参照/追加/変更/削除） |
+| `03_user_projects.test.sql` | RLS（本人/他人/admin/anon × 参照/追加/変更/削除） |
+| `04_shift_settings.test.sql` | RLS（本人/他人/admin/anon × 参照/追加/変更/削除。adminの例外なし）、CHECK制約（終業 <= 始業、休憩・下限が負、下限 > 上限）と境界値 |
+| `05_work_records.test.sql` | RLS（本人/他人/admin/anon × 参照/追加/変更/削除。adminは参照のみ、他人への付け替え不可）、CHECK制約（`flag`・休憩）、1ユーザー1日1件の一意制約 |
+| `06_allocations.test.sql` | RLS（work_records 経由の所有者判定。本人/他人/admin/anon × 参照/追加/変更/削除、他人の work_records への付け替え不可）、CHECK・一意・外部キー（`on delete restrict` / `cascade`）制約 |
+| `07_invitations.test.sql` | RLS（admin/member/anon × 参照/追加/変更/削除）、メールアドレスの正規化（追加・変更時）、`invited_by` の自動設定と偽装の拒否、直接DB接続での登録（`invited_by` が空）、CHECK制約（形式・正規化）、重複の拒否、招待したadmin削除時の `on delete set null` |
+| `08_hook_before_user_created.test.sql` | Hook 関数を SQL から直接呼び出し、招待済みは許可（`{}`）・未招待は拒否（`{"error": {"http_code": 403, "message": "email_not_invited"}}`）、正規化した照合、メールアドレスが無い/空のイベントの拒否、招待取り消し後の拒否。`PUBLIC` / `anon` / `authenticated` に `EXECUTE` 権限が無く呼び出すと権限エラーになること、`supabase_auth_admin` は実行できること、`SECURITY DEFINER` であること |
+
+`00_schema_security.test.sql` には既知の問題を `todo`（失敗してもテスト全体は成功扱い）として記録している:
+Supabase の既定権限により、`public` スキーマのテーブルには `anon` / `authenticated` に `TRUNCATE`・`REFERENCES`・
+`TRIGGER`・`MAINTAIN` が付与されている（Data API からは実行できないため実害は無い）。
+剥奪するマイグレーションを追加したら `todo` を外すこと。
+
+### 自動テストでは検証していないもの
+
+以下は実物の Supabase Auth（HTTP）やダッシュボード設定が関わるため、DBテストの対象外。
+Hook・マイグレーションを変更した場合は、`supabase start` によるローカルのSupabase一式で手動確認する。
+
+- 未招待のメールアドレスでのマジックリンク要求が HTTP 403（`msg: "email_not_invited"`）になり、
+  アプリ画面に「このメールアドレスは登録されていません」と表示されること
+  （Hook 関数の戻り値はDBテストで検証しているが、Supabase Auth がそれをHTTPレスポンスに変換する部分は検証していない）
+- 招待済みのメールアドレスでマジックリンクが送信されること
+- Admin API（Studio の「Invite user」相当）でも Hook が実行され、未招待のメールアドレスが拒否されること
+- Data API（PostgREST）の `rpc` 経由で Hook 関数を呼び出せないこと（DBテストでは `EXECUTE` 権限と、
+  `anon` / `authenticated` として呼び出したときの権限エラーで担保している）
+- 本番の Hook 有効化・「Allow new users to sign up」等のダッシュボード設定（マイグレーションでは管理できない）

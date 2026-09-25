@@ -34,6 +34,12 @@ GitHub Copilot が自動で読み込む。`applyTo` を解釈しないエージ�
   ```
 
   （Chrome が無い環境の扱いは `copilot-construction.md` の「4. テスト・検証（共通）」を参照）
+- `supabase/` を変更した場合は、DBテストもローカルで実行し、成功させる（Docker が必要。CI では `db-test` ジョブで実行される）。
+
+  ```sh
+  ./supabase/tests/run.sh
+  ```
+
 - PR の本文は `.github/pull_request_template.md` の構成に従って書く
   （該当しないチェック項目は削除してよい）。
 

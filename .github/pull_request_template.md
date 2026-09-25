@@ -24,6 +24,7 @@
 - [ ] （UI変更時）変更した画面・操作を実ブラウザ（Chrome）で確認した（起動して描画されるかは `verify` のスモークテストで自動確認される）
 - [ ] （UI変更時）文言を `strings.xml` に集約した（Composable/ViewModel に直書きしていない）
 - [ ] （新規テーブル追加時）RLS有効化・`authenticated` への grant・policy の3点をセットで追加した
+- [ ] （マイグレーション追加・変更時）対応するDBテストを `supabase/tests/database/` に追加・更新し、`./supabase/tests/run.sh` がローカルで成功した（適用済みのマイグレーションファイルは変更していない）
 - [ ] （例外処理追加時）外部ライブラリの例外メッセージをそのままUIに表示していない
 - [ ] （依存追加・更新時）バージョンは `gradle/libs.versions.toml` で管理している（`build.gradle.kts` に直書きしていない）
 - [ ] 新しく分かった規約・ハマりどころを該当する領域別ファイル（`.github/instructions/`、領域を問わないものは `copilot-construction.md`）に追記した（無ければ削除）
