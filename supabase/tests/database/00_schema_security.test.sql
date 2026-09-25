@@ -58,10 +58,10 @@ select is_empty(
       and c.relkind in ('r', 'p', 'v', 'm', 'f')
       and (
         has_table_privilege('anon', c.oid, 'SELECT, INSERT, UPDATE, DELETE')
-        or has_any_column_privilege('anon', c.oid, 'SELECT, INSERT, UPDATE')
+        or has_any_column_privilege('anon', c.oid, 'SELECT, INSERT, UPDATE, REFERENCES')
       )
   $$,
-  'anon は public スキーマのどのテーブル・ビューにも参照・追加・変更・削除の権限を持たない（列単位の権限も含む）'
+  'anon は public スキーマのどのテーブル・ビューにも参照・追加・変更・削除の権限を持たない（列単位の参照・追加・変更・REFERENCES も含む）'
 );
 
 select is_empty(
