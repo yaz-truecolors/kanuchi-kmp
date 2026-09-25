@@ -148,8 +148,11 @@ Domain Service側で都度計算する「導出値」として扱う。
   kotlin.testでカバー。UI描画テスト（見た目・操作の検証）はスコープ外（KMPでの成熟度が低いため）
   - ただし、ビルド・lint・単体テストでは検知できない「本番ビルドが起動せず画面が真っ白になる」事故を防ぐため、
     本番ビルドをヘッドレスブラウザで開いて描画されるかだけを確認するスモークテスト（Playwright）を行う
+  - データのアクセス制御は RLS・トリガー・Auth Hook（DB側）で強制しているため、これらは Supabase の実際の
+    Postgres にマイグレーションを適用した状態で pgTAP によるDBテスト（`supabase test db`）でカバーする
+    （「5. 認証・権限設計」の権限表の各セル、ロール昇格の制限、招待制Hookの許可/拒否など）
 - **CI/CD**（GitHub Actions）：
-  - PR時：`build` + `ktlint` + `detekt` + `test` + スモークテストを自動実行
+  - PR時：`build` + `ktlint` + `detekt` + `test` + スモークテストと、DBテスト（Gradleとは独立したジョブ）を自動実行
   - `main`ブランチへのマージ時：自動ビルドし、GitHub Pagesへ自動デプロイ
 - **Secrets管理**：SupabaseのURL・匿名キー（anon key）はRLSで保護される前提の公開可能な鍵として、
   GitHub Actionsのビルド変数経由でwasmJsバンドルに埋め込む

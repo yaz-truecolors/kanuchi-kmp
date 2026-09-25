@@ -33,6 +33,7 @@ kanuchi-kmp/
 ├── presentation/   # Compose Multiplatform UI、ViewModel
 ├── app-wasmjs/     # wasmJs エントリポイント（実行可能ファイルを生成する唯一のモジュール）
 ├── e2e/            # UI 描画スモークテスト（Playwright。Gradle モジュールではない）
+├── supabase/       # マイグレーション・Auth設定・DBテスト（pgTAP）
 └── docs/           # 要件定義書・設計書
 ```
 
@@ -99,6 +100,18 @@ UI の見た目や操作は検証しません。テスト中は localhost 以外
   （CI では artifact `smoke-test-results` としてアップロードされます）。
 - テストコードは `e2e/` にあります。手元の Node.js で直接実行・デバッグする方法は
   [.github/instructions/e2e.instructions.md](.github/instructions/e2e.instructions.md) を参照してください。
+
+### DBテスト（RLS・トリガー・招待制Hook）
+
+```sh
+./supabase/tests/run.sh
+```
+
+Supabase の実際の Postgres イメージをローカルの Docker で起動してマイグレーションを適用し、
+アクセス制御ルール（RLS・トリガー・招待制Hook）を pgTAP で検証します（`supabase test db`）。
+Docker と [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started) が必要なため
+`verify` には含まれていません（CI では `db-test` ジョブで実行されます）。詳細は
+[supabase/README.md](supabase/README.md) の「動作検証について（DBテスト）」を参照してください。
 
 ### ローカルでブラウザ実行（開発サーバー）
 
