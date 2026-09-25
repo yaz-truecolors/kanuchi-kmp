@@ -39,7 +39,7 @@ Excelファイル「受託作業時間内訳管理」で個人が手作業で行
   （`composeResources/values/strings.xml` → 生成される `Res.string.*`）を用いて一元管理する。
   多言語対応は行わないが、文言の可読性・保守性・将来の多言語化の余地を考慮しこの仕組みに従う。
   KMP/Compose Multiplatformプロジェクトにおける文字列・フォント等静的リソースの管理方法として
-  公式に提供されている唯一の標準機構であるため採用した（詳細は `copilot-construction.md` 参照）。
+  公式に提供されている唯一の標準機構であるため採用した（詳細は `.github/instructions/presentation.instructions.md` 参照）。
 
 ## 3. 技術スタック
 
