@@ -54,7 +54,7 @@ Excelファイル「受託作業時間内訳管理」で個人が手作業で行
 | フォント | Noto Sans JP（Compose Multiplatformリソース機構でバンドル配信） |
 | 文言管理 | Compose Multiplatformリソース機構（`composeResources/values/strings.xml`） |
 | Lint / フォーマッタ | ktlint + detekt 併用 |
-| テスト | kotlin.test（domain / data / ViewModel ロジックを対象） |
+| テスト | kotlin.test（domain / data / ViewModel ロジックを対象）、Playwright（本番ビルドの起動・描画スモークテストのみ） |
 | CI/CD | GitHub Actions |
 | バージョン管理 | Gradle Version Catalog（`libs.versions.toml`）で一元管理 |
 | パッケージ名 | `jp.co.yaz.kanuchi` |
@@ -145,9 +145,11 @@ Domain Service側で都度計算する「導出値」として扱う。
 
 - **Lint/フォーマッタ**：ktlint（フォーマット）+ detekt（静的解析・複雑度/命名規則チェック）を併用
 - **テスト方針**：domain層・data層（Repositoryのフェイク実装含む）・ViewModelのロジックまでを
-  kotlin.testでカバー。UI描画テストはスコープ外（KMPでの成熟度が低いため）
+  kotlin.testでカバー。UI描画テスト（見た目・操作の検証）はスコープ外（KMPでの成熟度が低いため）
+  - ただし、ビルド・lint・単体テストでは検知できない「本番ビルドが起動せず画面が真っ白になる」事故を防ぐため、
+    本番ビルドをヘッドレスブラウザで開いて描画されるかだけを確認するスモークテスト（Playwright）を行う
 - **CI/CD**（GitHub Actions）：
-  - PR時：`build` + `ktlint` + `detekt` + `test` を自動実行
+  - PR時：`build` + `ktlint` + `detekt` + `test` + スモークテストを自動実行
   - `main`ブランチへのマージ時：自動ビルドし、GitHub Pagesへ自動デプロイ
 - **Secrets管理**：SupabaseのURL・匿名キー（anon key）はRLSで保護される前提の公開可能な鍵として、
   GitHub Actionsのビルド変数経由でwasmJsバンドルに埋め込む

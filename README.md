@@ -32,6 +32,7 @@ kanuchi-kmp/
 ├── data/           # Repository実装、Supabase連携
 ├── presentation/   # Compose Multiplatform UI、ViewModel
 ├── app-wasmjs/     # wasmJs エントリポイント（実行可能ファイルを生成する唯一のモジュール）
+├── e2e/            # UI 描画スモークテスト（Playwright。Gradle モジュールではない）
 └── docs/           # 要件定義書・設計書
 ```
 
@@ -57,8 +58,8 @@ kanuchi-kmp/
 ./gradlew verify
 ```
 
-`ktlintCheck` / `detekt` / `allTests` / `:app-wasmjs:wasmJsBrowserDistribution` を1コマンドで実行します
-（CI の `build-lint-test` ジョブも同じタスクを実行しています）。
+`ktlintCheck` / `detekt` / `allTests` / `:app-wasmjs:wasmJsBrowserDistribution` / `:app-wasmjs:smokeTest`
+（UI 描画スモークテスト。後述）を1コマンドで実行します（CI の `build-lint-test` ジョブも同じタスクを実行しています）。
 失敗箇所をまとめて確認したい場合は `./gradlew verify --continue` を使ってください。
 個別に実行したい場合は以下の各コマンドを使います。
 
@@ -80,6 +81,24 @@ kanuchi-kmp/
 （`domain` / `data` はブラウザ不要な Node.js 上でテストされます）。
 Chrome を標準の場所にインストールしていない場合は、環境変数 `CHROME_BIN` に Chrome
 （Chrome for Testing 等でも可）の実行ファイルのパスを指定してください。
+
+### UI 描画スモークテスト
+
+```sh
+./gradlew :app-wasmjs:smokeTest
+```
+
+本番ビルド（`wasmJsBrowserDistribution` の成果物）をローカルで静的配信し、ヘッドレス Chromium（[Playwright](https://playwright.dev/)）で開いて、
+実行時エラー（未捕捉例外・`console.error`）なく `<canvas>` に描画されるかを確認します（`verify` にも含まれます）。
+`index.html` の不備や起動時の例外で画面が真っ白になる、といったビルド・lint・単体テストでは検知できない事故を防ぐためのもので、
+UI の見た目や操作は検証しません。テスト中は localhost 以外への通信（本番 Supabase 等）をすべて遮断します。
+
+- Node.js は Gradle（Kotlin Gradle プラグイン）がダウンロードしたもの、ブラウザは Playwright 同梱の Chromium を使うため、
+  Node.js や Chrome のインストールは不要です（初回は npm パッケージとブラウザのダウンロードのためネットワークが必要です）。
+- 失敗した場合は `e2e/test-results/` にスクリーンショット・コンソールログ・Playwright トレースが出力されます
+  （CI では artifact `smoke-test-results` としてアップロードされます）。
+- テストコードは `e2e/` にあります。手元の Node.js で直接実行・デバッグする方法は
+  [.github/instructions/e2e.instructions.md](.github/instructions/e2e.instructions.md) を参照してください。
 
 ### ローカルでブラウザ実行（開発サーバー）
 

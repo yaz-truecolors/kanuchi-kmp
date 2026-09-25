@@ -18,6 +18,10 @@ ktlint_function_naming_ignore_when_annotated_with = Composable
 [*.{yml,yaml}]
 indent_size = 2
 
+# e2e/（Playwright のスモークテスト）の JavaScript と npm が生成する JSON は 2 スペース
+[e2e/**.{js,json}]
+indent_size = 2
+
 [*.md]
 trim_trailing_whitespace = false
 

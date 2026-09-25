@@ -21,7 +21,7 @@
 <!-- 規約の詳細は copilot-construction.md と、変更したパスに対応する .github/instructions/*.instructions.md を参照。該当しない項目は行ごと削除してよい -->
 
 - [ ] `./gradlew verify` がローカルで成功した
-- [ ] （UI変更時）実ブラウザ（Chrome）で実際に描画・操作できることを確認した
+- [ ] （UI変更時）変更した画面・操作を実ブラウザ（Chrome）で確認した（起動して描画されるかは `verify` のスモークテストで自動確認される）
 - [ ] （UI変更時）文言を `strings.xml` に集約した（Composable/ViewModel に直書きしていない）
 - [ ] （新規テーブル追加時）RLS有効化・`authenticated` への grant・policy の3点をセットで追加した
 - [ ] （例外処理追加時）外部ライブラリの例外メッセージをそのままUIに表示していない

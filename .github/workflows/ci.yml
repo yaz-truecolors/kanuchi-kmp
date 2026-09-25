@@ -28,8 +28,19 @@ jobs:
 
       # ローカルと同じ集約タスク（ルートの build.gradle.kts の verify）を実行する。
       # --continue で失敗しても残りのタスクを実行し、失敗したタスクをまとめて報告させる。
-      - name: Verify (ktlintCheck / detekt / allTests / wasmJsBrowserDistribution)
+      # UI 描画スモークテスト（:app-wasmjs:smokeTest）も verify に含まれる（Node.js・Chromium は Gradle タスク側で用意する）。
+      - name: Verify (ktlintCheck / detekt / allTests / wasmJsBrowserDistribution / smokeTest)
         run: ./gradlew verify --continue
+
+      # スモークテストが失敗したときの原因調査用（スクリーンショット・コンソールログ・Playwright トレース）
+      - name: Upload smoke test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: smoke-test-results
+          path: e2e/test-results/
+          if-no-files-found: ignore
+          retention-days: 14
 
   deploy-pages:
     needs: build-lint-test

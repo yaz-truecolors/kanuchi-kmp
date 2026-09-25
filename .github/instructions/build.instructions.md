@@ -1,11 +1,11 @@
 ---
-applyTo: "**/*.gradle.kts,gradle/**,gradle.properties,config/detekt/**,.editorconfig"
+applyTo: "**/*.gradle.kts,gradle/**,gradle.properties,config/detekt/**,.editorconfig,renovate.json"
 ---
 
 # Gradle・依存関係・wasmJs ビルド設定の規約
 
 Gradle ビルドスクリプト（`**/*.gradle.kts`）、Version Catalog（`gradle/`）、lint 設定
-（`config/detekt/`、`.editorconfig`）を変更するときの規約・ハマりどころです。
+（`config/detekt/`、`.editorconfig`）、Renovate 設定（`renovate.json`）を変更するときの規約・ハマりどころです。
 領域共通の原則（アーキテクチャ・モジュール依存関係・共通コード規約・テスト実行）は
 [copilot-construction.md](../../copilot-construction.md) を参照してください。
 
@@ -47,10 +47,29 @@ Gradle ビルドスクリプト（`**/*.gradle.kts`）、Version Catalog（`grad
 ## 集約タスク `verify`
 
 - `verify` はCIと同じ検証を1コマンドで行うルートの集約タスク。中身は
-  「全プロジェクトの `check`（= `ktlintCheck` + `detekt` + `allTests`）」＋ `:app-wasmjs:wasmJsBrowserDistribution`。
+  「全プロジェクトの `check`（= `ktlintCheck` + `detekt` + `allTests`）」＋ `:app-wasmjs:wasmJsBrowserDistribution`
+  ＋ UI 描画スモークテスト `:app-wasmjs:smokeTest`。
 - CIの `build-lint-test` ジョブも `./gradlew verify --continue` を実行しているので、検証内容を変えたい場合は
   `ci.yml` ではなくルート `build.gradle.kts` の `verify` タスクを変更する（ローカルとCIの差異を作らないため）。
 - `check` がすでに lint とテストを含むので、`verify` に `ktlintCheck` 等を個別に足して重複させないこと。
+- `:app-wasmjs:smokeTest`（`app-wasmjs/build.gradle.kts` で定義）は `check` には含めず、`verify` から明示的に依存している
+  （本番ビルドとブラウザのダウンロードを伴い重いため、`./gradlew build` / `check` には含めない）。
+  `smokeTestNpmCi`（`e2e/` で `npm ci`）→ `smokeTestInstallBrowser`（Playwright 同梱 Chromium の headless shell を取得）→
+  `smokeTest`（`playwright test`）の順に実行する。
+  - Node.js は Kotlin Gradle プラグインがダウンロードするもの（`kotlinWasmNodeJsSetup`、`WasmNodeJsEnvSpec.executable`）を使い、
+    npm も同梱の `npm-cli.js` を node から直接起動する。開発端末に Node.js が無くても、PATH に node が無くても動く。
+  - `smokeTest` は本番ビルドの成果物と `e2e/` のソースを入力に宣言しているので、変更が無ければ `UP-TO-DATE` になる。
+    再実行したい場合は `--rerun` を付ける。
+  - スモークテストだけ飛ばしたい場合は `./gradlew verify -x :app-wasmjs:smokeTest`（PR 作成前は飛ばさないこと）。
+
+## Node.js のバージョン
+
+- Kotlin Gradle プラグインがダウンロードする Node.js のバージョンは `gradle/libs.versions.toml` の `nodejs` で固定し、
+  ルート `build.gradle.kts` の `allprojects { plugins.withType<WasmNodeJsPlugin> { ... } }` で全プロジェクトの
+  `WasmNodeJsEnvSpec.version` に適用している（`domain` / `data` の Node テストとスモークテストで同じ Node.js を使う）。
+- `[versions]` の `nodejs` はライブラリ・プラグインから参照されないため Renovate の Gradle マネージャーでは検知されない。
+  `renovate.json` の `customManagers`（regex、datasource `node-version`）で更新を検知させている。キー名や書式を変えたら
+  `matchStrings` も合わせて直すこと。
 
 ## 依存関係・バージョン管理
 
