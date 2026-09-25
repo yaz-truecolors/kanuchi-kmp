@@ -59,11 +59,30 @@ supabase db push
 （もしくは、Supabase Studio → SQL Editor に `supabase/migrations/` 配下のSQLファイルを
 日時順に貼り付けて実行しても同じ結果になる）
 
+## 新規登録（サインアップ）の無効化【必須】
+
+アカウント作成は招待制のため、本番の Auth 設定で新規登録を無効化する。
+アプリ側の `createUser = false` はクライアントが送るパラメータにすぎず、
+publishable key（公開値）で `/auth/v1/otp` を直接呼び出されると防げないため、**この設定が実際の防御になる**。
+
+1. Supabase Studio → **Authentication → Sign In / Providers** を開く
+2. 「**Allow new users to sign up**」を **OFF** にして保存する
+
+現在の設定は以下で確認できる（`"disable_signup": true` であれば無効化済み）。
+
+```bash
+curl -s https://azvfmvyquyrgzbkdfkga.supabase.co/auth/v1/settings \
+  -H "apikey: <publishable key>" | grep -o '"disable_signup":[a-z]*'
+```
+
+新規登録を無効にしても、既存ユーザーのログインと、Studio の「Invite user」による招待は引き続き行える。
+
 ## 初期admin（最初の管理者）の設定
 
 docs/requirements.md の方針どおり、最初の1人だけは手動でadmin化する。
 
-1. マジックリンクでその人が一度アプリにログインする（`profiles`行が自動作成される）
+1. Supabase Studio → **Authentication → Users → Invite user** でその人を招待し、
+   届いたメールのリンクから一度アプリにログインしてもらう（`profiles`行が自動作成される）
 2. Supabase Studio → **Table Editor** → `profiles` テーブルを開く
 3. 対象ユーザーの `role` 列を `member` から `admin` に直接書き換える
 

@@ -136,21 +136,31 @@ app-wasmjs -> domain
   (実際にこの状態で実装してしまっていたことがあり、後から気づいて修正した)。
   `SupabaseAuthRepository.sendMagicLink()`で`createUser = false`を明示していることを、
   この設定に触れる変更をする際は必ず確認すること。
+  - **ただし`createUser`はクライアントが送るリクエストパラメータ（`create_user`）にすぎず、
+    アクセス制御にはならない。** publishable keyは公開値のため、誰でも`/auth/v1/otp`を
+    `create_user: true`で直接呼び出せる。**実際の防御は本番Supabaseの Auth 設定
+    「Allow new users to sign up」をOFFにすること**であり、これはダッシュボードでの手動設定で行う
+    （手順は`supabase/README.md`）。現在の本番設定は、公開エンドポイント
+    `GET <PROJECT_URL>/auth/v1/settings`（`apikey`ヘッダーにpublishable key）の
+    `disable_signup`で確認できる（`true`であれば安全）。
   - 未登録メールアドレスでの試行時、Supabase Authは`AuthErrorCode.OtpDisabled`
     (`otp_disabled`)を返す。data層でこれを検知し、`AuthErrorCode`に応じた専用の
     マーカー例外(`EmailNotInvitedException`)に変換すること。他の`AuthRestException`と
     同様に`errorDescription`をそのまま出してしまうと英語の文言になり、日本語UIとして
     不自然になるため。
-  - 招待制である以上、「入力したメールアドレスが登録済みかどうか」をログイン画面の
-    エラー内容から区別できてしまうのは避けられないトレードオフである
-    (メール列挙攻撃への配慮より、招待制であることを優先している)。
+  - ログイン画面は「入力したメールアドレスが登録済みかどうか」を区別できるエラーを返す。
+    これは**意図的に許容しているトレードオフ**である（原理的に避けられないわけではない）。
+    社内チーム向けツールであり、入力ミス・未招待をその場で本人に伝えるUXを優先した。
+    なお、UIの文言を統一しても、Supabase Auth APIのレスポンス自体（成功/エラー）で区別できるため、
+    完全に防ぐにはAuth APIの前にサーバー側の中継エンドポイントを置いてレスポンスを正規化する必要がある
+    （Edge Function等が必要になるため採用していない）。
   - `supabase/config.toml`の`[auth] enable_signup` / `[auth.email] enable_signup`も
     ドキュメント目的で`false`にしている。ただし、これは**ローカル開発環境
     (`supabase start`)にのみ影響する設定**であり、本番のSupabaseプロジェクトには
     自動反映されない。`supabase config push`で反映することも可能だが、CLI自体が
     「config.tomlの他の項目（例: site_url等）まで意図せず本番へ上書きしてしまう危険がある」
-    と警告しているため、現時点ではCIに組み込んでいない。アプリ側で`createUser = false`を
-    明示している以上、この項目自体は必須ではなく多重防御目的の位置づけ。
+    と警告しているため、現時点ではCIに組み込んでいない。本番の設定はダッシュボードで
+    手動管理する（上記「Allow new users to sign up」）。
   - 将来「アプリ内でadminが新規ユーザーを招待する」機能を実装する場合、
     Supabase AuthのAdmin API (`inviteUserByEmail`等) はservice_role keyを要するため
     クライアント(wasmJs)から直接呼び出せない。Supabase Edge Function等のサーバーサイド
