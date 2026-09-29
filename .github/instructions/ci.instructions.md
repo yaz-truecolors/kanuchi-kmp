@@ -36,7 +36,9 @@ GitHub Copilot app のリポジトリ設定 `.github/github-app.yml` を変更�
   **エージェントの実行中に外部から取得が必要になるもの（Gradle 依存、Kotlin Gradle プラグインが取得する Node.js・Yarn・npm 依存・
   binaryen、Playwright の Chromium、DBテストの Docker イメージ等）は、ここで漏れなく取得しておく。** 現状は `./supabase/tests/run.sh`
   と `./gradlew verify --continue` を1回ずつ実行して取得している（ビルド結果も残るので、エージェントの `verify` も速くなる）。
-  - いずれかのステップが失敗すると、残りのステップは飛ばされてエージェントが作業を始める。失敗しうる `verify` は最後に置く。
+  - いずれかのステップが失敗すると、残りのステップは飛ばされてエージェントが作業を始める。そのため、途中の検証（DBテスト）は
+    失敗してもステップを成功として終え（後片付けの `supabase stop` も必ず実行する）、失敗は `$GITHUB_OUTPUT` に記録して
+    最後のステップでジョブの失敗にする。失敗しうる `verify` は準備の最後に置く。
   - Docker はランナー（GitHub ホストの `ubuntu-latest`）に入っているものを使う。DBテストのコンテナは検証後に `supabase stop` で止める
     （イメージは残るので、エージェントは取得なしで起動できる）。
 - トリガーは `workflow_dispatch` と、このファイル自身を変更したときの `push` / `pull_request`（`paths` 指定）。このファイルを変更した

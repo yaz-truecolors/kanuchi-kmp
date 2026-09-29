@@ -53,14 +53,27 @@ jobs:
 
       # DBテストに使う Supabase の Docker イメージを取得し、DBテストを1回実行しておく（ランナーの Docker を使う）。
       # 検証後は停止してメモリを空ける（イメージは残るので、エージェントの実行時は取得なしで起動できる）。
+      # ステップが失敗すると残りのステップ（verify による事前取得）が飛ばされるため、DBテストが失敗してもこのステップは
+      # 成功として終え、コンテナを停止したうえで、失敗は最後のステップでまとめて報告する。
       - name: Pull Supabase images and run database tests
+        id: db-test
         run: |
           supabase --version
-          ./supabase/tests/run.sh
+          if ./supabase/tests/run.sh; then
+            echo "failed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "failed=true" >> "$GITHUB_OUTPUT"
+            echo "::error::DBテスト（./supabase/tests/run.sh）が失敗しました"
+          fi
           supabase stop
 
       # verify を1回実行し、実行時に取得するもの（Gradle 依存、Kotlin/Wasm 用の Node.js・Yarn・npm 依存・binaryen、
       # スモークテストの npm 依存と Playwright の Chromium）をすべて取得する。ビルド結果も残るため、エージェントの verify も速くなる。
-      # 失敗しても他の準備が飛ばされないよう最後に置く。
+      # 失敗しても他の準備が飛ばされないよう、準備の最後に置く。
       - name: Prefetch dependencies by running verify
         run: ./gradlew verify --continue
+
+      # DBテストの失敗をここでジョブの失敗にする（ファイル変更時のワークフロー実行で気づけるようにする）。
+      - name: Report database test failure
+        if: steps.db-test.outputs.failed == 'true'
+        run: exit 1
