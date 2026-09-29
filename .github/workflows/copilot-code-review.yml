@@ -1,0 +1,17 @@
+name: Copilot Code Review Setup Steps
+
+# Copilot code review の実行環境（仕様: https://docs.github.com/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review#customizing-copilot-code-reviews-environment）。
+# このファイルが無いと、code review は copilot-setup-steps.yml（verify・DBテストを実行するため数分かかる）を使ってしまい、
+# レビューのたびに待ち時間と Actions の実行時間が増える。本プロジェクトではレビュー時に検証（ビルド・テスト）の実行を求めていないため、チェックアウトだけにする。
+on:
+  workflow_dispatch:
+
+jobs:
+  # ジョブ名は copilot-setup-steps でなければ Copilot に認識されない（code review 用のこのファイルでも同じ。変更しないこと）。
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7

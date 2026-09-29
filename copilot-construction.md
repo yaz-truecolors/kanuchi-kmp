@@ -17,11 +17,11 @@ GitHub Copilot（cloud agent / code review）はフロントマターの `applyT
 
 | 触るパス | 読むファイル | 主な内容 |
 |---|---|---|
-| `**/*.gradle.kts`, `gradle/**`, `gradle.properties`, `config/detekt/**`, `.editorconfig`, `renovate.json` | [.github/instructions/build.instructions.md](.github/instructions/build.instructions.md) | モジュールごとの wasmJs ターゲット設定、detekt/ktlint のビルド設定（KMPのソースセット・生成コード除外）、集約タスク `verify`（スモークテストのタスク構成）、Node.js・Supabase CLI のバージョン固定と Renovate、Version Catalog・BOM、wasmJs の Gradle DSL の注意点 |
+| `**/*.gradle.kts`, `gradle/**`, `gradle.properties`, `config/detekt/**`, `.editorconfig`, `renovate.json` | [.github/instructions/build.instructions.md](.github/instructions/build.instructions.md) | モジュールごとの wasmJs ターゲット設定、detekt/ktlint のビルド設定（KMPのソースセット・生成コード除外）、集約タスク `verify`（スモークテストのタスク構成）、Gradle デーモンの JDK（Daemon JVM criteria）、本番ビルドの静的配信（`serveDistribution`）、Node.js・Supabase CLI のバージョン固定と Renovate、Version Catalog・BOM、wasmJs の Gradle DSL の注意点 |
 | `presentation/**`, `app-wasmjs/**` | [.github/instructions/presentation.instructions.md](.github/instructions/presentation.instructions.md) | 文言の `strings.xml` 集約、エラー表示、フォント（Noto Sans JP）、アクセシビリティ対応を行わない方針、Chrome基準、`index.html` の `type="module"` などブラウザ実行時の注意点 |
 | `data/**` | [.github/instructions/data.instructions.md](.github/instructions/data.instructions.md) | 認証方式・RLS準拠クエリ・鍵の扱い、supabase-kt 例外の変換、招待制のクライアント側（`createUser`・例外変換・Hookメッセージ定数・意図的なトレードオフ） |
 | `supabase/**` | [.github/instructions/supabase.instructions.md](.github/instructions/supabase.instructions.md) | マイグレーション運用、新規テーブルの RLS/grant/policy の3点セット、DBテスト（`supabase/tests/`、pgTAP）の規約、ロール変更トリガー・`is_admin()`、Before User Created Hook のサーバー側規約 |
-| `.github/workflows/**` | [.github/instructions/ci.instructions.md](.github/instructions/ci.instructions.md) | `ci.yml`（Chromeセットアップ・`verify`・スモークテストの artifact・DBテストの `db-test` ジョブ・Pagesデプロイ・必須チェックのジョブ名）、`supabase-deploy.yml`（Secrets・トークン有効期限） |
+| `.github/workflows/**`, `.github/github-app.yml` | [.github/instructions/ci.instructions.md](.github/instructions/ci.instructions.md) | 検証環境（CI・Copilot cloud agent・GitHub Copilot app）の3箇所をそろえる規約、`ci.yml`（Chromeセットアップ・`verify`・スモークテストの artifact・DBテストの `db-test` ジョブ・Pagesデプロイ・必須チェックのジョブ名）、`supabase-deploy.yml`（Secrets・トークン有効期限）、`copilot-setup-steps.yml` / `copilot-code-review.yml`（ジョブ名固定・事前取得）、`.github/github-app.yml`（承認・資格情報・スクリプト・`server_ready_pattern`） |
 | `e2e/**` | [.github/instructions/e2e.instructions.md](.github/instructions/e2e.instructions.md) | UI 描画スモークテスト（Playwright）の位置付け（起動して描画されるかだけを見る）、実行方法、外部通信の遮断と許容する `console.error`、Canvas 描画の判定方法 |
 | `domain/**` | [.github/instructions/domain.instructions.md](.github/instructions/domain.instructions.md) | domain 層に関わるアーキテクチャ原則（本ファイル1節）への参照、UI文言を持たない・マーカー例外、`AuthRepository` の契約 |
 
@@ -94,6 +94,12 @@ app-wasmjs -> domain
   対応するテストを追加する（規約は [supabase.instructions.md](.github/instructions/supabase.instructions.md) の「DBテスト（`supabase/tests/`）」）。
 - CI（Chromeのセットアップ、DBテストのジョブ、Pagesデプロイ、`main` のルールセットと必須チェック名）については
   [ci.instructions.md](.github/instructions/ci.instructions.md) を参照。
+- **検証は CI（`ci.yml`）・Copilot cloud agent（`.github/workflows/copilot-setup-steps.yml`）・GitHub Copilot app
+  （`.github/github-app.yml`）の3箇所で実行できるようにしている。検証に新しいツールや手順を追加・変更したら（どの領域の変更でも）、
+  3箇所すべてを同じPRで更新すること**（詳細は [ci.instructions.md](.github/instructions/ci.instructions.md) の「検証環境の3箇所をそろえる」）。
+- Gradle デーモンは `gradle/gradle-daemon-jvm.properties` により JDK 17 で起動する。`./gradlew` の実行には何らかの JDK
+  （`JAVA_HOME` または PATH の `java`）が必要だが、17 でなくてもよい（詳細は [build.instructions.md](.github/instructions/build.instructions.md) の
+  「JDK（Gradle デーモンの JVM）」）。
 - 「起動して描画されるか」はスモークテスト（`verify` に含まれる）で自動確認される。UIに関わる変更をしたら、それに加えて
   変更した画面・操作が意図どおりに表示・動作するかを実ブラウザ（Chrome）で確認すること（スモークテストは起動直後の画面が
   描画されるかしか見ないため。理由と確認方法は [presentation.instructions.md](.github/instructions/presentation.instructions.md) の

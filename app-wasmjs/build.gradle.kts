@@ -68,6 +68,26 @@ val smokeTestInstallBrowser by tasks.registering(Exec::class) {
     args(playwrightCli, "install", "--only-shell", "chromium")
 }
 
+val productionDistDir =
+    layout.buildDirectory
+        .dir("dist/wasmJs/productionExecutable")
+        .get()
+        .asFile.path
+
+// 本番ビルドをキャッシュ無効（Cache-Control: no-store）で静的配信する。開発サーバー（wasmJsBrowserDevelopmentRun）は
+// キャッシュやライブリロードの都合で変更が反映されないことがあるため、確実に最新の成果物を確認したいときに使う。
+// 配信にはスモークテストと同じ e2e/serve.js（Node.js 標準モジュールのみ）を使う。停止するまで終了しない。
+tasks.register<Exec>("serveDistribution") {
+    group = "application"
+    description = "本番ビルドを http://127.0.0.1:<SERVE_PORT（既定 8081）>/ で静的配信する（キャッシュ無効）。"
+    dependsOn("wasmJsBrowserDistribution", "kotlinWasmNodeJsSetup")
+    workingDir(e2eDir)
+    executable(nodeExecutable.get())
+    args("serve.js")
+    environment("DIST_DIR", productionDistDir)
+    environment("PORT", providers.environmentVariable("SERVE_PORT").getOrElse("8081"))
+}
+
 tasks.register<Exec>("smokeTest") {
     group = LifecycleBasePlugin.VERIFICATION_GROUP
     description = "本番ビルドをヘッドレス Chromium で開き、実行時エラーなく canvas に描画されるかを確認する。"
@@ -85,11 +105,5 @@ tasks.register<Exec>("smokeTest") {
     workingDir(e2eDir)
     executable(nodeExecutable.get())
     args(playwrightCli, "test")
-    environment(
-        "DIST_DIR",
-        layout.buildDirectory
-            .dir("dist/wasmJs/productionExecutable")
-            .get()
-            .asFile.path,
-    )
+    environment("DIST_DIR", productionDistDir)
 }

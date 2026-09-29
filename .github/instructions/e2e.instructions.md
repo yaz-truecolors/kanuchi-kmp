@@ -22,6 +22,8 @@ Gradle 側のタスク構成は [build.instructions.md](build.instructions.md) �
 
 - 構成は `package.json` / `package-lock.json`（依存は `@playwright/test` のみ）、`playwright.config.js`、
   静的配信サーバー `serve.js`（Node.js 標準モジュールのみ）、`tests/smoke.spec.js`。
+  `serve.js` は手動確認用の `:app-wasmjs:serveDistribution` でも使っている（起動ログ `serving <dir> at <URL>` は
+  `.github/github-app.yml` の `server_ready_pattern` が URL の検出に使うため、書式を変えたらパターンも直す）。
   TypeScript・lint・フォーマッタ等のツールは追加しない（ktlint / detekt の対象外の言語を最小限にとどめるため）。
 - 通常は `./gradlew :app-wasmjs:smokeTest`（`verify` にも含まれる）で実行する。Node.js は Kotlin Gradle プラグインが
   ダウンロードするもの、ブラウザは Playwright 同梱の Chromium（headless shell）を使うので、Node.js・Chrome の

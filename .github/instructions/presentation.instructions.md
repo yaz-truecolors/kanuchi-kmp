@@ -87,7 +87,9 @@ Compose Multiplatform の UI・ViewModel・リソース（`presentation/`）と�
   （自動テストとしての見た目・操作の検証はスコープ外。`copilot-construction.md` の「4. テスト・検証（共通）」）。
 - `wasmJsBrowserDevelopmentRun`（webpack-dev-server経由）はコンテンツキャッシュや
   ライブリロードの都合でリソース変更が反映されないことがある。挙動を疑ったら
-  `wasmJsBrowserDistribution` の成果物 (`build/dist/wasmJs/productionExecutable`) を
-  `python3 -m http.server` 等で直接静的配信して確認する方が確実。
+  `./gradlew :app-wasmjs:serveDistribution` で本番ビルドの成果物 (`build/dist/wasmJs/productionExecutable`) を
+  キャッシュ無効で静的配信して（`http://127.0.0.1:8081/`）確認する方が確実（詳細は [build.instructions.md](build.instructions.md) の
+  「本番ビルドの静的配信（`serveDistribution`）」）。
+  - 開発サーバーは Kotlin Gradle プラグインの既定（`devServer.open = true`）でシステムの既定ブラウザも開く。
 - Gradle 側の wasmJs 設定（`outputModuleName`、Compose Resources 依存の追加タイミング、`kotlinx-browser` 等）は
   [build.instructions.md](build.instructions.md) を参照。
