@@ -1,6 +1,8 @@
 <resources>
+    <!-- 全画面共通 -->
+    <string name="app_title">Kanuchi（鍛冶）</string>
+
     <!-- ログイン画面 (マジックリンク送信フロー) -->
-    <string name="login_app_title">Kanuchi（鍛冶）</string>
     <string name="login_description">メールアドレスにログイン用のリンクを送ります。</string>
     <string name="login_email_label">メールアドレス</string>
     <string name="login_send_button">ログインリンクを送る</string>
@@ -11,4 +13,17 @@
     <string name="login_email_not_invited_message">このメールアドレスは登録されていません。管理者にお問い合わせください。</string>
     <!-- Supabase側から具体的な理由が得られなかった場合のフォールバック文言 -->
     <string name="login_generic_error_message">マジックリンクの送信に失敗しました。しばらくしてから再度お試しください。</string>
+    <!-- メール内のリンクを開いたが、期限切れ・使用済みでログインできなかった場合 -->
+    <string name="login_magic_link_expired_message">ログイン用のリンクが無効か、有効期限が切れています。もう一度ログインリンクを送ってください。</string>
+    <!-- メール内のリンクを開いたが、期限切れ以外の理由でログインできなかった場合 -->
+    <string name="login_magic_link_error_message">ログインに失敗しました。もう一度ログインリンクを送ってください。</string>
+
+    <!-- ホーム画面 (ログイン後の画面) -->
+    <string name="home_signed_in_as">ログイン中: %1$s</string>
+    <!-- ログイン中のユーザーのメールアドレスが取得できなかった場合に home_signed_in_as に埋め込む文言 -->
+    <string name="home_email_unknown">(不明)</string>
+    <string name="home_coming_soon_message">作業時間の入力・集計の画面は準備中です。</string>
+    <string name="home_sign_out_button">ログアウト</string>
+    <string name="home_signing_out_button">ログアウト中...</string>
+    <string name="home_sign_out_error_message">ログアウトに失敗しました。通信環境を確認して、もう一度お試しください。</string>
 </resources>

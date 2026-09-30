@@ -2,6 +2,7 @@ package jp.co.yaz.kanuchi.presentation.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import jp.co.yaz.kanuchi.domain.auth.ConsumeMagicLinkCallbackErrorUseCase
 import jp.co.yaz.kanuchi.domain.auth.EmailNotInvitedException
 import jp.co.yaz.kanuchi.domain.auth.GenericAuthFailureException
 import jp.co.yaz.kanuchi.domain.auth.SendMagicLinkUseCase
@@ -16,19 +17,34 @@ import org.jetbrains.compose.resources.getString
 
 class LoginViewModel(
     private val sendMagicLinkUseCase: SendMagicLinkUseCase,
+    consumeMagicLinkCallbackErrorUseCase: ConsumeMagicLinkCallbackErrorUseCase,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(LoginUiState())
+    // ログイン画面はログイン状態の確認が終わってから表示される (KanuchiNavHost) ため、
+    // この時点でマジックリンクから戻ってきた際のエラーは確定している。
+    private val _uiState = MutableStateFlow(LoginUiState(magicLinkCallbackError = consumeMagicLinkCallbackErrorUseCase()))
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
     fun onEmailChanged(newEmail: String) {
-        _uiState.value = _uiState.value.copy(email = newEmail, errorMessage = null, sentSuccessfully = false)
+        _uiState.value =
+            _uiState.value.copy(
+                email = newEmail,
+                errorMessage = null,
+                sentSuccessfully = false,
+                magicLinkCallbackError = null,
+            )
     }
 
     fun onSendMagicLinkClicked() {
         val currentState = _uiState.value
         if (currentState.isSending) return
 
-        _uiState.value = currentState.copy(isSending = true, errorMessage = null, sentSuccessfully = false)
+        _uiState.value =
+            currentState.copy(
+                isSending = true,
+                errorMessage = null,
+                sentSuccessfully = false,
+                magicLinkCallbackError = null,
+            )
 
         viewModelScope.launch {
             sendMagicLinkUseCase(currentState.email)

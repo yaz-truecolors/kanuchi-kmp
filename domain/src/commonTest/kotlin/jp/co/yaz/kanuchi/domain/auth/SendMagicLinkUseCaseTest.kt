@@ -8,16 +8,6 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class SendMagicLinkUseCaseTest {
-    private class FakeAuthRepository : AuthRepository {
-        var lastRequestedEmail: EmailAddress? = null
-        var resultToReturn: Result<Unit> = Result.success(Unit)
-
-        override suspend fun sendMagicLink(email: EmailAddress): Result<Unit> {
-            lastRequestedEmail = email
-            return resultToReturn
-        }
-    }
-
     @Test
     fun `valid email is forwarded to the repository`() =
         runTest {
@@ -48,7 +38,7 @@ class SendMagicLinkUseCaseTest {
         runTest {
             val repository =
                 FakeAuthRepository().apply {
-                    resultToReturn = Result.failure(RuntimeException("network error"))
+                    sendMagicLinkResult = Result.failure(RuntimeException("network error"))
                 }
             val useCase = SendMagicLinkUseCase(repository)
 
@@ -62,7 +52,7 @@ class SendMagicLinkUseCaseTest {
         runTest {
             val repository =
                 FakeAuthRepository().apply {
-                    resultToReturn = Result.failure(EmailNotInvitedException())
+                    sendMagicLinkResult = Result.failure(EmailNotInvitedException())
                 }
             val useCase = SendMagicLinkUseCase(repository)
 

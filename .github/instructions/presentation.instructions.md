@@ -26,6 +26,28 @@ Compose Multiplatform の UI・ViewModel・リソース（`presentation/`）と�
     エラー説明文（例: `AuthRestException.errorDescription`）は当該システムの言語でそのまま
     表示してよく、centralization対象の「自前の文言」には含めない。
 
+## 画面遷移とログイン状態
+
+- ログイン状態で決まる画面（読み込み中 `LOADING`・ログイン `LOGIN`・ホーム `HOME`）の切り替えは `KanuchiNavHost` が
+  `AuthGateViewModel.authState` を見て一括で行う。**画面側からこれらの間を `navigate` しない**（例: ログアウト成功時に
+  ホーム画面からログイン画面へ遷移させない。ログイン状態が `SignedOut` に変われば自動で切り替わる）。
+- 切り替え時はバックスタックを空にする（`popUpTo(navController.graph.id) { inclusive = true }`）。
+  ブラウザの戻る等でログアウト後にホーム画面へ戻れないようにするのと、画面ごとの ViewModel を破棄して
+  ログアウト→再ログイン時に前回の入力内容・エラー表示を残さないため。
+- `AuthState.Unknown` では画面を切り替えない。起動直後は開始画面（`LOADING`）のまま、ログイン後にトークン更新が
+  一時的に失敗している間は今の画面のままにする。
+- `LoginViewModel` は生成時にマジックリンクのエラーを1回だけ取り出す。ログイン画面はログイン状態の確認後にしか
+  表示されないため、この時点でエラーは確定している（`SupabaseAuthRepository.consumeMagicLinkCallbackError()` のコメント参照）。
+
+## ViewModel のテスト
+
+- ViewModel のテストは `presentation/src/commonTest/` に置く。Karma（ChromeHeadless）で実行されるため、
+  ローカルでは Chrome（または `CHROME_BIN`）が必要（`copilot-construction.md` の「4. テスト・検証（共通）」）。
+  `viewModelScope` は `Dispatchers.Main` を使うので、テストクラスは `MainDispatcherTest` を継承する。
+- 文言の解決（`getString`）が ViewModel にあると、テストが文言リソースの読み込みに依存する。新しく作る UI 状態は、
+  表示する文言そのものではなく種別（enum・Boolean 等）を持たせ、Composable 側で `stringResource` に変換する
+  （例: `HomeUiState.signOutFailed`、`LoginUiState.magicLinkCallbackError`）。
+
 ## エラー表示
 
 - **外部ライブラリ（supabase-kt 等）の例外の `message`/`toString()` をそのままUIに表示しない。**
