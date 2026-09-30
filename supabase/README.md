@@ -74,6 +74,24 @@ curl -s https://azvfmvyquyrgzbkdfkga.supabase.co/auth/v1/settings \
   -H "apikey: <publishable key>" | grep -o '"disable_signup":[a-z]*'
 ```
 
+## ログイン後の戻り先URL（Site URL / Redirect URLs）の設定
+
+マジックリンクを開いた後に戻る先（アプリのURL）は、Supabase 側で許可されている必要がある。
+アプリは今開いているページのURL（例: `https://yaz-truecolors.github.io/kanuchi-kmp/`）を戻り先として送るが、
+許可されていないURLの場合、Supabase は **Site URL** へ戻す。Site URL が既定の `http://localhost:3000` のままだと、
+リンクを開いてもアプリに戻れない（ブラウザにエラーページが表示される）。
+
+本番（ダッシュボード）で1回だけ設定する：
+
+1. Supabase Studio → **Authentication → URL Configuration** を開く
+2. **Site URL** を `https://yaz-truecolors.github.io/kanuchi-kmp/` にして保存する
+3. **Redirect URLs** に以下を追加する
+   - `https://yaz-truecolors.github.io/kanuchi-kmp/**`（本番）
+   - `http://127.0.0.1:8081/**`（ローカルで本番のSupabaseに接続して確認する場合。`serveDistribution` の既定URL）
+
+ローカルの Supabase（`supabase start`）では `config.toml` の `[auth]` の `site_url` / `additional_redirect_urls` で
+同じ設定をしている（`serveDistribution` の `http://127.0.0.1:8081/` に合わせている）。
+
 ## 初期admin（最初の管理者）の設定
 
 docs/requirements.md の方針どおり、最初の1人だけは手動でadmin化する。

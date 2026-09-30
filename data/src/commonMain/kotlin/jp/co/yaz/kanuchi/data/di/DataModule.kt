@@ -11,6 +11,9 @@ import org.koin.dsl.module
 /**
  * data層のKoinモジュール。
  * SupabaseClientは接続を1つに保つためアプリ全体でシングルトンとして共有する。
+ *
+ * [jp.co.yaz.kanuchi.data.auth.AuthRedirectUrl] は実行環境に依存するため、このモジュールでは定義せず、
+ * エントリポイント (app-wasmjs) のモジュールが提供する。
  */
 val dataModule =
     module {

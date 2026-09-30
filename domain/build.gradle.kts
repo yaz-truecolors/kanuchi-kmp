@@ -12,7 +12,8 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.kotlinx.coroutines.core)
+            // domain の公開API (Repository インターフェース等) が Flow を返すため、利用側にも公開する
+            api(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.koin.core)

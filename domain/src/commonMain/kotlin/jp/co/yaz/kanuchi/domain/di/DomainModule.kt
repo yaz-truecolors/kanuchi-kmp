@@ -1,6 +1,9 @@
 package jp.co.yaz.kanuchi.domain.di
 
+import jp.co.yaz.kanuchi.domain.auth.ConsumeMagicLinkCallbackErrorUseCase
+import jp.co.yaz.kanuchi.domain.auth.ObserveAuthStateUseCase
 import jp.co.yaz.kanuchi.domain.auth.SendMagicLinkUseCase
+import jp.co.yaz.kanuchi.domain.auth.SignOutUseCase
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
@@ -10,4 +13,7 @@ import org.koin.dsl.module
 val domainModule =
     module {
         factoryOf(::SendMagicLinkUseCase)
+        factoryOf(::ObserveAuthStateUseCase)
+        factoryOf(::ConsumeMagicLinkCallbackErrorUseCase)
+        factoryOf(::SignOutUseCase)
     }

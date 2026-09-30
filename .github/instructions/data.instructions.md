@@ -39,6 +39,29 @@ DB側（マイグレーション・RLS・トリガー・Hook の SQL）の規約
 - コルーチン内で `catch (e: Exception)` する際の `CancellationException` の扱いは
   `copilot-construction.md` の「3. コード規約（共通）」を参照（先に `catch` して再送出する）。
 
+## ログイン状態（セッション）・マジックリンクの戻り
+
+- マジックリンクから戻った際のURL（`#access_token=...`）の取り込み、URLの掃除、セッションの localStorage への保存・
+  起動時の復元・自動更新は、supabase-kt の Auth プラグインが初期化時に自動で行う。`SupabaseAuthRepository` は
+  その結果（`auth.sessionStatus`）を domain の `AuthState` に変換するだけで、自前でURLやストレージを扱わない。
+- **Auth の `flowType` は既定の IMPLICIT のままにする（PKCE にしない）。** PKCE はリンクを要求したブラウザに保存した
+  値でしかログインを完了できないため、「PCで要求して、別のブラウザ（メールアプリ内のブラウザ等）でリンクを開く」と
+  ログインできない。
+- **マジックリンクの戻り先（`redirectUrl`）は必ず明示的に渡す。** supabase-kt の既定値は `window.location.origin`
+  （パスを含まない）で、GitHub Pages（`https://<owner>.github.io/kanuchi-kmp/`）では `/kanuchi-kmp/` が落ちて
+  別のページに戻ってしまう。戻り先はブラウザの現在のURLから作る必要があるが、`data` は Node.js ターゲットも持つため
+  ブラウザAPI（`kotlinx.browser.window`）を使えない。そのため `AuthRedirectUrl` を `app-wasmjs` の Koin モジュールで
+  組み立てて注入している。戻り先は Supabase の Redirect URLs に登録されている必要がある（`supabase/README.md`）。
+- 戻ってきたURLにエラー（`#error_code=otp_expired&error_description=...` 等）が含まれている場合、supabase-kt は
+  `AuthEvent.OtpError` を `auth.events`（`@SupabaseExperimental`、replay=1）に流す。`consumeMagicLinkCallbackError()` は
+  その `replayCache` を1回だけ読む。**`errorDescription` はURLを書き換えれば任意の文字列にできるため、UIに表示しない**
+  （`errorCode` だけで `MagicLinkCallbackError` に変換する）。
+- `SessionStatus.RefreshFailure`（トークン更新のネットワークエラー等。supabase-kt が自動で再試行する）は
+  `AuthState.Unknown` に変換する。`SignedOut` にすると、一時的な通信断でログイン画面に戻されてしまう。
+- `auth.signOut()`（既定の LOCAL スコープ）は、Supabase がエラーを返した場合（`RestException`）はローカルのセッションを
+  消してから例外を投げるが、ネットワークエラー等はセッションを消さずに例外を投げる（ログインしたままになる）。
+  どちらも `GenericAuthFailureException` に変換し、ログイン状態の変化は `observeAuthState()` 側で判断する。
+
 ## 招待制アカウント作成（クライアント側）
 
 アカウント作成は招待制（招待リスト＋Before User Created Hook）。仕組みの全体像とサーバー側（SQL）の規約は

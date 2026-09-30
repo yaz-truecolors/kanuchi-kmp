@@ -17,11 +17,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import jp.co.yaz.kanuchi.domain.auth.MagicLinkCallbackError
 import kanuchi.presentation.generated.resources.Res
-import kanuchi.presentation.generated.resources.login_app_title
+import kanuchi.presentation.generated.resources.app_title
 import kanuchi.presentation.generated.resources.login_description
 import kanuchi.presentation.generated.resources.login_email_label
 import kanuchi.presentation.generated.resources.login_error_prefix
+import kanuchi.presentation.generated.resources.login_magic_link_error_message
+import kanuchi.presentation.generated.resources.login_magic_link_expired_message
 import kanuchi.presentation.generated.resources.login_send_button
 import kanuchi.presentation.generated.resources.login_sending_button
 import kanuchi.presentation.generated.resources.login_success_message
@@ -46,7 +49,7 @@ fun LoginScreen(viewModel: LoginViewModel = koinViewModel()) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(text = stringResource(Res.string.login_app_title), style = MaterialTheme.typography.headlineSmall)
+            Text(text = stringResource(Res.string.app_title), style = MaterialTheme.typography.headlineSmall)
             Text(text = stringResource(Res.string.login_description))
 
             OutlinedTextField(
@@ -75,11 +78,20 @@ fun LoginScreen(viewModel: LoginViewModel = koinViewModel()) {
                 )
             }
 
+            val magicLinkCallbackError = uiState.magicLinkCallbackError
             when {
                 uiState.sentSuccessfully -> Text(stringResource(Res.string.login_success_message))
                 uiState.errorMessage != null ->
                     Text(stringResource(Res.string.login_error_prefix, uiState.errorMessage.orEmpty()))
+                magicLinkCallbackError != null -> Text(magicLinkCallbackError.message())
             }
         }
     }
 }
+
+@Composable
+private fun MagicLinkCallbackError.message(): String =
+    when (this) {
+        MagicLinkCallbackError.EXPIRED -> stringResource(Res.string.login_magic_link_expired_message)
+        MagicLinkCallbackError.UNKNOWN -> stringResource(Res.string.login_magic_link_error_message)
+    }
