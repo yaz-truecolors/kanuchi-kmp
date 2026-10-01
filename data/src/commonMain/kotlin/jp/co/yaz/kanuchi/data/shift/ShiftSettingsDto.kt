@@ -1,11 +1,11 @@
 package jp.co.yaz.kanuchi.data.shift
 
-import jp.co.yaz.kanuchi.domain.common.Hours
-import jp.co.yaz.kanuchi.domain.common.TimeOfDay
+import jp.co.yaz.kanuchi.data.common.hoursOf
+import jp.co.yaz.kanuchi.data.common.parseDbTime
+import jp.co.yaz.kanuchi.data.common.toDbValue
 import jp.co.yaz.kanuchi.domain.shift.ShiftSettings
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlin.math.roundToInt
 
 /**
  * `shift_settings` テーブルの1行 (PostgREST のリクエスト・レスポンス)。
@@ -46,20 +46,3 @@ internal fun ShiftSettings.toDto(userId: String): ShiftSettingsDto =
         minHours = minHours.toDbValue(),
         maxHours = maxHours.toDbValue(),
     )
-
-/**
- * DB の `time` 型の値 (`HH:mm:ss`、秒の小数部が付くこともある) を [TimeOfDay] に変換する。
- * アプリは分単位でしか扱わないため、秒以下は切り捨てる (アプリから保存した値に秒は付かない)。
- */
-private fun parseDbTime(value: String): TimeOfDay {
-    val parts = value.split(":")
-    require(parts.size >= 2) { "unexpected time value: $value" }
-    return TimeOfDay.of(hour = parts[0].toInt(), minute = parts[1].toInt())
-}
-
-// numeric(p, 2) の値は 0.01 単位なので、2進小数の誤差は四捨五入で吸収する
-private fun hoursOf(value: Double): Hours = Hours.ofHundredths((value * HUNDRED).roundToInt())
-
-private fun Hours.toDbValue(): Double = hundredths / HUNDRED.toDouble()
-
-private const val HUNDRED = 100
