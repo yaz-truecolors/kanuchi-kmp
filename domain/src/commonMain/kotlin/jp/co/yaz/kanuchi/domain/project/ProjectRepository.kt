@@ -48,4 +48,10 @@ interface ProjectRepository {
         projectId: String,
         userIds: Set<String>,
     ): Result<Unit>
+
+    /**
+     * ログイン中のユーザー自身に割り当てられている案件のIDを取得する (無効な案件の割当も含む)。
+     * 日次入力で、工数を配分できる案件を決めるのに使う。
+     */
+    suspend fun getAssignedProjectIdsOfCurrentUser(): Result<Set<String>>
 }

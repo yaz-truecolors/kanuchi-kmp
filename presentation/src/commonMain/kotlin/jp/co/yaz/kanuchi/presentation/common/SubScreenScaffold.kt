@@ -25,6 +25,7 @@ import org.jetbrains.compose.resources.stringResource
 /**
  * ホーム画面から開く各画面 (個人設定・案件管理等) の共通の枠。
  * 上部に「戻る」ボタンと画面タイトルを表示し、その下に [content] を縦に並べる (はみ出す場合は縦スクロール)。
+ * [backEnabled] が false の間 (保存中等) は「戻る」を押せない。
  *
  * 一覧・表を表示する画面があるため、ログイン画面 (400.dp) より広い 720.dp を幅の上限にしている。
  * 幅上限の付け方 (Box で中央寄せし、内側に widthIn を付ける) の理由は LoginScreen のコメントを参照。
@@ -33,6 +34,7 @@ import org.jetbrains.compose.resources.stringResource
 fun SubScreenScaffold(
     title: String,
     onBack: () -> Unit,
+    backEnabled: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Box(
@@ -44,7 +46,7 @@ fun SubScreenScaffold(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = onBack) {
+                TextButton(onClick = onBack, enabled = backEnabled) {
                     Text(stringResource(Res.string.common_back_button))
                 }
                 Text(text = title, style = MaterialTheme.typography.headlineSmall)

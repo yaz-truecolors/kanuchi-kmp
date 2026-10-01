@@ -1,5 +1,6 @@
 package jp.co.yaz.kanuchi.presentation.navigation
 
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 
 /**
@@ -39,6 +40,13 @@ object KanuchiDestinations {
 
     /** 日次入力 (自分の稼働記録の入力)。全員が使える。 */
     const val DAILY_INPUT = "daily-input"
+
+    /** 日次入力の1日分の入力 (日次入力画面から開く)。全員が使える。引数 [DAILY_INPUT_DATE_ARG] に日付 (`yyyy-MM-dd`) を取る。 */
+    const val DAILY_INPUT_DAY = "daily-input/{date}"
+    const val DAILY_INPUT_DATE_ARG = "date"
+
+    /** [DAILY_INPUT_DAY] に日付を埋め込んだルート。 */
+    fun dailyInputDay(date: LocalDate): String = "daily-input/$date"
 
     /**
      * 案件別集計。全員が使える。省略できる引数を2つ取る ([summaryOf] で組み立てる)。

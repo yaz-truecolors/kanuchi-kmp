@@ -1,6 +1,7 @@
 package jp.co.yaz.kanuchi.data.project
 
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.exception.PostgrestRestException
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
@@ -128,6 +129,19 @@ internal class SupabaseProjectRepository(
         val failure = result.exceptionOrNull() as? GenericDataFailureException ?: return result
         return Result.failure(projectNameSaveFailure(failure, (failure.cause as? PostgrestRestException)?.code))
     }
+
+    override suspend fun getAssignedProjectIdsOfCurrentUser(): Result<Set<String>> =
+        runCatchingData {
+            // 本人の割当は RLS (user_projects_select_own_or_admin) で参照できる
+            val userId = checkNotNull(supabaseClient.auth.currentUserOrNull()?.id) { "not signed in" }
+            supabaseClient
+                .from(USER_PROJECTS)
+                .select(Columns.list(UserProjectDto.COLUMNS)) {
+                    filter { eq("user_id", userId) }
+                }.decodeList<UserProjectDto>()
+                .map { it.projectId }
+                .toSet()
+        }
 
     private companion object {
         const val PROJECTS = "projects"

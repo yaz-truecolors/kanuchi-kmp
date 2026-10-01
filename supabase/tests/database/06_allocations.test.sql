@@ -13,6 +13,16 @@ insert into public.projects (id, name) values
   ('10000000-0000-0000-0000-000000000003'::uuid, 'db-test 案件3'),
   ('10000000-0000-0000-0000-000000000004'::uuid, 'db-test 案件4');
 
+-- 工数を新しく配分できるのは割り当てられた有効な案件だけ（11_allocation_project_guard.test.sql）。
+-- ここでは RLS を検証するため、配分に使う案件をすべて割り当てておく
+insert into public.user_projects (user_id, project_id)
+select u.id, p.id
+from (values (tests.user_id('alice@db-test.invalid')), (tests.user_id('bob@db-test.invalid'))) as u (id)
+cross join (values
+  ('10000000-0000-0000-0000-000000000001'::uuid), ('10000000-0000-0000-0000-000000000002'::uuid),
+  ('10000000-0000-0000-0000-000000000003'::uuid), ('10000000-0000-0000-0000-000000000004'::uuid)
+) as p (id);
+
 insert into public.work_records (id, user_id, work_date) values
   ('20000000-0000-0000-0000-00000000000a'::uuid, tests.user_id('alice@db-test.invalid'), '2026-09-01'),
   ('20000000-0000-0000-0000-00000000000b'::uuid, tests.user_id('bob@db-test.invalid'), '2026-09-01');

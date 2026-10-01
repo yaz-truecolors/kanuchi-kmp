@@ -52,6 +52,10 @@ internal class FakeProjectRepository : ProjectRepository {
         return setAssignedUserIdsResult
     }
 
+    var assignedProjectIdsOfCurrentUserResult: Result<Set<String>> = Result.success(setOf(ACTIVE.id))
+
+    override suspend fun getAssignedProjectIdsOfCurrentUser(): Result<Set<String>> = assignedProjectIdsOfCurrentUserResult
+
     companion object {
         val ACTIVE = Project(id = "project-1", name = "案件A", isActive = true)
     }

@@ -1,5 +1,6 @@
 package jp.co.yaz.kanuchi.domain.work
 
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 
 /**
@@ -15,6 +16,19 @@ interface WorkRecordRepository {
         userId: String,
         yearMonth: YearMonth,
     ): Result<List<WorkRecord>>
+
+    /**
+     * ログイン中のユーザー自身の [record] の日の記録を保存する (その日の記録がまだ無ければ追加、あれば上書き)。
+     * 案件ごとの配分も [WorkRecord.allocations] のとおりにする (含まれない案件の配分は消す。時間が 0 の配分は保存しない)。
+     * 途中で失敗した場合、一部だけが反映されていることがある (同じ内容で再度呼べば、残りが反映される)。
+     */
+    suspend fun saveWorkRecord(record: WorkRecord): Result<Unit>
+
+    /**
+     * ログイン中のユーザー自身の [date] の記録 (案件ごとの配分を含む) を削除する。
+     * 削除した日は「何も入力していない日」として扱われる (稼働日なら定時どおり)。記録が無い場合も成功とする。
+     */
+    suspend fun deleteWorkRecord(date: LocalDate): Result<Unit>
 
     /**
      * 参照できるすべてのユーザーの [yearMonth] の稼働記録 (案件ごとの配分を含む) を、ユーザーIDごとに日付の順で取得する

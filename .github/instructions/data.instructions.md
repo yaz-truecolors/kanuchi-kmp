@@ -127,6 +127,15 @@ DB側（マイグレーション・RLS・トリガー・Hook の SQL）の規約
   完全に防ぐにはAuth APIの前にサーバー側の中継エンドポイントを置いてレスポンスを正規化する必要がある
   （Edge Function等が必要になるため採用していない）。
 
+## 親子のテーブルの保存（日次入力）
+
+- 親子のテーブル（`work_records` と `allocations`）の保存は、親の upsert（`onConflict = "user_id,work_date"`、`select` で id を受け取る）→
+  子の現在の行を取得 → 不要になった子の削除 → 追加・変更した子の upsert（`onConflict = "work_record_id,project_id"`）の順に行う
+  （実例: `SupabaseWorkRecordRepository.saveWorkRecord`）。PostgREST では複数のリクエストを1つのトランザクションにできないため、
+  途中で失敗しても同じ内容で保存し直せば揃うよう、各手順を冪等にしておく。差分の計算は純粋な関数に分けてテストする（`allocationChangesOf`）。
+- 入力欄を空にした値（例: 退勤時刻）を DB で null に戻すには、保存用の DTO の nullable なプロパティに既定値を付けない
+  （既定値があると `encodeDefaults = false` のため送られず、upsert で前の値が残る）。実例: `WorkRecordSaveDto`。
+
 ## 全ユーザー分の一括取得（PostgREST の `max_rows`）
 
 - PostgREST は1回のレスポンスで返す行数を `max_rows`（`supabase/config.toml` の `[api] max_rows`、
