@@ -15,6 +15,11 @@ internal class FakeShiftSettingsRepository : ShiftSettingsRepository {
 
     override suspend fun getShiftSettingsOf(userId: String): Result<ShiftSettings?> = getOfResults[userId] ?: Result.success(null)
 
+    /** getShiftSettingsOfAllUsers() の結果。 */
+    var getOfAllUsersResult: Result<Map<String, ShiftSettings>> = Result.success(emptyMap())
+
+    override suspend fun getShiftSettingsOfAllUsers(): Result<Map<String, ShiftSettings>> = getOfAllUsersResult
+
     override suspend fun saveShiftSettings(settings: ShiftSettings): Result<ShiftSettings> {
         savedSettings += settings
         return saveResult ?: Result.success(settings)

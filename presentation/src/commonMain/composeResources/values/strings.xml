@@ -169,6 +169,28 @@
     <string name="admin_dashboard_title">管理者ダッシュボード</string>
     <string name="company_holidays_title">休業日管理</string>
 
+    <!-- 管理者ダッシュボード (admin のみ) -->
+    <string name="admin_dashboard_members_header">メンバーごとの稼働</string>
+    <string name="admin_dashboard_members_note">稼働時間は今日までの合計です。メンバーを選ぶと、その人の案件別集計を開きます。利用停止中のメンバーは、その月に記録がある場合だけ表示します。</string>
+    <string name="admin_dashboard_members_empty_message">表示するメンバーがいません。</string>
+    <string name="admin_dashboard_suspended_label">利用停止中</string>
+    <!-- %1$s: 月の稼働時間合計、%2$s: 下限、%3$s: 上限 (いずれも時間) -->
+    <string name="admin_dashboard_working_hours">稼働 %1$s時間（下限 %2$s / 上限 %3$s）</string>
+    <string name="admin_dashboard_range_below_min">下限未満</string>
+    <string name="admin_dashboard_range_above_max">上限超過</string>
+    <string name="admin_dashboard_range_within">範囲内</string>
+    <!-- %1$s: 日数 -->
+    <string name="admin_dashboard_business_days">営業日数 %1$s日</string>
+    <!-- %1$s: 日数 -->
+    <string name="admin_dashboard_imbalance_days">過不足のある日 %1$s日</string>
+    <string name="admin_dashboard_open_member_button">案件別集計</string>
+    <string name="admin_dashboard_projects_header">案件ごとのチーム合計</string>
+    <string name="admin_dashboard_projects_note">全メンバーの案件への配分の合計（今日まで）です。時間の多い順に表示します。</string>
+    <string name="admin_dashboard_projects_empty_message">この月の案件への配分はありません。</string>
+    <string name="admin_dashboard_project_inactive_label">無効</string>
+    <string name="admin_dashboard_project_unknown_name">（不明な案件）</string>
+    <!-- %1$s: 時間数 -->
+    <string name="admin_dashboard_hours">%1$s時間</string>
     <!-- 案件別集計画面 -->
     <!-- 管理者ダッシュボード等からユーザーを指定して開いた場合。%1$s: 表示名、%2$s: メールアドレス -->
     <string name="summary_target_user">%1$s（%2$s）の集計</string>

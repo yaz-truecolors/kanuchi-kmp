@@ -21,6 +21,12 @@ interface ShiftSettingsRepository {
     suspend fun getShiftSettingsOf(userId: String): Result<ShiftSettings?>
 
     /**
+     * 参照できるすべてのユーザーの勤務時間設定を、ユーザーIDごとに取得する (管理者ダッシュボードで、メンバーごとに
+     * 問い合わせずにまとめて取得するため)。まだ保存していないユーザーは含まれない。member が呼ぶと本人の分だけになる。
+     */
+    suspend fun getShiftSettingsOfAllUsers(): Result<Map<String, ShiftSettings>>
+
+    /**
      * ログイン中のユーザーの勤務時間設定を保存する (まだ保存していなければ追加、保存済みなら上書き)。
      * 保存後の設定を返す。
      */

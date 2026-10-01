@@ -27,6 +27,7 @@ import jp.co.yaz.kanuchi.domain.user.ReactivateUserUseCase
 import jp.co.yaz.kanuchi.domain.user.RevokeInvitationUseCase
 import jp.co.yaz.kanuchi.domain.user.SuspendUserUseCase
 import jp.co.yaz.kanuchi.domain.work.GetMonthlyWorkSheetUseCase
+import jp.co.yaz.kanuchi.domain.work.GetTeamMonthlySummaryUseCase
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 import kotlin.time.Clock
@@ -62,6 +63,7 @@ val domainModule =
         single<Clock> { Clock.System }
         factoryOf(::GetTodayUseCase)
         factoryOf(::GetMonthlyWorkSheetUseCase)
+        factoryOf(::GetTeamMonthlySummaryUseCase)
         factoryOf(::GetCompanyHolidaysOfYearUseCase)
         factoryOf(::AddCompanyHolidaysUseCase)
         factoryOf(::DeleteCompanyHolidayUseCase)
