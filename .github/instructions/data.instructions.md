@@ -53,6 +53,13 @@ DB側（マイグレーション・RLS・トリガー・Hook の SQL）の規約
 - RLS で参照・変更できない行は、エラーにならず「0行」として扱われることがある（PostgREST の仕様）。
   例えば権限の無い `update` は失敗せず何も更新しない。変更の成否を確かめたい場合は、
   `select()` を付けて更新後の行を受け取り、0行なら失敗として扱う。
+  （`insert` は RLS で拒否されると HTTP 403・`code` `42501` のエラーになる。`delete` も `update` と同じく0行になるので、
+  `select()` を付けて削除した行数を確かめる。実例: `SupabaseProjectRepository`）
+- 制約違反などをユーザーに理由を伝えるエラーに変換する場合は、`PostgrestRestException.code`（Postgres のエラーコード。
+  unique 制約違反は `23505`）で判別する（message の文字列で判別しない）。`runCatchingData` で `GenericDataFailureException` に
+  包んだ後、`cause` の `code` を見て domain の専用例外（例: `DuplicateProjectNameException`）に変換する。
+  `PostgrestRestException` は `HttpResponse` が必要でテストで作りにくいため、「コード → 例外」の変換は純粋な関数に分けてテストする
+  （例: `projectNameSaveFailure`）。
 
 ## ログイン状態（セッション）・マジックリンクの戻り
 

@@ -22,6 +22,13 @@ object KanuchiDestinations {
     /** 案件管理 (案件マスタ・担当割当)。admin のみ。 */
     const val PROJECTS = "projects"
 
+    /** 案件の担当メンバー (案件管理画面から開く)。admin のみ。引数 [PROJECT_ID_ARG] に案件のIDを取る。 */
+    const val PROJECT_MEMBERS = "projects/{projectId}/members"
+    const val PROJECT_ID_ARG = "projectId"
+
+    /** [PROJECT_MEMBERS] に案件のIDを埋め込んだルート。 */
+    fun projectMembers(projectId: String): String = "projects/$projectId/members"
+
     /** ユーザー管理 (招待・利用停止)。admin のみ。 */
     const val USERS = "users"
 
