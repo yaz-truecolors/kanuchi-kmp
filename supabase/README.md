@@ -108,6 +108,11 @@ docs/requirements.md の方針どおり、最初の1人だけは手動でadmin�
 上記の手動操作は問題なく行える。（詳細は `functions_and_triggers.sql` の
 `enforce_role_change_permission()` のコメントを参照）
 
+同様に、「自分自身の降格・利用停止の禁止」「利用中のadminが1人もいなくなる降格・利用停止の禁止」
+（`guard_active_admins()`、下記「利用停止（除名）・復帰」参照）もアプリ経由の場合のみ適用される。
+Studio から直接 role・`suspended_at` を書き換えるとこれらの確認を迂回するため、adminを0人にしないよう注意する
+（誤ってadminがいなくなった場合の復旧も、Studio から上記の手順で行う）。
+
 ## 招待制（招待リスト＋Before User Created Hook）
 
 アカウントは、招待リスト（`public.invitations`）に登録されたメールアドレスでのみ作成できる。
@@ -141,7 +146,12 @@ Hookの有効化はマイグレーションでは行えないため、ダッシ�
 
 ### 新しいメンバーを招待する（日常運用）
 
-アプリ内の招待画面ができるまでは、Supabase Studioから登録する。
+通常は、adminがアプリの **ユーザー管理** 画面（ホーム画面の管理者メニュー）で招待リストに追加する
+（一覧・取り消しも同じ画面で行える。メールアドレスは自動で小文字等に正規化される）。
+招待メールは自動送信されないため、追加後に本人へアプリのURLを伝える。
+本人がログイン画面でメールアドレスを入力すると、アカウントが作成されマジックリンクが届く。
+
+アプリを使えない場合（初期adminの登録等）は、Supabase Studioから登録する。
 
 1. Supabase Studio → **Table Editor** → `invitations` テーブル → **Insert row**
 2. `email` に招待するメールアドレスを入力して保存（大文字・前後の空白は自動で正規化される）。
@@ -150,17 +160,45 @@ Hookの有効化はマイグレーションでは行えないため、ダッシ�
 3. 招待した本人にアプリのURLを伝える（招待メールは自動送信されない）
 4. 本人がログイン画面でメールアドレスを入力すると、アカウントが作成されマジックリンクが届く
 
-招待を取り消す場合は `invitations` の行を削除する（作成済みのアカウントは削除されない。
-アカウント自体を削除する場合は **Authentication → Users** から行う）。
+招待を取り消す場合は、ユーザー管理画面の「取り消し」（または `invitations` の行を削除）。
+作成済みのアカウントは削除されないため、既にログインしたことがある人をログインできなくするには
+下記「利用停止（除名）・復帰」を行う。
 
 **注意**：Hookは Supabase Studio の「Invite user」「Add user」でも実行される。
 Studioから直接ユーザーを追加する場合も、先に `invitations` への登録が必要。
+
+## 利用停止（除名）・復帰
+
+adminはアプリの **ユーザー管理** 画面で、ユーザーを利用停止・復帰させられる
+（`migrations/20261001100000_user_suspension_and_admin_guard.sql`）。**ダッシュボードでの設定は不要**
+（マイグレーションの適用だけで有効になる）。
+
+- 利用停止したユーザーはログインできなくなる。アカウント（`profiles`）と過去の稼働記録は削除されず、集計に使える。
+  復帰させると再びログインできる。
+  - 仕組み：`profiles.suspended_at` に利用停止した日時を記録し、あわせて `auth.users.banned_until` を
+    遠い未来に設定する（Supabase Auth がログインを拒否する）。ログイン中の端末のセッションも削除する。
+  - 利用停止中のユーザーがログイン画面でメールアドレスを入力すると、**マジックリンクのメール自体は届く**
+    （Supabase Auth の仕様）が、リンクを開くとログイン画面に「利用停止中」のエラーが表示される。
+  - 利用停止の時点でログイン中だった端末は、発行済みのアクセストークン（最長1時間有効）が残るが、
+    PostgREST の pre-request 関数（`reject_suspended_user`）が利用停止中のユーザーの Data API へのアクセスを
+    すべて拒否する（HTTP 403）。画面には読み込みエラーが表示され、トークンの更新時にログアウトされる。
+- 自分自身の利用停止、および利用中のadminが1人もいなくなる利用停止・降格はできない（DB 側のトリガーで拒否する。
+  2人のadminが互いを同時に操作した場合も、ロックで直列化して0人にならないようにしている）。
+- 利用停止中のadminは、adminとして扱われない（`is_admin()` が false になる）。
+- **Studio の「Ban user」（Authentication → Users）は使わない**。`profiles.suspended_at` が更新されず、
+  アプリの一覧では「利用中」と表示されてしまう。利用停止・復帰は必ずアプリ（`set_user_suspended()`）から行う。
+  アプリを使えない場合は SQL Editor で
+  `update public.profiles set suspended_at = null where email = '...'` と
+  `update auth.users set banned_until = null where email = '...'`（復帰の例）のように両方を更新する。
+- pre-request 関数は、マイグレーションで `authenticator` ロールの設定（`pgrst.db_pre_request`）として登録している
+  （Supabase のドキュメント「Securing your API」の方法）。設定の確認は SQL Editor で
+  `select * from pg_db_role_setting where setrole = 'authenticator'::regrole;`。
 
 ## RLS（Row Level Security）方針の要約
 
 | テーブル | 参照 | 追加・変更・削除 |
 |---|---|---|
-| profiles | 本人 or admin | 本人 or admin（ただし role の変更は admin のみ、トリガーで強制） |
+| profiles | 本人 or admin | 本人 or admin（ただし role の変更は admin のみ、トリガーで強制。自分自身の降格・利用中のadminが0人になる降格は不可。`suspended_at` は直接変更できず、`set_user_suspended()`（adminのみ）で変更する） |
 | projects | 全員 | admin のみ |
 | user_projects | 本人 or admin | admin のみ |
 | shift_settings | 本人のみ（adminの例外なし） | 本人のみ |
@@ -223,6 +261,7 @@ Docker（起動済み）と [Supabase CLI](https://supabase.com/docs/guides/loca
 | `06_allocations.test.sql` | RLS（work_records 経由の所有者判定。本人/他人/admin/anon × 参照/追加/変更/削除、他人の work_records への付け替え不可）、CHECK・一意・外部キー（`on delete restrict` / `cascade`）制約 |
 | `07_invitations.test.sql` | RLS（admin/member/anon × 参照/追加/変更/削除）、メールアドレスの正規化（追加・変更時）、`invited_by` の自動設定と偽装の拒否、直接DB接続での登録（`invited_by` が空）、CHECK制約（形式・正規化）、重複の拒否、招待したadmin削除時の `on delete set null` |
 | `08_hook_before_user_created.test.sql` | Hook 関数を SQL から直接呼び出し、招待済みは許可（`{}`）・未招待は拒否（`{"error": {"http_code": 403, "message": "email_not_invited"}}`）、正規化した照合、メールアドレスが無い/空のイベントの拒否、招待取り消し後の拒否。`PUBLIC` / `anon` / `authenticated` に `EXECUTE` 権限が無く呼び出すと権限エラーになること、`supabase_auth_admin` は実行できること、`SECURITY DEFINER` であること |
+| `09_user_suspension.test.sql` | `set_user_suspended()` による利用停止・復帰（`suspended_at`・`auth.users.banned_until`・セッション削除）、admin 以外（member・利用停止中のadmin・anon）は実行できないこと、自分自身の利用停止・降格の拒否、利用中のadminが0人になる利用停止・降格の拒否、`suspended_at` を直接変更できないこと、`is_admin()` が利用停止中のadminを除外すること、pre-request 関数 `reject_suspended_user()` が利用停止中のユーザーだけを拒否すること。ローカルDBに開発用のadminがいても検証できるよう、テスト内（rollback される）で `@db-test.invalid` 以外のadminを降格してから実行する |
 
 ### 自動テストでは検証していないもの
 
@@ -237,3 +276,9 @@ Hook・マイグレーションを変更した場合は、`supabase start` に�
 - Data API（PostgREST）の `rpc` 経由で Hook 関数を呼び出せないこと（DBテストでは `EXECUTE` 権限と、
   `anon` / `authenticated` として呼び出したときの権限エラーで担保している）
 - 本番の Hook 有効化・「Allow new users to sign up」等のダッシュボード設定（マイグレーションでは管理できない）
+- 利用停止中のユーザーがマジックリンクを開くと、Supabase Auth が `#error_code=user_banned` でアプリに戻り、
+  ログイン画面に「利用停止中」と表示されること（`banned_until` の設定はDBテストで検証している）
+- pre-request 関数が PostgREST に登録され、利用停止中のユーザーの Data API へのリクエストが HTTP 403 になること
+  （関数の動作はDBテストで検証しているが、PostgREST への登録・呼び出しは検証していない）
+- 2人のadminが互いを同時に降格・利用停止したときに、後の操作がロック待ちの後に拒否されること
+  （DBテストは1つのトランザクションで実行するため、同時実行は再現できない）
