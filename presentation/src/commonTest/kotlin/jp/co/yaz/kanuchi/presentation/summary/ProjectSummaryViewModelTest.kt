@@ -300,6 +300,8 @@ class ProjectSummaryViewModelTest : MainDispatcherTest() {
             failure?.let { return Result.failure(it) }
             return Result.success(records[userId].orEmpty().filter { it.date.year == yearMonth.year && it.date.month == yearMonth.month })
         }
+
+        override suspend fun getWorkRecordsOfAllUsers(yearMonth: YearMonth): Result<Map<String, List<WorkRecord>>> = error("not used")
     }
 
     private class FakeCompanyHolidayRepository : CompanyHolidayRepository {
