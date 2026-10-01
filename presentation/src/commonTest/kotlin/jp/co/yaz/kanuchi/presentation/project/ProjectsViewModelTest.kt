@@ -54,6 +54,42 @@ class ProjectsViewModelTest : MainDispatcherTest() {
     }
 
     @Test
+    fun `project cannot be added while loading`() {
+        val loadResult = CompletableDeferred<Result<List<Project>>>()
+        repository.getProjectsResult = loadResult
+        val viewModel = createViewModel()
+
+        viewModel.onNewProjectNameChanged("案件C")
+        assertFalse(viewModel.uiState.value.canAdd)
+        viewModel.onAddClicked()
+
+        assertTrue(repository.addedNames.isEmpty())
+        assertFalse(viewModel.uiState.value.isAdding)
+
+        loadResult.complete(Result.success(listOf(ACTIVE)))
+
+        assertTrue(viewModel.uiState.value.canAdd)
+    }
+
+    @Test
+    fun `project cannot be added after load failure until retry succeeds`() {
+        repository.projectsResult = Result.failure(GenericDataFailureException())
+        val viewModel = createViewModel()
+
+        viewModel.onNewProjectNameChanged("案件C")
+        assertFalse(viewModel.uiState.value.canAdd)
+        viewModel.onAddClicked()
+
+        assertTrue(repository.addedNames.isEmpty())
+
+        repository.projectsResult = Result.success(listOf(ACTIVE))
+        viewModel.onRetryClicked()
+        viewModel.onAddClicked()
+
+        assertEquals(listOf("案件C"), repository.addedNames)
+    }
+
+    @Test
     fun `added project is inserted in display order and the input is cleared`() {
         val viewModel = createViewModel()
         val result = CompletableDeferred<Result<Project>>()

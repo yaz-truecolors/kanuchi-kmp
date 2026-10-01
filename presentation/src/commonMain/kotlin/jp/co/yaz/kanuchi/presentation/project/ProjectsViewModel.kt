@@ -56,7 +56,7 @@ class ProjectsViewModel(
 
     fun onAddClicked() {
         val state = _uiState.value
-        if (state.isSaving) return
+        if (!state.canAdd) return
         _uiState.update { it.copy(isAdding = true, addError = null) }
 
         viewModelScope.launch {

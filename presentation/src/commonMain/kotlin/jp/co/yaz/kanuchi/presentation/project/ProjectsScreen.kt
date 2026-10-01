@@ -122,7 +122,7 @@ private fun AddProjectForm(
         )
         Button(
             onClick = onAdd,
-            enabled = !uiState.isSaving && uiState.newProjectName.isNotBlank(),
+            enabled = uiState.canAdd && uiState.newProjectName.isNotBlank(),
         ) {
             Text(
                 if (uiState.isAdding) {

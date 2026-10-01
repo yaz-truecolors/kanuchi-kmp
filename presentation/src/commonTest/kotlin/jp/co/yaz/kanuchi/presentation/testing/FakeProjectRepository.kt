@@ -16,6 +16,8 @@ internal class FakeProjectRepository : ProjectRepository {
     var projectResult: Result<Project> = Result.success(ACTIVE)
     var assignedUserIdsResult: Result<Set<String>> = Result.success(setOf(FakeProfileRepository.MEMBER.id))
 
+    /** 設定すると、一覧の取得はこれが完了するまで待つ (読み込み中の状態を確かめる用)。 */
+    var getProjectsResult: CompletableDeferred<Result<List<Project>>>? = null
     var addProjectResult: CompletableDeferred<Result<Project>>? = null
     var renameProjectResult: CompletableDeferred<Result<Project>>? = null
     var setProjectActiveResult: CompletableDeferred<Result<Project>>? = null
@@ -30,7 +32,7 @@ internal class FakeProjectRepository : ProjectRepository {
 
     override suspend fun getProjects(): Result<List<Project>> {
         getProjectsCallCount++
-        return projectsResult
+        return getProjectsResult?.await() ?: projectsResult
     }
 
     override suspend fun getProject(projectId: String): Result<Project> {

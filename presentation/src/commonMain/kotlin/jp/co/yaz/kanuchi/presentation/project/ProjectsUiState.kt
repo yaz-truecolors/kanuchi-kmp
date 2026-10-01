@@ -40,4 +40,10 @@ data class ProjectsUiState(
 ) {
     /** いずれかの保存 (追加・名前変更・有効／無効の切り替え) の処理中か。処理中は他の保存を受け付けない。 */
     val isSaving: Boolean get() = isAdding || savingProjectId != null
+
+    /**
+     * 案件を追加できるか。一覧の取得に成功するまでは追加させない
+     * (取得中に追加すると、後から返った一覧で追加した案件が画面から消えるため)。
+     */
+    val canAdd: Boolean get() = !isLoading && !loadFailed && !isSaving
 }
