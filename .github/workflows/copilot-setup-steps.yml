@@ -47,7 +47,7 @@ jobs:
         uses: supabase/setup-cli@v1
         env:
           # Renovate が更新する（renovate.json の customManagers）。ci.yml・supabase-deploy.yml と同じバージョンにそろえること。
-          SUPABASE_CLI_VERSION: 2.117.0
+          SUPABASE_CLI_VERSION: 2.119.0
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
 
