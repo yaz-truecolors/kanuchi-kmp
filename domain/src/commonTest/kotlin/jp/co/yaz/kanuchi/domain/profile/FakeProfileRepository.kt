@@ -9,7 +9,15 @@ internal class FakeProfileRepository : ProfileRepository {
 
     override suspend fun getCurrentUserProfile(): Result<UserProfile> = currentUserProfileResult
 
+    var updateDisplayNameResult: Result<UserProfile>? = null
+    val updatedDisplayNames = mutableListOf<DisplayName>()
+
     override suspend fun getProfiles(): Result<List<UserProfile>> = profilesResult
+
+    override suspend fun updateDisplayName(displayName: DisplayName): Result<UserProfile> {
+        updatedDisplayNames += displayName
+        return updateDisplayNameResult ?: Result.success(PROFILE.copy(displayName = displayName.value))
+    }
 
     companion object {
         val PROFILE = UserProfile(id = "user-1", email = "taro@example.com", displayName = "taro", role = UserRole.MEMBER)

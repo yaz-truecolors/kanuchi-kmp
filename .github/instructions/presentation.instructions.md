@@ -48,6 +48,11 @@ Compose Multiplatform の UI・ViewModel・リソース（`presentation/`）と�
 - 画面の枠は `SubScreenScaffold`（「戻る」ボタン・タイトル・縦スクロール・幅上限 720.dp）を使う。
   「戻る」には `KanuchiNavHost` の `backToHome()` を渡す。画面側は `NavController` を受け取らず、
   `onBack: () -> Unit` のようなコールバックだけを受け取る（画面を Navigation に依存させないため）。
+- ホーム画面の ViewModel（`HomeViewModel`）は、ホーム画面から開いた画面を表示している間もバックスタックに残る。
+  開いた画面での変更（個人設定での表示名の変更等）をホーム画面に反映するため、`HomeScreen` は表示されるたびに
+  （`LaunchedEffect`。戻ってきたときもホーム画面は作り直される）`HomeViewModel.onScreenShown()` を呼び、プロフィールを
+  読み込み直している（2回目以降は読み込み中の表示を出さず、失敗しても前の表示を続ける）。ホーム画面に表示する情報を
+  増やす場合も、ここで読み込み直すようにする。
 - admin 用の画面でも、メニューを隠しているのは使い勝手のためで、アクセス制御ではない。
   データの参照・変更の可否は必ず DB 側（RLS・トリガー・関数）で強制する。
 - 画面からさらに別の画面を開く（引数付きのルート）場合の実例は、案件管理 → 担当メンバー（`KanuchiDestinations.PROJECT_MEMBERS`）。

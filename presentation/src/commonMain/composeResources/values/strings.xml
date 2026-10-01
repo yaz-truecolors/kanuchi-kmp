@@ -41,6 +41,34 @@
     <string name="projects_title">案件管理</string>
     <string name="users_title">ユーザー管理</string>
     <string name="roles_title">権限管理</string>
+
+    <!-- 個人設定画面 -->
+    <string name="settings_save_button">保存</string>
+    <string name="settings_saving_button">保存中...</string>
+    <string name="settings_display_name_header">表示名</string>
+    <string name="settings_display_name_label">表示名</string>
+    <!-- %1$s: 表示名の最大文字数 -->
+    <string name="settings_display_name_hint">%1$s文字以内。ホーム画面等に表示されます。</string>
+    <string name="settings_display_name_blank_error">表示名を入力してください。</string>
+    <!-- %1$s: 表示名の最大文字数 -->
+    <string name="settings_display_name_too_long_error">表示名は%1$s文字以内で入力してください。</string>
+    <string name="settings_display_name_saved_message">表示名を保存しました。</string>
+    <string name="settings_shift_header">勤務時間</string>
+    <string name="settings_shift_description">定時（始業・終業）と1日の休憩時間、月の稼働時間の下限・上限です。作業時間の入力・集計で、初期値や過不足の判定に使います。</string>
+    <string name="settings_start_time_label">始業時刻</string>
+    <string name="settings_end_time_label">終業時刻</string>
+    <string name="settings_break_hours_label">休憩時間（時間）</string>
+    <string name="settings_min_hours_label">月の稼働時間の下限（時間）</string>
+    <string name="settings_max_hours_label">月の稼働時間の上限（時間）</string>
+    <string name="settings_time_hint">HH:mm 形式（例: 09:30）</string>
+    <string name="settings_hours_hint">小数第2位まで（例: 1.5）</string>
+    <string name="settings_time_format_error">HH:mm 形式の時刻（00:00〜23:59）で入力してください。</string>
+    <string name="settings_end_time_not_after_start_time_error">終業時刻は始業時刻より後にしてください。</string>
+    <string name="settings_hours_format_error">0以上の数値を、小数第2位までで入力してください。</string>
+    <!-- %1$s: 入力できる最大値 -->
+    <string name="settings_hours_too_large_error">%1$s以下で入力してください。</string>
+    <string name="settings_min_hours_exceeds_max_hours_error">上限は下限以上にしてください。</string>
+    <string name="settings_shift_saved_message">勤務時間を保存しました。</string>
     <!-- 案件管理画面 (admin のみ) -->
     <string name="projects_new_name_label">新しい案件名</string>
     <string name="projects_add_button">追加</string>

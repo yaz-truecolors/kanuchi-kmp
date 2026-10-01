@@ -28,7 +28,7 @@ class HomeViewModelTest : MainDispatcherTest() {
             ObserveAuthStateUseCase(repository),
             GetCurrentUserProfileUseCase(profileRepository),
             SignOutUseCase(repository),
-        )
+        ).also { it.onScreenShown() }
 
     @Test
     fun `profile is loaded and admin menu is hidden for members`() {
@@ -62,6 +62,33 @@ class HomeViewModelTest : MainDispatcherTest() {
         assertFalse(viewModel.uiState.value.profileLoadFailed)
         assertTrue(viewModel.uiState.value.showsAdminMenu)
         assertEquals(2, profileRepository.getCurrentUserProfileCallCount)
+    }
+
+    @Test
+    fun `profile is reloaded when the screen is shown again`() {
+        val viewModel = createViewModel()
+
+        profileRepository.currentUserProfileResult = Result.success(FakeProfileRepository.MEMBER.copy(displayName = "山田"))
+        viewModel.onScreenShown()
+
+        assertEquals(
+            "山田",
+            viewModel.uiState.value.profile
+                ?.displayName,
+        )
+        assertEquals(2, profileRepository.getCurrentUserProfileCallCount)
+    }
+
+    @Test
+    fun `previous profile is kept when reloading fails`() {
+        val viewModel = createViewModel()
+
+        profileRepository.currentUserProfileResult = Result.failure(GenericDataFailureException())
+        viewModel.onScreenShown()
+
+        assertEquals(FakeProfileRepository.MEMBER, viewModel.uiState.value.profile)
+        assertFalse(viewModel.uiState.value.isLoadingProfile)
+        assertFalse(viewModel.uiState.value.profileLoadFailed)
     }
 
     @Test

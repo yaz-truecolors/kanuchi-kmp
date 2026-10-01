@@ -17,6 +17,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -56,6 +57,8 @@ fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    // ホーム画面から開いた画面から戻ったときも、この画面は作り直されるため再度実行される
+    LaunchedEffect(viewModel) { viewModel.onScreenShown() }
 
     // 幅上限の付け方は LoginScreen と同じ (理由は LoginScreen のコメント参照)。
     Box(
