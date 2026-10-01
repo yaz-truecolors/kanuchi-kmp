@@ -3,6 +3,7 @@ package jp.co.yaz.kanuchi.presentation.summary
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import jp.co.yaz.kanuchi.domain.calendar.GetTodayUseCase
+import jp.co.yaz.kanuchi.domain.calendar.JapaneseHolidays
 import jp.co.yaz.kanuchi.domain.profile.GetCurrentUserProfileUseCase
 import jp.co.yaz.kanuchi.domain.profile.GetProfilesUseCase
 import jp.co.yaz.kanuchi.domain.profile.UserProfile
@@ -28,7 +29,8 @@ import kotlinx.datetime.yearMonth
  *   指定された場合は、参照できるプロフィールの一覧 ([GetProfilesUseCase]。admin は全員分、member は自分の分だけ) から
  *   探し、見つからなければ [ProjectSummaryLoadError.USER_NOT_VIEWABLE] にする (member が他人を指定しても、
  *   記録が空のシートを本人の集計として表示しないため)。
- * @param yearMonthArg 初めに表示する月 (画面のルートの引数。`yyyy-MM` 形式)。null または形式が正しくなければ日本時間の今月
+ * @param yearMonthArg 初めに表示する月 (画面のルートの引数。`yyyy-MM` 形式)。null または形式が正しくなければ日本時間の今月。
+ *   切り替えられる範囲 (2000年1月〜今月) の外の月は、範囲の端の月にする
  */
 class ProjectSummaryViewModel(
     private val userId: String?,
@@ -39,16 +41,18 @@ class ProjectSummaryViewModel(
     private val getProjectsUseCase: GetProjectsUseCase,
     getTodayUseCase: GetTodayUseCase,
 ) : ViewModel() {
+    private val minYearMonth = YearMonth(JapaneseHolidays.SUPPORTED_YEARS.first, 1)
+    private val maxYearMonth = getTodayUseCase().yearMonth
+
     private val _uiState =
-        getTodayUseCase().yearMonth.let { thisMonth ->
-            MutableStateFlow(
-                ProjectSummaryUiState(
-                    yearMonth = yearMonthArg?.let(::parseYearMonthOrNull) ?: thisMonth,
-                    maxYearMonth = thisMonth,
-                    showsTargetUser = userId != null,
-                ),
-            )
-        }
+        MutableStateFlow(
+            ProjectSummaryUiState(
+                yearMonth = yearMonthArg?.let(::parseYearMonthOrNull)?.coerceIn(minYearMonth, maxYearMonth) ?: maxYearMonth,
+                minYearMonth = minYearMonth,
+                maxYearMonth = maxYearMonth,
+                showsTargetUser = userId != null,
+            ),
+        )
     val uiState: StateFlow<ProjectSummaryUiState> = _uiState.asStateFlow()
 
     private var loadJob: Job? = null
@@ -59,8 +63,9 @@ class ProjectSummaryViewModel(
 
     /** 表示する月を切り替える。読み込み中に切り替えた場合は、前の月の読み込みを取り消す。 */
     fun onMonthChanged(yearMonth: YearMonth) {
-        if (yearMonth == _uiState.value.yearMonth) return
-        _uiState.update { it.copy(yearMonth = yearMonth) }
+        val month = yearMonth.coerceIn(minYearMonth, maxYearMonth)
+        if (month == _uiState.value.yearMonth) return
+        _uiState.update { it.copy(yearMonth = month) }
         load()
     }
 

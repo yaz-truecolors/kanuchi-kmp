@@ -90,6 +90,7 @@ fun ProjectSummaryScreen(
         MonthSelector(
             yearMonth = uiState.yearMonth,
             onYearMonthChange = viewModel::onMonthChanged,
+            minYearMonth = uiState.minYearMonth,
             maxYearMonth = uiState.maxYearMonth,
         )
         when {

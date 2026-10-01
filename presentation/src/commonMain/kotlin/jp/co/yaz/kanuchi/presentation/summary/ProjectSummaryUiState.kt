@@ -12,6 +12,11 @@ import kotlinx.datetime.YearMonth
 data class ProjectSummaryUiState(
     /** 表示している月。 */
     val yearMonth: YearMonth,
+    /**
+     * 切り替えられる最初の月 (2000年1月)。祝日の判定 ([jp.co.yaz.kanuchi.domain.calendar.JapaneseHolidays]) が
+     * 正確なのは 2000 年以降なので、それより前の月は営業日数が正しく出ないため切り替えさせない。
+     */
+    val minYearMonth: YearMonth,
     /** 切り替えられる最後の月 (日本時間の今月)。来月以降は実績が無く、合計が 0 で下限未満と表示されるだけなので切り替えさせない。 */
     val maxYearMonth: YearMonth,
     /**

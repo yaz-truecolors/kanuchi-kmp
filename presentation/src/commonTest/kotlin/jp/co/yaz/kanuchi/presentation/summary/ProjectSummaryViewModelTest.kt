@@ -204,6 +204,27 @@ class ProjectSummaryViewModelTest : MainDispatcherTest() {
     }
 
     @Test
+    fun `month argument outside the selectable range is clamped to the range`() {
+        val future = createViewModel(yearMonthArg = "2026-11")
+        val past = createViewModel(yearMonthArg = "1999-12")
+
+        assertEquals(october, future.uiState.value.yearMonth)
+        assertEquals(YearMonth(2000, 1), past.uiState.value.yearMonth)
+        assertEquals(YearMonth(2000, 1), past.uiState.value.minYearMonth)
+        assertEquals(listOf(MEMBER.id to october, MEMBER.id to YearMonth(2000, 1)), workRecordRepository.requests)
+    }
+
+    @Test
+    fun `month outside the selectable range is not selected`() {
+        val viewModel = createViewModel()
+
+        viewModel.onMonthChanged(YearMonth(2026, 11))
+
+        assertEquals(october, viewModel.uiState.value.yearMonth)
+        assertEquals(1, workRecordRepository.requests.size)
+    }
+
+    @Test
     fun `selecting the same month does not reload`() {
         val viewModel = createViewModel()
 
