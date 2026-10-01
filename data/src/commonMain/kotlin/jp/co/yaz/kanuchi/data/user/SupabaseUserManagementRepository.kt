@@ -9,7 +9,6 @@ import io.github.jan.supabase.postgrest.query.Order
 import jp.co.yaz.kanuchi.data.profile.runCatchingData
 import jp.co.yaz.kanuchi.domain.auth.EmailAddress
 import jp.co.yaz.kanuchi.domain.user.UserManagementRepository
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
@@ -26,7 +25,7 @@ internal class SupabaseUserManagementRepository(
         runCatchingData {
             supabaseClient
                 .from(INVITATIONS)
-                .select(Columns.list("email")) {
+                .select(Columns.list(InvitationDto.COLUMNS)) {
                     order("created_at", Order.DESCENDING)
                 }.decodeList<InvitationDto>()
                 .map { it.email }
@@ -40,9 +39,16 @@ internal class SupabaseUserManagementRepository(
 
     override suspend fun revokeInvitation(email: String): Result<Unit> =
         runCatchingData {
-            supabaseClient.from(INVITATIONS).delete {
-                filter { eq("email", email) }
-            }
+            // RLS で対象行が見えない場合 (操作中に admin でなくなった等) も、DELETE はエラーにならず0行になる。
+            // 削除した行を受け取り、0行なら失敗として扱う。
+            val deleted =
+                supabaseClient
+                    .from(INVITATIONS)
+                    .delete {
+                        select(Columns.list(InvitationDto.COLUMNS))
+                        filter { eq("email", email) }
+                    }.decodeList<InvitationDto>()
+            check(deleted.isNotEmpty()) { "invitation was not deleted" }
         }
 
     override suspend fun setUserSuspended(
@@ -73,11 +79,6 @@ internal class SupabaseUserManagementRepository(
             restException?.let { toUserManagementFailure(code = it.code, message = it.error, cause = it) }
         return if (known != null) Result.failure(known) else this
     }
-
-    @Serializable
-    private data class InvitationDto(
-        val email: String,
-    )
 
     private companion object {
         const val INVITATIONS = "invitations"
