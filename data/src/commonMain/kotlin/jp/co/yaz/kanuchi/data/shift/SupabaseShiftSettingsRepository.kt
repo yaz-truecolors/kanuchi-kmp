@@ -10,20 +10,23 @@ import jp.co.yaz.kanuchi.domain.shift.ShiftSettingsRepository
 
 /**
  * [ShiftSettingsRepository] のSupabase実装。`shift_settings` テーブルを PostgREST で参照・保存する。
- * 参照・保存できるのは本人の行だけ (RLS の `shift_settings_*_own`)。
+ * 保存できるのは本人の行だけ (RLS の `shift_settings_*_own`)、参照できるのは本人の行と、admin なら全員の行
+ * (RLS の `shift_settings_admin_select`)。
  */
 internal class SupabaseShiftSettingsRepository(
     private val supabaseClient: SupabaseClient,
 ) : ShiftSettingsRepository {
-    override suspend fun getShiftSettings(): Result<ShiftSettings?> =
-        runCatchingData {
-            supabaseClient
-                .from(TABLE)
-                .select(Columns.list(ShiftSettingsDto.COLUMNS)) {
-                    filter { eq("user_id", currentUserId()) }
-                }.decodeSingleOrNull<ShiftSettingsDto>()
-                ?.toDomain()
-        }
+    override suspend fun getShiftSettings(): Result<ShiftSettings?> = runCatchingData { fetchShiftSettingsOf(currentUserId()) }
+
+    override suspend fun getShiftSettingsOf(userId: String): Result<ShiftSettings?> = runCatchingData { fetchShiftSettingsOf(userId) }
+
+    private suspend fun fetchShiftSettingsOf(userId: String): ShiftSettings? =
+        supabaseClient
+            .from(TABLE)
+            .select(Columns.list(ShiftSettingsDto.COLUMNS)) {
+                filter { eq("user_id", userId) }
+            }.decodeSingleOrNull<ShiftSettingsDto>()
+            ?.toDomain()
 
     override suspend fun saveShiftSettings(settings: ShiftSettings): Result<ShiftSettings> =
         runCatchingData {

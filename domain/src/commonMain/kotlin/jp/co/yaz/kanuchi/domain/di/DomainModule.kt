@@ -4,6 +4,7 @@ import jp.co.yaz.kanuchi.domain.auth.ConsumeMagicLinkCallbackErrorUseCase
 import jp.co.yaz.kanuchi.domain.auth.ObserveAuthStateUseCase
 import jp.co.yaz.kanuchi.domain.auth.SendMagicLinkUseCase
 import jp.co.yaz.kanuchi.domain.auth.SignOutUseCase
+import jp.co.yaz.kanuchi.domain.calendar.GetTodayUseCase
 import jp.co.yaz.kanuchi.domain.profile.GetCurrentUserProfileUseCase
 import jp.co.yaz.kanuchi.domain.profile.GetProfilesUseCase
 import jp.co.yaz.kanuchi.domain.profile.UpdateDisplayNameUseCase
@@ -22,8 +23,10 @@ import jp.co.yaz.kanuchi.domain.user.InviteUserUseCase
 import jp.co.yaz.kanuchi.domain.user.ReactivateUserUseCase
 import jp.co.yaz.kanuchi.domain.user.RevokeInvitationUseCase
 import jp.co.yaz.kanuchi.domain.user.SuspendUserUseCase
+import jp.co.yaz.kanuchi.domain.work.GetMonthlyWorkSheetUseCase
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
+import kotlin.time.Clock
 
 /**
  * domain層のKoinモジュール。UseCaseは状態を持たないため factory (呼び出しごとに新規生成) で登録する。
@@ -52,4 +55,8 @@ val domainModule =
         factoryOf(::SetProjectActiveUseCase)
         factoryOf(::GetProjectAssignmentUseCase)
         factoryOf(::SaveProjectAssignmentUseCase)
+        // 「今日」の基準。テストでは固定の Clock を渡す
+        single<Clock> { Clock.System }
+        factoryOf(::GetTodayUseCase)
+        factoryOf(::GetMonthlyWorkSheetUseCase)
     }

@@ -14,7 +14,8 @@ kotlin {
         commonMain.dependencies {
             // domain の公開API (Repository インターフェース等) が Flow を返すため、利用側にも公開する
             api(libs.kotlinx.coroutines.core)
-            implementation(libs.kotlinx.datetime)
+            // domain の公開API (稼働記録の日付・月等) が LocalDate / YearMonth を使うため、利用側にも公開する
+            api(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.koin.core)
         }

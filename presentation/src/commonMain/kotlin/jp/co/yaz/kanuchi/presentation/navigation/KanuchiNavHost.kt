@@ -14,6 +14,7 @@ import androidx.navigation.navArgument
 import androidx.savedstate.read
 import jp.co.yaz.kanuchi.domain.auth.AuthState
 import jp.co.yaz.kanuchi.presentation.auth.LoginScreen
+import jp.co.yaz.kanuchi.presentation.common.ComingSoonScreen
 import jp.co.yaz.kanuchi.presentation.common.LoadingScreen
 import jp.co.yaz.kanuchi.presentation.home.HomeScreen
 import jp.co.yaz.kanuchi.presentation.project.ProjectMembersScreen
@@ -21,6 +22,12 @@ import jp.co.yaz.kanuchi.presentation.project.ProjectsScreen
 import jp.co.yaz.kanuchi.presentation.role.RolesScreen
 import jp.co.yaz.kanuchi.presentation.settings.SettingsScreen
 import jp.co.yaz.kanuchi.presentation.users.UsersScreen
+import kanuchi.presentation.generated.resources.Res
+import kanuchi.presentation.generated.resources.admin_dashboard_title
+import kanuchi.presentation.generated.resources.company_holidays_title
+import kanuchi.presentation.generated.resources.daily_input_title
+import kanuchi.presentation.generated.resources.summary_title
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -84,6 +91,7 @@ fun KanuchiNavHost(authGateViewModel: AuthGateViewModel = koinViewModel()) {
         composable(KanuchiDestinations.ROLES) {
             RolesScreen(onBack = navController::backToHome)
         }
+        workRecordRoutes(navController)
     }
 }
 
@@ -118,4 +126,47 @@ private fun NavGraphBuilder.projectRoutes(navController: NavHostController) {
             onBack = { navController.popBackStack(KanuchiDestinations.PROJECTS, inclusive = false) },
         )
     }
+}
+
+/**
+ * 日次入力・案件別集計・管理者ダッシュボード・休業日管理のルート。
+ * 案件別集計は、管理者ダッシュボードから開いた場合 (他のメンバーの分) は管理者ダッシュボードへ、
+ * ホーム画面から開いた場合はホーム画面へ戻る。
+ */
+private fun NavGraphBuilder.workRecordRoutes(navController: NavHostController) {
+    composable(KanuchiDestinations.DAILY_INPUT) {
+        ComingSoonScreen(title = stringResource(Res.string.daily_input_title), onBack = navController::backToHome)
+    }
+    composable(
+        KanuchiDestinations.SUMMARY,
+        arguments =
+            listOf(
+                navArgument(KanuchiDestinations.SUMMARY_USER_ID_ARG) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument(KanuchiDestinations.SUMMARY_YEAR_MONTH_ARG) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+    ) {
+        ComingSoonScreen(title = stringResource(Res.string.summary_title), onBack = navController::backFromSummary)
+    }
+    composable(KanuchiDestinations.ADMIN_DASHBOARD) {
+        ComingSoonScreen(title = stringResource(Res.string.admin_dashboard_title), onBack = navController::backToHome)
+    }
+    composable(KanuchiDestinations.COMPANY_HOLIDAYS) {
+        ComingSoonScreen(title = stringResource(Res.string.company_holidays_title), onBack = navController::backToHome)
+    }
+}
+
+/**
+ * 案件別集計の「戻る」。管理者ダッシュボードから開いていれば管理者ダッシュボードへ、そうでなければホーム画面へ戻る
+ * (戻る操作の連打で戻りすぎないよう、backToHome と同じく popBackStack(route) を使う)。
+ */
+private fun NavHostController.backFromSummary() {
+    if (!popBackStack(KanuchiDestinations.ADMIN_DASHBOARD, inclusive = false)) backToHome()
 }

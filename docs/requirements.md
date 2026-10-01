@@ -86,11 +86,14 @@ Clean Architecture + DDD（戦術パターン）による層分離。Androidア�
 
 ### DDD戦術パターンの適用例
 
-- **Entity**：`WorkRecord`（日次稼働記録）、`Project`
-- **Value Object**：`WorkingHours`、`AllocationRatio`、`ShiftTime`
-- **Aggregate Root**：`MonthlyWorkSheet`（月次シート全体、整合性を保証）
-- **Domain Service**：`WorkingHoursCalculator`（Excelの稼働時間数式相当）、`AllocationBalancer`（過不足計算相当）
-- **Repository**（interfaceはdomain、実装はdata）：`WorkRecordRepository`、`ProjectRepository`
+- **Entity**：`WorkRecord`（日次稼働記録）、`Project`、`CompanyHoliday`（会社の休業日）
+- **Value Object**：`Hours`（時間数）、`SignedHours`（符号付きの時間数。過不足）、`TimeOfDay`（時刻）、
+  `AllocationRatio`（割合）、`ShiftSettings`（勤務時間設定）、`DayKind`（日の種類：平日/土日/祝日/会社の休業日）
+- **Aggregate Root**：`MonthlyWorkSheet`（1人・1か月分の稼働記録のシート。日ごとの行 `WorkDay` と月の集計値）
+- **Domain Service**：`WorkingHoursCalculator`（Excelの稼働時間数式相当）、`AllocationBalancer`（過不足計算相当）、
+  `JapaneseHolidays`（日本の祝日の判定）、`WorkCalendar`（稼働日の判定）
+- **Repository**（interfaceはdomain、実装はdata）：`WorkRecordRepository`、`ProjectRepository`、
+  `ShiftSettingsRepository`、`CompanyHolidayRepository` 等
 
 Excelで数式により自動計算していた値（稼働時間・過不足・割合など）は、DBに保存せず
 Domain Service側で都度計算する「導出値」として扱う。
@@ -129,8 +132,9 @@ Domain Service側で都度計算する「導出値」として扱う。
     未ログインの状態でログイン後の画面を表示することはない
 - 画面構成（ログイン後）：ホーム画面のメニューから各画面を開く。管理者用の画面はadminにだけメニューを表示する
   （表示の制御は使い勝手のためで、アクセス制御はRLS等のDB側で行う）
-  - 全員：個人設定（表示名・勤務時間設定）
-  - adminのみ：案件管理、ユーザー管理（招待・利用停止）、権限管理（昇格・降格）
+  - 全員：日次入力、案件別集計、個人設定（表示名・勤務時間設定）
+  - adminのみ：管理者ダッシュボード、案件管理、ユーザー管理（招待・利用停止）、権限管理（昇格・降格）、休業日管理
+  - 案件別集計は、adminが管理者ダッシュボードから他のメンバーの分も開ける
 - 権限管理：アプリ内の「権限管理」画面で、adminが**既存の**他ユーザーをadminに昇格・memberに降格させる
   （新規ユーザーの招待とは別の機能・別の画面）
   - 自分自身の降格と、admin が1人もいなくなる降格はできない（DB側で強制する）
@@ -145,7 +149,10 @@ Domain Service側で都度計算する「導出値」として扱う。
 - 初期admin：運用開始時、Supabase管理画面から手動で最初の1人のみ`profiles.role`を`admin`に設定
 - RLS（Row Level Security）方針：
   - `work_records` / `allocations`：本人データのみ参照・編集可、adminは全員分を参照可
-  - `projects` / `shift_settings`：`projects`は全員参照可・編集はadminのみ、`shift_settings`は本人のみ参照・編集可
+  - `projects` / `shift_settings`：`projects`は全員参照可・編集はadminのみ、`shift_settings`は本人のみ編集可・
+    参照は本人と、adminは全員分（管理者ダッシュボードで各メンバーの定時・稼働時間の下限/上限を使うため）
+  - `company_holidays`（会社の休業日）：全員参照可（稼働日の判定に使う）、追加・削除はadminのみ（変更は不可。
+    直したい場合は削除して追加し直す）
 
 ## 6. DBスキーマ（v1）
 
@@ -155,9 +162,10 @@ Domain Service側で都度計算する「導出値」として扱う。
 | `projects` | id, name, is_active | 案件マスタ（チーム共有、admin管理） |
 | `user_projects` | user_id, project_id | ユーザーごとの担当案件割当（多対多） |
 | `shift_settings` | id, user_id(unique), start_time, end_time, break_hours, min_hours, max_hours | ユーザーごとの勤務時間設定 |
-| `work_records` | id, user_id, work_date, clock_in, clock_out, break_hours, flag(祝/欠/null), note | 日次実績（unique: user_id + work_date） |
+| `work_records` | id, user_id, work_date, clock_in, clock_out, break_hours, flag(`holiday`=休/`absence`=欠/null), note | 日次実績（unique: user_id + work_date）。flag の意味は「9. 日次入力・集計の仕様」 |
 | `allocations` | id, work_record_id, project_id, hours | 日×案件の工数配分 |
 | `invitations` | email(PK), invited_by, created_at | 招待リスト（ここに登録されたメールアドレスのみアカウント作成可、admin管理） |
+| `company_holidays` | holiday_date(PK), name, created_by, created_at | 会社の休業日（土日・祝日以外の休み。admin管理） |
 
 ### v1のスコープ外（将来検討）
 
@@ -188,5 +196,55 @@ Domain Service側で都度計算する「導出値」として扱う。
 2. Supabaseプロジェクト作成・DBスキーマ適用・RLSポリシー設定
 3. domain層の実装（Entity/Value Object/UseCase/Domain Service）とテスト
 4. data層の実装（Supabase連携）とテスト
-5. presentation層の実装（画面：ログイン、ホーム、個人設定、日次入力、案件別集計、管理者ダッシュボード、案件管理、ユーザー管理、権限管理）
+5. presentation層の実装（画面：ログイン、ホーム、個人設定、日次入力、案件別集計、管理者ダッシュボード、案件管理、ユーザー管理、権限管理、休業日管理）
 6. GitHub Pagesへのデプロイ確認・動作検証
+
+## 9. 日次入力・集計の仕様
+
+Excel「稼働記録」シートの自動計算を、domain層（`WorkingHoursCalculator`・`AllocationBalancer`・`MonthlyWorkSheet`）で
+同じ考え方で計算する。計算結果はDBに保存しない（「4. アーキテクチャ」の導出値）。
+
+### 稼働日（営業日）
+
+- 土日は休み。**日本の祝日はアプリが自動で判定する**（`JapaneseHolidays`）。外部APIや年ごとの祝日データには頼らず、
+  「国民の祝日に関する法律」のルール（固定日、ハッピーマンデー、春分の日・秋分の日の計算式、振替休日、国民の休日）と、
+  2019年（天皇の即位）・2020/2021年（東京オリンピック・パラリンピック）の特例を実装している。対象は2000〜2099年。
+  内閣府が公表している祝日一覧と一致することをテストで確認している（2000〜2027年）
+  - 法改正や新たな特例があった場合は、`JapaneseHolidays` を修正する
+- **会社の休業日**（年末年始・創立記念日等）は、adminが休業日管理画面から追加・削除する（`company_holidays`）
+- 稼働日 ＝ 平日（月〜金）で、祝日・会社の休業日でない日
+
+### 日ごとの印（`work_records.flag`）
+
+| 印 | DBの値 | 意味 | 稼働時間 | 営業日数 |
+|---|---|---|---|---|
+| 休 | `holiday` | 個人の休暇（有給休暇等） | 0 | 数えない |
+| 欠 | `absence` | 欠勤 | 0 | 数える |
+
+### 稼働時間（Excel の G 列に相当）
+
+- 稼働日で印が無い日：`(退勤 ?: 定時終業) − (出勤 ?: 定時始業) − (休憩 ?: 定時休憩)`。
+  **何も入力していない稼働日も、定時どおり働いたとみなす**（Excelと同じ）。定時は本人の勤務時間設定
+  （未保存なら初期値の 9:30〜18:30・休憩1時間）
+- 休み（土日・祝日・会社の休業日）：出勤か退勤が入力されている場合だけ稼働として上の式で計算する（片方だけなら他方は定時）。
+  どちらも入力されていなければ 0
+- 印（休・欠）の日は 0
+- 計算結果が負になる場合（入力ミス）は 0 とし、日次入力画面で警告できるよう日の状態として区別する
+- 時刻の差（分）は 0.01時間単位に四捨五入してから休憩時間を引く
+- **今日より後の日は月の合計に含めない**（実績のみ）。「今日」は日本時間（Asia/Tokyo）の日付
+
+### 過不足（Excel の H 列に相当）
+
+- 日ごとに `稼働時間 − 案件への配分の合計`。0 でない日を「過不足あり」とする（負＝配分しすぎ）
+- 月の合計に含める日（今日まで）だけを判定する
+
+### 月次の集計（案件別集計・管理者ダッシュボード）
+
+- **営業日数**：その月の稼働日数 − 「休」の日数（月全体で数える。休みの日に付けた「休」は数に影響しない）
+- **月の稼働時間合計**：今日までの日の稼働時間の合計
+- **下限・上限との比較**：月の稼働時間合計を、本人の勤務時間設定の稼働時間の下限・上限と比べる（下限未満／範囲内／上限超過）
+- **案件ごとの実績時間と割合**：今日までの日の配分の合計。割合の分母は月の稼働時間合計で、0.1%単位に四捨五入する
+  （端数のため、割合の合計が100.0%から±0.1%程度ずれることがある）。配分されていない時間は「未配分」として別に表示する
+- **過不足がある日数**
+- Excelの予定割合・予定時間は対象外（「6. DBスキーマ」の「v1のスコープ外」）
+
