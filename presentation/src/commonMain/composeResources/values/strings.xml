@@ -43,4 +43,39 @@
     <string name="projects_title">案件管理</string>
     <string name="users_title">ユーザー管理</string>
     <string name="roles_title">権限管理</string>
+    <!-- ユーザー管理画面 (招待リスト・利用停止) -->
+    <string name="users_invite_header">招待</string>
+    <!-- 招待しても Supabase からメールは送られない (Before User Created Hook で登録を許可するだけ) ため -->
+    <string name="users_invite_description">招待リストに追加したメールアドレスの人だけがログインできます。招待メールは送信されないため、アプリのURLを本人へ別途お伝えください。</string>
+    <string name="users_invite_email_label">招待するメールアドレス</string>
+    <string name="users_invite_button">招待する</string>
+    <!-- %1$s: 招待したメールアドレス -->
+    <string name="users_invite_success_message">%1$s を招待リストに追加しました。</string>
+    <string name="users_invite_invalid_email_message">メールアドレスの形式が正しくありません。</string>
+    <string name="users_invite_already_invited_message">このメールアドレスは既に招待リストにあります。</string>
+    <string name="users_invitations_header">招待リスト</string>
+    <string name="users_invitations_empty">招待リストは空です。</string>
+    <!-- 招待したメールアドレスのアカウントが既にある (本人が1回以上ログインした) 場合 -->
+    <string name="users_invitation_has_account">アカウント作成済み</string>
+    <string name="users_invitation_no_account">未ログイン</string>
+    <string name="users_invitation_revoke_button">取り消し</string>
+    <string name="users_invitation_revoke_note">取り消しても、作成済みのアカウントは削除されません。ログインできないようにするには、下のユーザー一覧で利用停止してください。</string>
+    <string name="users_list_header">ユーザー</string>
+    <!-- %1$s: 表示名 (ログイン中のユーザー自身の行) -->
+    <string name="users_list_current_user_name">%1$s（あなた）</string>
+    <string name="users_role_admin">管理者</string>
+    <string name="users_role_member">メンバー</string>
+    <string name="users_status_active">利用中</string>
+    <string name="users_status_suspended">利用停止中</string>
+    <!-- %1$s: 権限 (users_role_*)、%2$s: 状態 (users_status_*) -->
+    <string name="users_role_and_status">権限: %1$s ／ 状態: %2$s</string>
+    <string name="users_suspend_button">利用停止</string>
+    <string name="users_reactivate_button">復帰</string>
+    <string name="users_suspend_confirm_title">利用停止の確認</string>
+    <!-- %1$s: 表示名、%2$s: メールアドレス -->
+    <string name="users_suspend_confirm_message">%1$s（%2$s）を利用停止しますか？ログインできなくなり、ログイン中の場合も操作できなくなります。アカウントと過去の記録は残り、復帰させると再びログインできます。</string>
+    <string name="users_suspend_confirm_button">利用停止する</string>
+    <string name="users_cancel_button">キャンセル</string>
+    <string name="users_ok_button">OK</string>
+    <string name="users_last_active_admin_required_message">利用中の管理者が1人もいなくなるため、この操作はできません。</string>
 </resources>

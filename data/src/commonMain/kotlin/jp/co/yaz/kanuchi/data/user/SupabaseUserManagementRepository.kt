@@ -68,9 +68,9 @@ internal class SupabaseUserManagementRepository(
         runCatchingData(block).recoverCatchingKnownFailure()
 
     private fun Result<Unit>.recoverCatchingKnownFailure(): Result<Unit> {
-        val failure = exceptionOrNull() ?: return this
-        val restException = failure.cause as? PostgrestRestException ?: return this
-        val known = toUserManagementFailure(code = restException.code, message = restException.error, cause = restException)
+        val restException = exceptionOrNull()?.cause as? PostgrestRestException
+        val known =
+            restException?.let { toUserManagementFailure(code = it.code, message = it.error, cause = it) }
         return if (known != null) Result.failure(known) else this
     }
 
