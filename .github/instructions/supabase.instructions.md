@@ -164,3 +164,11 @@ RLS の権限方針（誰が何を参照・編集できるか）は `docs/requir
   （理由は [data.instructions.md](data.instructions.md) を参照）。
 - Edge Function + Admin API（`inviteUserByEmail`）方式は、TypeScript/Deno・secret key管理・
   デプロイ経路の追加が必要になるため採用していない（`docs/requirements.md` 5節）。
+
+## upsert と BEFORE INSERT トリガー
+
+- `insert ... on conflict do update`（supabase-kt の `upsert`）は、既存の行の更新になる場合も **BEFORE INSERT トリガーが発火する**。
+  「新しい行の追加だけを制限する」トリガーは、同じキーの行が既にあれば許可するようにしないと、既存の行の upsert による更新まで拒否してしまう。
+  また、`do update set` は値が変わらない列も含めて全列を set するため、`before update of <列>` のトリガーは値が変わったか
+  （`is distinct from old.<列>`）で判定する。実例: `guard_allocation_project`（`allocations` に新しく配分できるのは本人に割り当てられた
+  有効な案件だけ。既にある配分は担当を外された後も変更・削除できる）と `11_allocation_project_guard.test.sql`。
