@@ -100,5 +100,5 @@
     <!-- %1$s: 表示名、%2$s: 変更後の権限 (roles_role_admin / roles_role_member) -->
     <string name="roles_change_success_message">%1$s の権限を「%2$s」に変更しました。</string>
     <!-- 降格によって利用中の管理者がいなくなるため、DB 側で拒否された場合 (他の管理者が同時に降格・利用停止した場合等) -->
-    <string name="roles_last_active_admin_error_message">利用中の管理者が1人もいなくなるため、変更できませんでした。一覧を最新の状態に更新しました。</string>
+    <string name="roles_last_active_admin_error_message">利用中の管理者が1人もいなくなるため、変更できませんでした（他の管理者が先に降格・利用停止した可能性があります）。</string>
 </resources>
