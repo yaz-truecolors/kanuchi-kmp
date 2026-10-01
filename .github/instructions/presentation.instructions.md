@@ -152,3 +152,12 @@ Compose Multiplatform の UI・ViewModel・リソース（`presentation/`）と�
   - 開発サーバーは Kotlin Gradle プラグインの既定（`devServer.open = true`）でシステムの既定ブラウザも開く。
 - Gradle 側の wasmJs 設定（`outputModuleName`、Compose Resources 依存の追加タイミング、`kotlinx-browser` 等）は
   [build.instructions.md](build.instructions.md) を参照。
+
+## 引数付きの画面遷移・画面からの戻り（日次入力）
+
+- 画面に値を渡すルートは `"daily-input/{date}"` のようにパスに入れ、受け取る側で `LocalDate.parse` 等で解釈する
+  （解釈できない値なら一覧に戻す）。ViewModel へは `koinViewModel { parametersOf(date) }` で渡し、
+  モジュールでは `viewModel { params -> DailyInputDayViewModel(params.get(), get(), ...) }` と登録する。
+- 保存・削除の完了で前の画面に戻すときは、UiState に `isFinished` を持たせ、画面側の `LaunchedEffect(isFinished)` で
+  コールバック（`popBackStack`）を呼ぶ（ViewModel から NavController を触らない）。一覧へ戻ったときの再読み込みは、
+  一覧の ViewModel の `onScreenShown`（初回は init で読み込み済みのため飛ばす）で行う。

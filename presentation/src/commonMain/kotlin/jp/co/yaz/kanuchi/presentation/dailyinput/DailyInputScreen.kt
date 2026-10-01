@@ -109,7 +109,6 @@ private fun MonthSummary(
                 formatHours(shift.minHours),
                 formatHours(shift.maxHours),
             ),
-            style = MaterialTheme.typography.titleSmall,
         )
         when (sheet.rangeStatus) {
             WorkingHoursRangeStatus.BELOW_MIN -> WarningText(stringResource(Res.string.daily_input_range_below_min))
@@ -135,7 +134,7 @@ private fun WarningText(text: String) {
 
 /** 一覧の列の幅。1行に収めるため固定幅にする。 */
 private object ColumnWidth {
-    val DATE: Dp = 72.dp
+    val DATE: Dp = 84.dp
     val DAY_KIND: Dp = 104.dp
     val FLAG: Dp = 28.dp
     val TIME: Dp = 52.dp
