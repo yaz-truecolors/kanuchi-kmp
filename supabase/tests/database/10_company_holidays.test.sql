@@ -2,7 +2,7 @@
 begin;
 \ir helpers.psql
 
-select plan(24);
+select plan(29);
 
 select tests.create_standard_users();
 
@@ -94,6 +94,39 @@ select throws_ok(
   '23514',
   'new row for relation "company_holidays" violates check constraint "company_holidays_name_check"',
   '名前の前後に空白がある休業日は登録できない'
+);
+
+select throws_ok(
+  $$ insert into public.company_holidays (holiday_date, name) values ('2099-12-03', E'\tdb-test 先頭にタブ') $$,
+  '23514',
+  'new row for relation "company_holidays" violates check constraint "company_holidays_name_check"',
+  '名前の先頭にタブがある休業日は登録できない'
+);
+
+select throws_ok(
+  $$ insert into public.company_holidays (holiday_date, name) values ('2099-12-03', E'db-test 末尾に改行\n') $$,
+  '23514',
+  'new row for relation "company_holidays" violates check constraint "company_holidays_name_check"',
+  '名前の末尾に改行がある休業日は登録できない'
+);
+
+select throws_ok(
+  $$ insert into public.company_holidays (holiday_date, name) values ('2099-12-03', U&'\3000db-test 先頭に全角スペース') $$,
+  '23514',
+  'new row for relation "company_holidays" violates check constraint "company_holidays_name_check"',
+  '名前の先頭に全角スペースがある休業日は登録できない'
+);
+
+select results_eq(
+  $$ insert into public.company_holidays (holiday_date, name) values ('2099-12-09', U&'db-test 年末\3000年始') returning name $$,
+  $$ values (U&'db-test 年末\3000年始') $$,
+  '名前の途中の全角スペースは許可される'
+);
+
+select results_eq(
+  $$ insert into public.company_holidays (holiday_date, name) values ('2099-12-10', repeat(U&'\+01F38D', 50)) returning char_length(name) $$,
+  $$ values (50) $$,
+  '名前の文字数はコードポイント数で数える（絵文字50文字は登録できる）'
 );
 
 select throws_ok(
