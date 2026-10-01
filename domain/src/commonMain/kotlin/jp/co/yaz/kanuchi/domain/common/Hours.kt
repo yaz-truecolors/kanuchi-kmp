@@ -13,6 +13,13 @@ value class Hours private constructor(
 ) : Comparable<Hours> {
     override fun compareTo(other: Hours): Int = hundredths.compareTo(other.hundredths)
 
+    operator fun plus(other: Hours): Hours = Hours(hundredths + other.hundredths)
+
+    /** 差 (`this - other`)。負になり得るため [SignedHours] で返す。 */
+    operator fun minus(other: Hours): SignedHours = SignedHours.ofHundredths(hundredths - other.hundredths)
+
+    fun toSignedHours(): SignedHours = SignedHours.ofHundredths(hundredths)
+
     /** 時間数の10進表記。小数部の末尾の0は付けない (例: `1`、`1.5`、`1.25`)。 */
     override fun toString(): String {
         val integerPart = hundredths / HUNDRED
@@ -23,6 +30,8 @@ value class Hours private constructor(
 
     companion object {
         private const val HUNDRED = 100
+
+        val ZERO: Hours = Hours(0)
         private const val MAX_INTEGER_DIGITS = 7
         private val TEXT_PATTERN = Regex("^(\\d{1,$MAX_INTEGER_DIGITS})(?:\\.(\\d{1,2}))?$")
 

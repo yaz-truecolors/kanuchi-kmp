@@ -23,6 +23,11 @@ internal class FakeShiftSettingsRepository : ShiftSettingsRepository {
         return getResult
     }
 
+    /** getShiftSettingsOf() の結果 (ユーザーIDごと)。無ければ未保存 (null) を返す。 */
+    val getOfResults = mutableMapOf<String, Result<ShiftSettings?>>()
+
+    override suspend fun getShiftSettingsOf(userId: String): Result<ShiftSettings?> = getOfResults[userId] ?: Result.success(null)
+
     override suspend fun saveShiftSettings(settings: ShiftSettings): Result<ShiftSettings> {
         savedSettings += settings
         saveGate?.await()

@@ -10,7 +10,7 @@ select plan(17);
 -- テーブルを追加・削除したら、この一覧を更新し、そのテーブルの RLS・権限のテストを追加すること。
 select tables_are(
   'public',
-  array['profiles', 'projects', 'user_projects', 'shift_settings', 'work_records', 'allocations', 'invitations'],
+  array['profiles', 'projects', 'user_projects', 'shift_settings', 'work_records', 'allocations', 'invitations', 'company_holidays'],
   'public スキーマのテーブル一覧が想定どおり（追加・削除したらテストも追加・更新する）'
 );
 
@@ -154,7 +154,9 @@ select set_eq(
       ('work_records', '', 'SELECT'), ('work_records', '', 'INSERT'), ('work_records', '', 'UPDATE'), ('work_records', '', 'DELETE'),
       ('allocations', '', 'SELECT'), ('allocations', '', 'INSERT'), ('allocations', '', 'UPDATE'), ('allocations', '', 'DELETE'),
       ('invitations', '', 'SELECT'), ('invitations', '', 'DELETE'),
-      ('invitations', 'email', 'INSERT')
+      ('invitations', 'email', 'INSERT'),
+      ('company_holidays', '', 'SELECT'), ('company_holidays', '', 'DELETE'),
+      ('company_holidays', 'holiday_date', 'INSERT'), ('company_holidays', 'name', 'INSERT')
   $$,
   'authenticated の権限はアプリが使う参照・追加・変更・削除（列単位を含む）だけ'
 );

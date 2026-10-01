@@ -1,8 +1,8 @@
--- shift_settings: 本人のみ参照・追加・変更・削除可（admin の例外なし）、CHECK 制約
+-- shift_settings: 本人のみ追加・変更・削除可、参照は本人 or admin（admin は参照のみ）、CHECK 制約
 begin;
 \ir helpers.psql
 
-select plan(24);
+select plan(25);
 
 select tests.create_standard_users();
 select tests.create_user('carol@db-test.invalid');
@@ -69,13 +69,17 @@ select throws_ok(
 );
 
 -- ------------------------------------------------------------
--- admin（例外なし: 他人の shift_settings には一切アクセスできない）
+-- admin（他人の shift_settings は参照のみ。管理者ダッシュボードで定時・稼働時間の下限/上限を使うため）
 -- ------------------------------------------------------------
 select tests.authenticate_as('admin@db-test.invalid');
 
-select is_empty(
-  $$ select user_id from public.shift_settings where user_id <> auth.uid() $$,
-  'admin も他人の shift_settings を参照できない'
+select set_eq(
+  $$
+    select user_id from public.shift_settings
+    where user_id in (tests.user_id('alice@db-test.invalid'), tests.user_id('bob@db-test.invalid'))
+  $$,
+  $$ values (tests.user_id('alice@db-test.invalid')), (tests.user_id('bob@db-test.invalid')) $$,
+  'admin は他人の shift_settings を参照できる'
 );
 
 select throws_ok(
@@ -101,6 +105,19 @@ select results_eq(
   $$ values (tests.user_id('admin@db-test.invalid')) $$,
   'admin も自分の shift_settings は追加できる'
 );
+
+-- 利用停止中の admin は admin として扱わない（is_admin() が false）ため、他人の shift_settings を参照できない
+select tests.clear_authentication();
+update public.profiles set suspended_at = now() where id = tests.user_id('admin@db-test.invalid');
+select tests.authenticate_as('admin@db-test.invalid');
+
+select is_empty(
+  $$ select user_id from public.shift_settings where user_id <> auth.uid() $$,
+  '利用停止中の admin は他人の shift_settings を参照できない'
+);
+
+select tests.clear_authentication();
+update public.profiles set suspended_at = null where id = tests.user_id('admin@db-test.invalid');
 
 -- ------------------------------------------------------------
 -- 未ログイン（anon）
