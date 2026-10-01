@@ -6,6 +6,7 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import jp.co.yaz.kanuchi.domain.common.GenericDataFailureException
+import jp.co.yaz.kanuchi.domain.profile.DisplayName
 import jp.co.yaz.kanuchi.domain.profile.ProfileRepository
 import jp.co.yaz.kanuchi.domain.profile.UserProfile
 import kotlinx.coroutines.CancellationException
@@ -36,6 +37,19 @@ internal class SupabaseProfileRepository(
                     order("display_name", Order.ASCENDING)
                 }.decodeList<ProfileDto>()
                 .map { it.toDomain() }
+        }
+
+    override suspend fun updateDisplayName(displayName: DisplayName): Result<UserProfile> =
+        runCatchingData {
+            val userId = checkNotNull(supabaseClient.auth.currentUserOrNull()?.id) { "not signed in" }
+            // RLS で更新できない場合は失敗せず0行になるため、更新後の行を受け取って確かめる (0行なら decodeSingle が失敗する)
+            supabaseClient
+                .from(TABLE)
+                .update({ set("display_name", displayName.value) }) {
+                    select(Columns.list(ProfileDto.COLUMNS))
+                    filter { eq("id", userId) }
+                }.decodeSingle<ProfileDto>()
+                .toDomain()
         }
 
     private companion object {

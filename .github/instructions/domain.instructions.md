@@ -33,3 +33,12 @@ domain 層の設計原則は領域共通の原則として [copilot-construction
   presentation 層で `strings.xml` の文言に変換する。
 - マジックリンクから戻った際のエラーは `MagicLinkCallbackError`（種別のみの enum）で表す。URLに含まれる説明文は
   誰でも書き換えられるため、domain にメッセージとして持ち込まない。
+
+## 時刻・時間数・入力の検証
+
+- DB の `time` 型（時刻）は `TimeOfDay`（分単位）、`numeric(p, 2)` の時間数（休憩時間・稼働時間等）は `Hours`
+  （0.01 時間単位の整数で保持し、2進小数の誤差を避ける。負の値は作れない）で表す（いずれも `domain/common/`）。
+  利用者の入力文字列の解釈は `TimeOfDay.parse`（`HH:mm`）・`Hours.parse`（0以上、小数第2位まで）を使う。
+- 入力の検証は domain に置き、DB の check 制約と同じ条件と、列の型に収まる範囲（例: `numeric(4, 2)` なら 99.99 以下）を
+  確認する（実例: `ShiftSettingsInput.toShiftSettings()`、`DisplayName.of()`）。満たしていない条件は文言を持たない
+  enum（例: `ShiftSettingsViolation`）で返し、presentation 層が入力欄ごとの文言に変換する。
