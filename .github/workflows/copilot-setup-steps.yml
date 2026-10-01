@@ -36,7 +36,7 @@ jobs:
           java-version: "17"
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       # presentation の Karma テスト（wasmJsBrowserTest）用。ci.yml と同じ
       - name: Setup Chrome (for wasmJs browser tests)
