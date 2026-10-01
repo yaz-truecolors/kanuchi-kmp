@@ -11,6 +11,9 @@ enum class MagicLinkCallbackError {
     /** リンクの有効期限切れ、または使用済み (マジックリンクは1回しか使えない)。 */
     EXPIRED,
 
+    /** 利用停止中のユーザー (admin がユーザー管理画面で利用停止した)。 */
+    SUSPENDED,
+
     /** それ以外の理由。 */
     UNKNOWN,
 }

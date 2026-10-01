@@ -21,6 +21,8 @@
     <string name="login_generic_error_message">マジックリンクの送信に失敗しました。しばらくしてから再度お試しください。</string>
     <!-- メール内のリンクを開いたが、期限切れ・使用済みでログインできなかった場合 -->
     <string name="login_magic_link_expired_message">ログイン用のリンクが無効か、有効期限が切れています。もう一度ログインリンクを送ってください。</string>
+    <!-- メール内のリンクを開いたが、利用停止中のためログインできなかった場合 -->
+    <string name="login_magic_link_suspended_message">このアカウントは利用停止中のため、ログインできません。管理者にお問い合わせください。</string>
     <!-- メール内のリンクを開いたが、期限切れ以外の理由でログインできなかった場合 -->
     <string name="login_magic_link_error_message">ログインに失敗しました。もう一度ログインリンクを送ってください。</string>
 

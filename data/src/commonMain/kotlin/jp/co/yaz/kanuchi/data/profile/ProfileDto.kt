@@ -14,10 +14,12 @@ internal data class ProfileDto(
     val email: String,
     @SerialName("display_name") val displayName: String,
     val role: String,
+    /** 利用停止した日時 (ISO 8601)。利用中なら null。日時そのものは使わず、利用停止中かどうかだけを見る。 */
+    @SerialName("suspended_at") val suspendedAt: String? = null,
 ) {
     companion object {
         /** PostgREST で取得する列。テーブルに列が増えても、必要な列だけを取得する。 */
-        val COLUMNS = listOf("id", "email", "display_name", "role")
+        val COLUMNS = listOf("id", "email", "display_name", "role", "suspended_at")
     }
 }
 
@@ -32,6 +34,7 @@ internal fun ProfileDto.toDomain(): UserProfile =
         displayName = displayName,
         // DB の check 制約により member / admin 以外は入らないが、万一の場合は権限の小さい member として扱う
         role = if (role == ROLE_ADMIN) UserRole.ADMIN else UserRole.MEMBER,
+        isSuspended = suspendedAt != null,
     )
 
 internal fun UserRole.toDbValue(): String =

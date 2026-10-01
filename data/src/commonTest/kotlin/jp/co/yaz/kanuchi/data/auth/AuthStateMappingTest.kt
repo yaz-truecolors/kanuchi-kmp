@@ -64,6 +64,15 @@ class AuthStateMappingTest {
 
     @OptIn(SupabaseExperimental::class)
     @Test
+    fun `user banned error is mapped to suspended`() {
+        // ローカルの Supabase Auth で、利用停止中のユーザーがマジックリンクを開いたときに返る値
+        val error = AuthEvent.OtpError(error = "user_banned", errorDescription = "User is banned")
+
+        assertEquals(MagicLinkCallbackError.SUSPENDED, error.toMagicLinkCallbackError())
+    }
+
+    @OptIn(SupabaseExperimental::class)
+    @Test
     fun `other errors are mapped to unknown`() {
         val error = AuthEvent.OtpError(error = "unexpected_failure", errorDescription = "anything")
 

@@ -35,11 +35,15 @@ internal fun SessionStatus.toAuthState(): AuthState =
 /**
  * マジックリンクを開いて戻ってきたURLに含まれていたエラーを、domain のエラー種別に変換する。
  * URL内の説明文 (`errorDescription`) はリンクを開いた人が自由に書き換えられるため使わない。
+ *
+ * 利用停止中のユーザーもマジックリンクのメール自体は受け取れる (Supabase Auth は送信を拒否しない) が、
+ * リンクを開くと Supabase Auth が `error_code=user_banned` を付けてアプリに戻す。
  */
 @OptIn(SupabaseExperimental::class)
 internal fun AuthEvent.OtpError.toMagicLinkCallbackError(): MagicLinkCallbackError =
-    if (errorCode == AuthErrorCode.OtpExpired) {
-        MagicLinkCallbackError.EXPIRED
-    } else {
-        MagicLinkCallbackError.UNKNOWN
+    when (errorCode) {
+        AuthErrorCode.OtpExpired -> MagicLinkCallbackError.EXPIRED
+        // 利用停止中のユーザー (auth.users.banned_until が未来の日時。supabase/migrations の set_user_suspended 参照)
+        AuthErrorCode.UserBanned -> MagicLinkCallbackError.SUSPENDED
+        else -> MagicLinkCallbackError.UNKNOWN
     }
