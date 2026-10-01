@@ -128,6 +128,11 @@ RLS の権限方針（誰が何を参照・編集できるか）は `docs/requir
   テーブルは、`grant insert (<送ってよい列>, ...)` のように列単位で insert を許可する。テーブル単位で許可すると、
   クライアントが他人の ID を送って既定値を上書きできてしまう（DBテストで「送ると 42501 になる」ことを確認する。実例:
   `10_company_holidays.test.sql`）。
+- 文字列の check 制約は、アプリ（domain）の検証と判定を完全に一致させる。DB が通した値を domain の変換が拒否すると、
+  その行を含む一覧の取得全体が失敗する。特に `btrim()` は既定で半角スペースしか除かないため、「前後に空白なし」は
+  Kotlin の `Char.isWhitespace()` と同じ文字の集合（タブ・改行・全角スペース等）を正規表現で明示して判定する
+  （`[[:space:]]` はロケール依存なので使わない）。文字数は `char_length`（コードポイント数）なので、domain 側も
+  `String.length`（UTF-16 の単位数）ではなくコードポイント数で数える。実例: `company_holidays_name_check` と `CompanyHoliday.isValidName`。
 
 ## 招待制アカウント作成（Before User Created Hook）
 

@@ -38,8 +38,12 @@ data class CompanyHolidayInput(
                     if (days < 1) add(CompanyHolidayViolation.END_DATE_BEFORE_START_DATE)
                     if (days > MAX_DAYS) add(CompanyHolidayViolation.PERIOD_TOO_LONG)
                 }
-                if (trimmedName.isEmpty()) add(CompanyHolidayViolation.NAME_BLANK)
-                if (CompanyHoliday.nameLength(trimmedName) > CompanyHoliday.MAX_NAME_LENGTH) add(CompanyHolidayViolation.NAME_TOO_LONG)
+                if (trimmedName.isEmpty()) {
+                    add(CompanyHolidayViolation.NAME_BLANK)
+                } else if (!CompanyHoliday.isValidName(trimmedName)) {
+                    // trim 済みで空でないため、満たしていないのは文字数だけ
+                    add(CompanyHolidayViolation.NAME_TOO_LONG)
+                }
             }
         if (violations.isNotEmpty()) return Result.failure(InvalidCompanyHolidayInputException(violations))
         // 違反が無い = 日付の形式が正しい (null でない)

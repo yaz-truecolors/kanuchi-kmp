@@ -21,13 +21,14 @@ data class CompanyHoliday(
         /** 名前の最大文字数。DB の check 制約 (`company_holidays_name_check`) と一致させること。 */
         const val MAX_NAME_LENGTH: Int = 50
 
-        /** [name] が休業日の名前として正しいか (前後の空白なしで 1〜[MAX_NAME_LENGTH] 文字)。 */
-        fun isValidName(name: String): Boolean = name.isNotEmpty() && name == name.trim() && nameLength(name) <= MAX_NAME_LENGTH
-
         /**
-         * [name] の文字数。DB の `char_length` と同じく Unicode のコードポイント数で数える
-         * (`String.length` は UTF-16 単位のため、絵文字などを2文字と数えてしまう)。
+         * [name] が休業日の名前として正しいか (前後の空白なしで 1〜[MAX_NAME_LENGTH] 文字)。
+         * 空白は [Char.isWhitespace] (タブ・改行・全角スペース等を含む) で判定し、文字数はコードポイント数で数える。
+         * DB の check 制約も同じ空白文字の集合・数え方 (`char_length`) にしているため、変えるときは両方を合わせること。
          */
-        fun nameLength(name: String): Int = name.count { !it.isLowSurrogate() }
+        fun isValidName(name: String): Boolean = name.isNotEmpty() && name == name.trim() && name.codePointCount() <= MAX_NAME_LENGTH
+
+        // 絵文字等のサロゲートペアを1文字と数える (String.length は UTF-16 の単位数のため2文字になる)
+        private fun String.codePointCount(): Int = count { !it.isLowSurrogate() }
     }
 }

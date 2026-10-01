@@ -18,6 +18,17 @@ class CompanyHolidayInputTest {
     }
 
     @Test
+    fun `full width spaces and tabs around the name are removed`() {
+        val holidays = CompanyHolidayInput(startDate = "2026-08-14", endDate = "", name = "\u3000\t夏季休業\u3000").toCompanyHolidays()
+
+        assertEquals(listOf(CompanyHoliday(LocalDate(2026, 8, 14), "夏季休業")), holidays.getOrThrow())
+        assertEquals(
+            setOf(CompanyHolidayViolation.NAME_BLANK),
+            violationsOf(CompanyHolidayInput(startDate = "2026-08-14", endDate = "", name = "\u3000\t")),
+        )
+    }
+
+    @Test
     fun `period is converted to each day including the end of year`() {
         val holidays = CompanyHolidayInput(startDate = "2026-12-29", endDate = "2027-01-03", name = "年末年始休業").toCompanyHolidays()
 
