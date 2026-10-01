@@ -5,6 +5,7 @@ import jp.co.yaz.kanuchi.presentation.home.HomeViewModel
 import jp.co.yaz.kanuchi.presentation.navigation.AuthGateViewModel
 import jp.co.yaz.kanuchi.presentation.project.ProjectMembersViewModel
 import jp.co.yaz.kanuchi.presentation.project.ProjectsViewModel
+import jp.co.yaz.kanuchi.presentation.role.RolesViewModel
 import jp.co.yaz.kanuchi.presentation.settings.SettingsViewModel
 import jp.co.yaz.kanuchi.presentation.users.UsersViewModel
 import org.koin.core.module.dsl.viewModel
@@ -20,6 +21,7 @@ val presentationModule =
         viewModelOf(::AuthGateViewModel)
         viewModelOf(::LoginViewModel)
         viewModelOf(::HomeViewModel)
+        viewModelOf(::RolesViewModel)
         viewModelOf(::UsersViewModel)
         viewModelOf(::SettingsViewModel)
         viewModelOf(::ProjectsViewModel)

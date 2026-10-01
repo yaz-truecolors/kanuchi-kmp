@@ -14,16 +14,13 @@ import androidx.navigation.navArgument
 import androidx.savedstate.read
 import jp.co.yaz.kanuchi.domain.auth.AuthState
 import jp.co.yaz.kanuchi.presentation.auth.LoginScreen
-import jp.co.yaz.kanuchi.presentation.common.ComingSoonScreen
 import jp.co.yaz.kanuchi.presentation.common.LoadingScreen
 import jp.co.yaz.kanuchi.presentation.home.HomeScreen
 import jp.co.yaz.kanuchi.presentation.project.ProjectMembersScreen
 import jp.co.yaz.kanuchi.presentation.project.ProjectsScreen
+import jp.co.yaz.kanuchi.presentation.role.RolesScreen
 import jp.co.yaz.kanuchi.presentation.settings.SettingsScreen
 import jp.co.yaz.kanuchi.presentation.users.UsersScreen
-import kanuchi.presentation.generated.resources.Res
-import kanuchi.presentation.generated.resources.roles_title
-import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -85,7 +82,7 @@ fun KanuchiNavHost(authGateViewModel: AuthGateViewModel = koinViewModel()) {
             UsersScreen(onBack = navController::backToHome)
         }
         composable(KanuchiDestinations.ROLES) {
-            ComingSoonScreen(title = stringResource(Res.string.roles_title), onBack = navController::backToHome)
+            RolesScreen(onBack = navController::backToHome)
         }
     }
 }

@@ -13,6 +13,8 @@ import jp.co.yaz.kanuchi.domain.project.GetProjectsUseCase
 import jp.co.yaz.kanuchi.domain.project.RenameProjectUseCase
 import jp.co.yaz.kanuchi.domain.project.SaveProjectAssignmentUseCase
 import jp.co.yaz.kanuchi.domain.project.SetProjectActiveUseCase
+import jp.co.yaz.kanuchi.domain.role.ChangeUserRoleUseCase
+import jp.co.yaz.kanuchi.domain.role.GetRoleManagementOverviewUseCase
 import jp.co.yaz.kanuchi.domain.shift.GetShiftSettingsUseCase
 import jp.co.yaz.kanuchi.domain.shift.SaveShiftSettingsUseCase
 import jp.co.yaz.kanuchi.domain.user.GetUserManagementOverviewUseCase
@@ -39,6 +41,8 @@ val domainModule =
         factoryOf(::RevokeInvitationUseCase)
         factoryOf(::SuspendUserUseCase)
         factoryOf(::ReactivateUserUseCase)
+        factoryOf(::GetRoleManagementOverviewUseCase)
+        factoryOf(::ChangeUserRoleUseCase)
         factoryOf(::UpdateDisplayNameUseCase)
         factoryOf(::GetShiftSettingsUseCase)
         factoryOf(::SaveShiftSettingsUseCase)
