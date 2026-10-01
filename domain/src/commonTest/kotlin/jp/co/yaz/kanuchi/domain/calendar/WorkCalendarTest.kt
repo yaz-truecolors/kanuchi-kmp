@@ -56,4 +56,24 @@ class WorkCalendarTest {
         assertFalse(CompanyHoliday.isValidName("あ".repeat(CompanyHoliday.MAX_NAME_LENGTH + 1)))
         assertFailsWith<IllegalArgumentException> { CompanyHoliday(LocalDate(2026, 1, 5), " ") }
     }
+
+    @Test
+    fun `company holiday name length is counted in code points`() {
+        val emoji = "\uD83C\uDF8D"
+        assertTrue(CompanyHoliday.isValidName(emoji.repeat(CompanyHoliday.MAX_NAME_LENGTH)))
+        assertFalse(CompanyHoliday.isValidName(emoji.repeat(CompanyHoliday.MAX_NAME_LENGTH + 1)))
+    }
+
+    @Test
+    fun `company holiday name must not start or end with any whitespace the database also rejects`() {
+        // DB の company_holidays_name_check で前後に置けない文字の集合と一致させる
+        val whitespaces =
+            listOf('\t', '\n', '\u000B', '\u000C', '\r', '\u001C', '\u001F', ' ', '\u00A0', '\u1680') +
+                ('\u2000'..'\u200A') + listOf('\u2028', '\u2029', '\u202F', '\u205F', '\u3000')
+        for (whitespace in whitespaces) {
+            assertFalse(CompanyHoliday.isValidName("${whitespace}創立記念日"), "leading U+${whitespace.code.toString(16)}")
+            assertFalse(CompanyHoliday.isValidName("創立記念日$whitespace"), "trailing U+${whitespace.code.toString(16)}")
+        }
+        assertTrue(CompanyHoliday.isValidName("年末\u3000年始"))
+    }
 }
