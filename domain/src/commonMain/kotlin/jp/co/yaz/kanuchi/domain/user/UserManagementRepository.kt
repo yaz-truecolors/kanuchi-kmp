@@ -27,6 +27,8 @@ interface UserManagementRepository {
     /**
      * 招待を取り消す (招待リストから削除する)。既に作成済みのアカウントは削除されない
      * (ログインできないようにするには [setUserSuspended] で利用停止する)。
+     *
+     * 削除できなかった場合 (既に取り消されていた・admin でなくなった等) も失敗を返す。
      */
     suspend fun revokeInvitation(email: String): Result<Unit>
 
