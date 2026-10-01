@@ -43,4 +43,27 @@
     <string name="projects_title">案件管理</string>
     <string name="users_title">ユーザー管理</string>
     <string name="roles_title">権限管理</string>
+
+    <!-- 権限管理画面 (admin のみ) -->
+    <string name="roles_description">管理者は、案件管理・ユーザー管理・権限管理の画面を使えます。自分自身と、利用停止中のユーザーの権限は変更できません（利用停止中のユーザーは、ユーザー管理画面で復帰させてから変更してください）。</string>
+    <string name="roles_role_admin">管理者</string>
+    <string name="roles_role_member">メンバー</string>
+    <!-- 一覧で、ログイン中のユーザー自身の行に表示する名前。%1$s: 表示名 -->
+    <string name="roles_current_user_name">%1$s（自分）</string>
+    <string name="roles_suspended_label">利用停止中</string>
+    <string name="roles_promote_button">管理者にする</string>
+    <string name="roles_demote_button">メンバーにする</string>
+    <string name="roles_changing_button">変更中...</string>
+    <string name="roles_promote_confirm_title">管理者にしますか？</string>
+    <!-- %1$s: 表示名、%2$s: メールアドレス -->
+    <string name="roles_promote_confirm_message">%1$s（%2$s）を管理者にします。案件管理・ユーザー管理・権限管理の画面を使えるようになります。</string>
+    <string name="roles_demote_confirm_title">メンバーにしますか？</string>
+    <!-- %1$s: 表示名、%2$s: メールアドレス -->
+    <string name="roles_demote_confirm_message">%1$s（%2$s）をメンバーにします。管理者用の画面を使えなくなります。</string>
+    <string name="roles_confirm_button">変更する</string>
+    <string name="roles_cancel_button">キャンセル</string>
+    <!-- %1$s: 表示名、%2$s: 変更後の権限 (roles_role_admin / roles_role_member) -->
+    <string name="roles_change_success_message">%1$s の権限を「%2$s」に変更しました。</string>
+    <!-- 降格によって利用中の管理者がいなくなるため、DB 側で拒否された場合 (他の管理者が同時に降格・利用停止した場合等) -->
+    <string name="roles_last_active_admin_error_message">利用中の管理者が1人もいなくなるため、変更できませんでした。一覧を最新の状態に更新しました。</string>
 </resources>

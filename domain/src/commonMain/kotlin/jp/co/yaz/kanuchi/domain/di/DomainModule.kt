@@ -6,6 +6,8 @@ import jp.co.yaz.kanuchi.domain.auth.SendMagicLinkUseCase
 import jp.co.yaz.kanuchi.domain.auth.SignOutUseCase
 import jp.co.yaz.kanuchi.domain.profile.GetCurrentUserProfileUseCase
 import jp.co.yaz.kanuchi.domain.profile.GetProfilesUseCase
+import jp.co.yaz.kanuchi.domain.role.ChangeUserRoleUseCase
+import jp.co.yaz.kanuchi.domain.role.GetRoleManagementOverviewUseCase
 import jp.co.yaz.kanuchi.domain.user.GetUserManagementOverviewUseCase
 import jp.co.yaz.kanuchi.domain.user.InviteUserUseCase
 import jp.co.yaz.kanuchi.domain.user.ReactivateUserUseCase
@@ -30,4 +32,6 @@ val domainModule =
         factoryOf(::RevokeInvitationUseCase)
         factoryOf(::SuspendUserUseCase)
         factoryOf(::ReactivateUserUseCase)
+        factoryOf(::GetRoleManagementOverviewUseCase)
+        factoryOf(::ChangeUserRoleUseCase)
     }
