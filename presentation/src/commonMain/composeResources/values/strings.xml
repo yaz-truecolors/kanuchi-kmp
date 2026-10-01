@@ -168,4 +168,92 @@
     <string name="summary_title">案件別集計</string>
     <string name="admin_dashboard_title">管理者ダッシュボード</string>
     <string name="company_holidays_title">休業日管理</string>
+
+    <!-- 日次入力 (月の一覧) -->
+    <string name="daily_input_list_hint">日付の行を押すと、その日の入力画面を開きます。空欄の出勤・退勤・休憩は、定時（薄い文字）で計算します。</string>
+    <!-- %1$s: 稼働時間合計、%2$s: 下限、%3$s: 上限 (いずれも 7.50 のような表記) -->
+    <string name="daily_input_total_working_hours">稼働時間合計: %1$s 時間（下限 %2$s 時間 ／ 上限 %3$s 時間）</string>
+    <string name="daily_input_range_below_min">下限に足りていません。</string>
+    <string name="daily_input_range_above_max">上限を超えています。</string>
+    <!-- %1$s: 日数 -->
+    <string name="daily_input_business_day_count">営業日数: %1$s 日</string>
+    <string name="daily_input_imbalance_day_count">過不足のある日: %1$s 日</string>
+    <string name="daily_input_negative_day_count">稼働時間が負になる入力の日: %1$s 日（その日の稼働時間は 0 として数えます）</string>
+    <string name="daily_input_counted_days_note">稼働時間合計・過不足のある日は、今日までの日で数えます（今日より後の日は含めません）。</string>
+    <string name="daily_input_column_date">日付</string>
+    <string name="daily_input_column_day_kind">休日</string>
+    <string name="daily_input_column_flag">印</string>
+    <string name="daily_input_column_clock_in">出勤</string>
+    <string name="daily_input_column_clock_out">退勤</string>
+    <string name="daily_input_column_break_hours">休憩</string>
+    <string name="daily_input_column_working_hours">稼働</string>
+    <string name="daily_input_column_balance">過不足</string>
+    <string name="daily_input_column_note">備考</string>
+    <!-- 一覧の、備考が入力されている日の印 -->
+    <string name="daily_input_note_mark">あり</string>
+    <!-- %1$s: 日 (1〜31)、%2$s: 曜日 -->
+    <string name="daily_input_row_date_format">%1$s日（%2$s）</string>
+    <string name="daily_input_weekday_monday">月</string>
+    <string name="daily_input_weekday_tuesday">火</string>
+    <string name="daily_input_weekday_wednesday">水</string>
+    <string name="daily_input_weekday_thursday">木</string>
+    <string name="daily_input_weekday_friday">金</string>
+    <string name="daily_input_weekday_saturday">土</string>
+    <string name="daily_input_weekday_sunday">日</string>
+    <string name="daily_input_flag_vacation">休</string>
+    <string name="daily_input_flag_absence">欠</string>
+
+    <!-- 日次入力 (1日分の入力) -->
+    <!-- %1$s: 年、%2$s: 月、%3$s: 日、%4$s: 曜日 -->
+    <string name="daily_input_day_date_format">%1$s年%2$s月%3$s日（%4$s）</string>
+    <string name="daily_input_day_kind_weekday">平日</string>
+    <string name="daily_input_day_kind_weekend">土日</string>
+    <!-- %1$s: 祝日の名前 -->
+    <string name="daily_input_day_kind_national_holiday">祝日（%1$s）</string>
+    <!-- %1$s: 休業日の名前 -->
+    <string name="daily_input_day_kind_company_holiday">会社の休業日（%1$s）</string>
+    <string name="daily_input_flag_label">印</string>
+    <string name="daily_input_flag_none_option">なし</string>
+    <string name="daily_input_flag_vacation_option">休（休暇）</string>
+    <string name="daily_input_flag_absence_option">欠（欠勤）</string>
+    <string name="daily_input_flag_note">「休」「欠」を付けた日は稼働時間を 0 とし、出勤・退勤・休憩・案件ごとの工数は保存しません。</string>
+    <string name="daily_input_clock_in_label">出勤</string>
+    <string name="daily_input_clock_out_label">退勤</string>
+    <string name="daily_input_break_hours_label">休憩（時間）</string>
+    <!-- 空欄の入力欄に薄く表示する定時の値。%1$s: 定時の値 -->
+    <string name="daily_input_shift_placeholder">定時 %1$s</string>
+    <!-- %1$s: 定時の値 -->
+    <string name="daily_input_time_hint">HH:mm 形式。空欄なら定時（%1$s）</string>
+    <!-- %1$s: 定時の値 -->
+    <string name="daily_input_hours_hint">小数第2位まで。空欄なら定時（%1$s）</string>
+    <string name="daily_input_weekend_time_note">休みの日は、出勤か退勤を入力した場合だけ稼働として計算します（片方だけなら他方は定時）。</string>
+    <string name="daily_input_fill_shift_button">定時を入力</string>
+    <string name="daily_input_projects_header">案件ごとの工数（時間）</string>
+    <string name="daily_input_projects_empty_message">担当している有効な案件がありません。</string>
+    <!-- 担当から外された・無効にされた案件のうち、この日に既に工数がある案件の注記 -->
+    <string name="daily_input_project_unassigned_note">担当外・無効の案件</string>
+    <string name="daily_input_allocation_hint">小数第2位まで。空欄・0 は配分なし</string>
+    <!-- %1$s: 時間数 (7.50 のような表記) -->
+    <string name="daily_input_working_hours_preview">稼働時間: %1$s 時間</string>
+    <string name="daily_input_allocated_hours_preview">配分の合計: %1$s 時間</string>
+    <!-- %1$s: 符号付きの時間数 (+0.50 のような表記) -->
+    <string name="daily_input_balance_preview">過不足: %1$s 時間</string>
+    <!-- 入力の形式が正しくなく、稼働時間・配分の合計・過不足を計算できない場合の表示 -->
+    <string name="daily_input_not_calculable">—</string>
+    <string name="daily_input_balance_warning">稼働時間と配分の合計が一致していません（このまま保存することもできます）。</string>
+    <string name="daily_input_negative_working_hours_warning">稼働時間が負になります。出勤・退勤・休憩を確認してください（空欄は定時で計算します）。</string>
+    <string name="daily_input_note_label">備考</string>
+    <string name="daily_input_save_button">保存</string>
+    <string name="daily_input_saving_button">保存中...</string>
+    <string name="daily_input_cancel_button">キャンセル</string>
+    <string name="daily_input_delete_button">この日の入力を消す</string>
+    <string name="daily_input_deleting_button">消去中...</string>
+    <string name="daily_input_delete_confirm_title">この日の入力を消しますか？</string>
+    <string name="daily_input_delete_confirm_message">出勤・退勤・休憩・印・備考・案件ごとの工数をすべて消します。稼働日は定時どおり働いたものとして計算されます。</string>
+    <string name="daily_input_delete_confirm_button">消す</string>
+    <string name="daily_input_time_format_error">HH:mm 形式の時刻（00:00〜23:59）で入力してください。</string>
+    <string name="daily_input_clock_out_not_after_clock_in_error">退勤時刻は出勤時刻より後にしてください。</string>
+    <string name="daily_input_hours_format_error">0以上の数値を、小数第2位までで入力してください。</string>
+    <!-- %1$s: 上限の時間数 -->
+    <string name="daily_input_hours_too_large_error">%1$s以下で入力してください。</string>
 </resources>

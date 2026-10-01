@@ -16,6 +16,8 @@ import jp.co.yaz.kanuchi.domain.auth.AuthState
 import jp.co.yaz.kanuchi.presentation.auth.LoginScreen
 import jp.co.yaz.kanuchi.presentation.common.ComingSoonScreen
 import jp.co.yaz.kanuchi.presentation.common.LoadingScreen
+import jp.co.yaz.kanuchi.presentation.dailyinput.DailyInputDayScreen
+import jp.co.yaz.kanuchi.presentation.dailyinput.DailyInputScreen
 import jp.co.yaz.kanuchi.presentation.home.HomeScreen
 import jp.co.yaz.kanuchi.presentation.project.ProjectMembersScreen
 import jp.co.yaz.kanuchi.presentation.project.ProjectsScreen
@@ -25,8 +27,8 @@ import jp.co.yaz.kanuchi.presentation.users.UsersScreen
 import kanuchi.presentation.generated.resources.Res
 import kanuchi.presentation.generated.resources.admin_dashboard_title
 import kanuchi.presentation.generated.resources.company_holidays_title
-import kanuchi.presentation.generated.resources.daily_input_title
 import kanuchi.presentation.generated.resources.summary_title
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -134,9 +136,7 @@ private fun NavGraphBuilder.projectRoutes(navController: NavHostController) {
  * ホーム画面から開いた場合はホーム画面へ戻る。
  */
 private fun NavGraphBuilder.workRecordRoutes(navController: NavHostController) {
-    composable(KanuchiDestinations.DAILY_INPUT) {
-        ComingSoonScreen(title = stringResource(Res.string.daily_input_title), onBack = navController::backToHome)
-    }
+    dailyInputRoutes(navController)
     composable(
         KanuchiDestinations.SUMMARY,
         arguments =
@@ -169,4 +169,33 @@ private fun NavGraphBuilder.workRecordRoutes(navController: NavHostController) {
  */
 private fun NavHostController.backFromSummary() {
     if (!popBackStack(KanuchiDestinations.ADMIN_DASHBOARD, inclusive = false)) backToHome()
+}
+
+/**
+ * 日次入力 (月の一覧) と、そこから開く1日分の入力のルート。
+ * 1日分の入力の「戻る」・保存後は、戻る操作の連打で一覧より前に戻らないよう popBackStack(route) で一覧へ戻る。
+ */
+private fun NavGraphBuilder.dailyInputRoutes(navController: NavHostController) {
+    composable(KanuchiDestinations.DAILY_INPUT) {
+        DailyInputScreen(
+            onBack = navController::backToHome,
+            onOpenDay = { date -> navController.navigate(KanuchiDestinations.dailyInputDay(date)) { launchSingleTop = true } },
+        )
+    }
+    composable(
+        KanuchiDestinations.DAILY_INPUT_DAY,
+        arguments = listOf(navArgument(KanuchiDestinations.DAILY_INPUT_DATE_ARG) { type = NavType.StringType }),
+    ) { backStackEntry ->
+        val backToList = { navController.popBackStack(KanuchiDestinations.DAILY_INPUT, inclusive = false) }
+        val date =
+            backStackEntry.arguments
+                ?.read { getStringOrNull(KanuchiDestinations.DAILY_INPUT_DATE_ARG) }
+                ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+        if (date == null) {
+            // ルートは dailyInputDay() で組み立てるため通常は起きない
+            LaunchedEffect(Unit) { backToList() }
+        } else {
+            DailyInputDayScreen(date = date, onBack = { backToList() }, onFinished = { backToList() })
+        }
+    }
 }

@@ -1,6 +1,8 @@
 package jp.co.yaz.kanuchi.presentation.di
 
 import jp.co.yaz.kanuchi.presentation.auth.LoginViewModel
+import jp.co.yaz.kanuchi.presentation.dailyinput.DailyInputDayViewModel
+import jp.co.yaz.kanuchi.presentation.dailyinput.DailyInputViewModel
 import jp.co.yaz.kanuchi.presentation.home.HomeViewModel
 import jp.co.yaz.kanuchi.presentation.navigation.AuthGateViewModel
 import jp.co.yaz.kanuchi.presentation.project.ProjectMembersViewModel
@@ -27,4 +29,7 @@ val presentationModule =
         viewModelOf(::ProjectsViewModel)
         // 案件のIDは画面のルートの引数から koinViewModel { parametersOf(projectId) } で渡す
         viewModel { params -> ProjectMembersViewModel(params.get(), get(), get()) }
+        viewModelOf(::DailyInputViewModel)
+        // 日付は画面のルートの引数から koinViewModel { parametersOf(date) } で渡す
+        viewModel { params -> DailyInputDayViewModel(params.get(), get(), get(), get()) }
     }

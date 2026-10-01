@@ -26,7 +26,12 @@ data class DailyInputUiState(
 ) {
     /** 日ごとの行 (表示中の月の月次シートを読み込めた場合のみ)。 */
     val rows: List<DailyInputRow>
-        get() = sheet?.takeIf { it.yearMonth == yearMonth }?.let { sheet -> sheet.days.map { DailyInputRow.of(it, sheet, today) } }.orEmpty()
+        get() =
+            sheet
+                ?.takeIf { it.yearMonth == yearMonth }
+                ?.let { sheet ->
+                    sheet.days.map { DailyInputRow.of(it, sheet, today) }
+                }.orEmpty()
 
     /** 表示中の月に、今日より後の (合計に含めない) 日があるか。 */
     val hasFutureDays: Boolean get() = yearMonth.lastDay > today

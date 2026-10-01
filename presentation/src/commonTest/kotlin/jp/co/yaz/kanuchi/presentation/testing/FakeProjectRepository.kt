@@ -72,6 +72,10 @@ internal class FakeProjectRepository : ProjectRepository {
         return setAssignedUserIdsResult?.await() ?: Result.success(Unit)
     }
 
+    var assignedProjectIdsOfCurrentUserResult: Result<Set<String>> = Result.success(setOf(ACTIVE.id))
+
+    override suspend fun getAssignedProjectIdsOfCurrentUser(): Result<Set<String>> = assignedProjectIdsOfCurrentUserResult
+
     private fun projectOf(projectId: String): Project = projectsResult.getOrThrow().first { it.id == projectId }
 
     companion object {
