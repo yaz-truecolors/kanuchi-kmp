@@ -16,6 +16,7 @@ import jp.co.yaz.kanuchi.domain.auth.AuthState
 import jp.co.yaz.kanuchi.presentation.auth.LoginScreen
 import jp.co.yaz.kanuchi.presentation.common.ComingSoonScreen
 import jp.co.yaz.kanuchi.presentation.common.LoadingScreen
+import jp.co.yaz.kanuchi.presentation.dashboard.AdminDashboardScreen
 import jp.co.yaz.kanuchi.presentation.home.HomeScreen
 import jp.co.yaz.kanuchi.presentation.project.ProjectMembersScreen
 import jp.co.yaz.kanuchi.presentation.project.ProjectsScreen
@@ -23,7 +24,6 @@ import jp.co.yaz.kanuchi.presentation.role.RolesScreen
 import jp.co.yaz.kanuchi.presentation.settings.SettingsScreen
 import jp.co.yaz.kanuchi.presentation.users.UsersScreen
 import kanuchi.presentation.generated.resources.Res
-import kanuchi.presentation.generated.resources.admin_dashboard_title
 import kanuchi.presentation.generated.resources.company_holidays_title
 import kanuchi.presentation.generated.resources.daily_input_title
 import kanuchi.presentation.generated.resources.summary_title
@@ -156,7 +156,12 @@ private fun NavGraphBuilder.workRecordRoutes(navController: NavHostController) {
         ComingSoonScreen(title = stringResource(Res.string.summary_title), onBack = navController::backFromSummary)
     }
     composable(KanuchiDestinations.ADMIN_DASHBOARD) {
-        ComingSoonScreen(title = stringResource(Res.string.admin_dashboard_title), onBack = navController::backToHome)
+        AdminDashboardScreen(
+            onBack = navController::backToHome,
+            onOpenMember = { userId, yearMonth ->
+                navController.navigate(KanuchiDestinations.summaryOf(userId, yearMonth)) { launchSingleTop = true }
+            },
+        )
     }
     composable(KanuchiDestinations.COMPANY_HOLIDAYS) {
         ComingSoonScreen(title = stringResource(Res.string.company_holidays_title), onBack = navController::backToHome)
