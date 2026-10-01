@@ -191,4 +191,83 @@
     <string name="admin_dashboard_project_unknown_name">（不明な案件）</string>
     <!-- %1$s: 時間数 -->
     <string name="admin_dashboard_hours">%1$s時間</string>
+    <!-- 案件別集計画面 -->
+    <!-- 管理者ダッシュボード等からユーザーを指定して開いた場合。%1$s: 表示名、%2$s: メールアドレス -->
+    <string name="summary_target_user">%1$s（%2$s）の集計</string>
+    <string name="summary_user_not_viewable_message">このユーザーの集計は表示できません。</string>
+    <string name="summary_overview_header">月の集計</string>
+    <string name="summary_business_days_label">営業日数</string>
+    <!-- %1$s: 日数 -->
+    <string name="summary_days_value">%1$s日</string>
+    <string name="summary_total_working_hours_label">稼働時間合計（今日まで）</string>
+    <!-- %1$s: 時間数 (例: 7.50、+0.50) -->
+    <string name="summary_hours_value">%1$s時間</string>
+    <!-- %1$s: 下限の時間数、%2$s: 上限の時間数 -->
+    <string name="summary_range_value">下限 %1$s時間・上限 %2$s時間</string>
+    <string name="summary_range_label">稼働時間の範囲</string>
+    <string name="summary_below_min_message">稼働時間合計が下限を下回っています。</string>
+    <string name="summary_above_max_message">稼働時間合計が上限を超えています。</string>
+    <string name="summary_imbalance_days_label">過不足がある日数</string>
+    <string name="summary_projects_header">案件ごとの実績</string>
+    <string name="summary_projects_description">割合は稼働時間合計に対する割合です（四捨五入のため、合計が100%にならないことがあります）。</string>
+    <string name="summary_projects_empty">この月の案件の実績はありません。</string>
+    <!-- %1$s: 案件名 -->
+    <string name="summary_project_inactive">%1$s（無効）</string>
+    <!-- 実績のある案件が案件の一覧に無い (参照できない) 場合 -->
+    <string name="summary_project_unknown">（不明な案件）</string>
+    <string name="summary_unallocated_label">未配分</string>
+    <!-- %1$s: 割合 (例: 12.5) -->
+    <string name="summary_ratio_value">%1$s%</string>
+    <!-- 稼働時間合計が0で割合を求められない場合 -->
+    <string name="summary_ratio_unavailable">-</string>
+    <!-- 休業日管理画面 (admin のみ) -->
+    <string name="company_holidays_previous_year_button">&lt; 前年</string>
+    <string name="company_holidays_next_year_button">翌年 &gt;</string>
+    <!-- %1$s: 年 -->
+    <string name="company_holidays_year">%1$s年</string>
+    <string name="company_holidays_header">会社の休業日</string>
+    <string name="company_holidays_description">土日・祝日以外で会社を休みにする日（年末年始休業・夏季休業など）です。休業日は稼働日から除かれます。</string>
+    <string name="company_holidays_start_date_label">日付（期間の場合は開始日）</string>
+    <string name="company_holidays_end_date_label">終了日（期間の場合のみ）</string>
+    <string name="company_holidays_name_label">名前</string>
+    <!-- %1$s: 一度に追加できる最大日数 -->
+    <string name="company_holidays_date_hint">YYYY-MM-DD 形式（例: 2026-12-29）。期間は%1$s日まで。</string>
+    <!-- %1$s: 名前の最大文字数 -->
+    <string name="company_holidays_name_hint">%1$s文字以内（例: 年末年始休業）。期間のすべての日に同じ名前が付きます。</string>
+    <string name="company_holidays_add_button">追加</string>
+    <string name="company_holidays_adding_button">追加中...</string>
+    <!-- %1$s: 追加した日数 -->
+    <string name="company_holidays_added_message">%1$s日分の休業日を追加しました。</string>
+    <string name="company_holidays_date_invalid_error">YYYY-MM-DD 形式の日付（2000〜2099年）で入力してください。</string>
+    <string name="company_holidays_end_date_before_start_date_error">終了日は開始日以降にしてください。</string>
+    <!-- %1$s: 一度に追加できる最大日数 -->
+    <string name="company_holidays_period_too_long_error">期間は%1$s日以内にしてください。</string>
+    <string name="company_holidays_name_blank_error">名前を入力してください。</string>
+    <!-- %1$s: 名前の最大文字数 -->
+    <string name="company_holidays_name_too_long_error">名前は%1$s文字以内で入力してください。</string>
+    <string name="company_holidays_duplicate_error">既に休業日として登録されている日が含まれています。一覧を確認してください。</string>
+    <string name="company_holidays_empty_message">この年の会社の休業日はまだありません。</string>
+    <!-- %1$s: 月、%2$s: 日、%3$s: 曜日 -->
+    <string name="company_holidays_date">%1$s/%2$s（%3$s）</string>
+    <!-- 一覧の1行。%1$s: 日付 (company_holidays_date)、%2$s: 休業日の名前 -->
+    <string name="company_holidays_item">%1$s　%2$s</string>
+    <string name="company_holidays_overlaps_day_off_note">土日・祝日と重なっています</string>
+    <string name="company_holidays_delete_button">削除</string>
+    <string name="company_holidays_deleting_button">削除中...</string>
+    <string name="company_holidays_delete_confirm_title">休業日を削除しますか？</string>
+    <!-- %1$s: 日付 (YYYY-MM-DD)、%2$s: 休業日の名前 -->
+    <string name="company_holidays_delete_confirm_message">%1$s（%2$s）を休業日から削除します。</string>
+    <string name="company_holidays_delete_confirm_button">削除する</string>
+    <!-- %1$s: 日付 (company_holidays_date)、%2$s: 休業日の名前 -->
+    <string name="company_holidays_delete_error">%1$s（%2$s）を削除できませんでした。一覧を読み込み直したので、内容を確認してください。</string>
+    <string name="company_holidays_cancel_button">キャンセル</string>
+    <string name="company_holidays_national_holidays_header">日本の祝日（自動判定）</string>
+    <string name="company_holidays_national_holidays_description">祝日（振替休日・国民の休日を含む）は自動で休みになるため、登録は不要です。</string>
+    <string name="company_holidays_day_of_week_monday">月</string>
+    <string name="company_holidays_day_of_week_tuesday">火</string>
+    <string name="company_holidays_day_of_week_wednesday">水</string>
+    <string name="company_holidays_day_of_week_thursday">木</string>
+    <string name="company_holidays_day_of_week_friday">金</string>
+    <string name="company_holidays_day_of_week_saturday">土</string>
+    <string name="company_holidays_day_of_week_sunday">日</string>
 </resources>

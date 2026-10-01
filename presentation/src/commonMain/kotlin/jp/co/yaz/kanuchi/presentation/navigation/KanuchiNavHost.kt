@@ -17,16 +17,16 @@ import jp.co.yaz.kanuchi.presentation.auth.LoginScreen
 import jp.co.yaz.kanuchi.presentation.common.ComingSoonScreen
 import jp.co.yaz.kanuchi.presentation.common.LoadingScreen
 import jp.co.yaz.kanuchi.presentation.dashboard.AdminDashboardScreen
+import jp.co.yaz.kanuchi.presentation.holiday.CompanyHolidaysScreen
 import jp.co.yaz.kanuchi.presentation.home.HomeScreen
 import jp.co.yaz.kanuchi.presentation.project.ProjectMembersScreen
 import jp.co.yaz.kanuchi.presentation.project.ProjectsScreen
 import jp.co.yaz.kanuchi.presentation.role.RolesScreen
 import jp.co.yaz.kanuchi.presentation.settings.SettingsScreen
+import jp.co.yaz.kanuchi.presentation.summary.ProjectSummaryScreen
 import jp.co.yaz.kanuchi.presentation.users.UsersScreen
 import kanuchi.presentation.generated.resources.Res
-import kanuchi.presentation.generated.resources.company_holidays_title
 import kanuchi.presentation.generated.resources.daily_input_title
-import kanuchi.presentation.generated.resources.summary_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -152,8 +152,13 @@ private fun NavGraphBuilder.workRecordRoutes(navController: NavHostController) {
                     defaultValue = null
                 },
             ),
-    ) {
-        ComingSoonScreen(title = stringResource(Res.string.summary_title), onBack = navController::backFromSummary)
+    ) { backStackEntry ->
+        val arguments = backStackEntry.arguments
+        ProjectSummaryScreen(
+            userId = arguments?.read { getStringOrNull(KanuchiDestinations.SUMMARY_USER_ID_ARG) },
+            yearMonth = arguments?.read { getStringOrNull(KanuchiDestinations.SUMMARY_YEAR_MONTH_ARG) },
+            onBack = navController::backFromSummary,
+        )
     }
     composable(KanuchiDestinations.ADMIN_DASHBOARD) {
         AdminDashboardScreen(
@@ -164,7 +169,7 @@ private fun NavGraphBuilder.workRecordRoutes(navController: NavHostController) {
         )
     }
     composable(KanuchiDestinations.COMPANY_HOLIDAYS) {
-        ComingSoonScreen(title = stringResource(Res.string.company_holidays_title), onBack = navController::backToHome)
+        CompanyHolidaysScreen(onBack = navController::backToHome)
     }
 }
 
