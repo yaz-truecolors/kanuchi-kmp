@@ -4,6 +4,9 @@ import jp.co.yaz.kanuchi.domain.auth.ConsumeMagicLinkCallbackErrorUseCase
 import jp.co.yaz.kanuchi.domain.auth.ObserveAuthStateUseCase
 import jp.co.yaz.kanuchi.domain.auth.SendMagicLinkUseCase
 import jp.co.yaz.kanuchi.domain.auth.SignOutUseCase
+import jp.co.yaz.kanuchi.domain.calendar.AddCompanyHolidaysUseCase
+import jp.co.yaz.kanuchi.domain.calendar.DeleteCompanyHolidayUseCase
+import jp.co.yaz.kanuchi.domain.calendar.GetCompanyHolidaysOfYearUseCase
 import jp.co.yaz.kanuchi.domain.calendar.GetTodayUseCase
 import jp.co.yaz.kanuchi.domain.profile.GetCurrentUserProfileUseCase
 import jp.co.yaz.kanuchi.domain.profile.GetProfilesUseCase
@@ -28,6 +31,7 @@ import jp.co.yaz.kanuchi.domain.work.GetCurrentUserMonthlyWorkSheetUseCase
 import jp.co.yaz.kanuchi.domain.work.GetMonthlyWorkSheetUseCase
 import jp.co.yaz.kanuchi.domain.work.GetWorkDayEntryUseCase
 import jp.co.yaz.kanuchi.domain.work.SaveWorkRecordUseCase
+import jp.co.yaz.kanuchi.domain.work.GetTeamMonthlySummaryUseCase
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 import kotlin.time.Clock
@@ -67,4 +71,8 @@ val domainModule =
         factoryOf(::GetWorkDayEntryUseCase)
         factoryOf(::SaveWorkRecordUseCase)
         factoryOf(::DeleteWorkRecordUseCase)
+        factoryOf(::GetTeamMonthlySummaryUseCase)
+        factoryOf(::GetCompanyHolidaysOfYearUseCase)
+        factoryOf(::AddCompanyHolidaysUseCase)
+        factoryOf(::DeleteCompanyHolidayUseCase)
     }

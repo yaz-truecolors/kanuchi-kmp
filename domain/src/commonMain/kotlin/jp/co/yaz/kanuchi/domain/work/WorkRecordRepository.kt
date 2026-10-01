@@ -29,4 +29,9 @@ interface WorkRecordRepository {
      * 削除した日は「何も入力していない日」として扱われる (稼働日なら定時どおり)。記録が無い場合も成功とする。
      */
     suspend fun deleteWorkRecord(date: LocalDate): Result<Unit>
+     * 参照できるすべてのユーザーの [yearMonth] の稼働記録 (案件ごとの配分を含む) を、ユーザーIDごとに日付の順で取得する
+     * (管理者ダッシュボードで、メンバーごとに問い合わせずにまとめて取得するため)。
+     * 記録が1件も無いユーザーは含まれない。member が呼ぶと本人の分だけになる。
+     */
+    suspend fun getWorkRecordsOfAllUsers(yearMonth: YearMonth): Result<Map<String, List<WorkRecord>>>
 }

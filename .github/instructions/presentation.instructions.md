@@ -161,3 +161,5 @@ Compose Multiplatform の UI・ViewModel・リソース（`presentation/`）と�
 - 保存・削除の完了で前の画面に戻すときは、UiState に `isFinished` を持たせ、画面側の `LaunchedEffect(isFinished)` で
   コールバック（`popBackStack`）を呼ぶ（ViewModel から NavController を触らない）。一覧へ戻ったときの再読み込みは、
   一覧の ViewModel の `onScreenShown`（初回は init で読み込み済みのため飛ばす）で行う。
+- `strings.xml` の文言には `%` をそのまま書いてよい（例: `%1$s%` で「33.3%」と表示される。案件別集計画面で確認済み）。
+  Compose Resources の `stringResource(id, args)` は `%1$s` の形の書式指定だけを置き換える。

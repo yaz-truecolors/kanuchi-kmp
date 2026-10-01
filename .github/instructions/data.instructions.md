@@ -135,3 +135,17 @@ DB側（マイグレーション・RLS・トリガー・Hook の SQL）の規約
   途中で失敗しても同じ内容で保存し直せば揃うよう、各手順を冪等にしておく。差分の計算は純粋な関数に分けてテストする（`allocationChangesOf`）。
 - 入力欄を空にした値（例: 退勤時刻）を DB で null に戻すには、保存用の DTO の nullable なプロパティに既定値を付けない
   （既定値があると `encodeDefaults = false` のため送られず、upsert で前の値が残る）。実例: `WorkRecordSaveDto`。
+## 全ユーザー分の一括取得（PostgREST の `max_rows`）
+
+- PostgREST は1回のレスポンスで返す行数を `max_rows`（`supabase/config.toml` の `[api] max_rows`、
+  クラウドの既定値も 1000）で打ち切る。**打ち切られてもエラーにならない**ため、全ユーザー分の稼働記録のように
+  件数が 1000 行を超えうる一括取得では、`range()` でページングして取得する
+  （例: `SupabaseWorkRecordRepository.getWorkRecordsOfAllUsers`）。
+- ページングは並び順を一意に固定し（例: `user_id`・`work_date` の順）、取得件数がページサイズ未満になったら終える。
+  ページサイズはサーバーの `max_rows` 以下にすること（超えると1ページ目で打ち切られた件数が
+  ページサイズ未満になり、続きがあるのに取得を終えてしまう）。
+- 画面ごとにユーザー単位で取得する（N+1）のではなく、テーブルごとに1回（＋ページング）で取得し、
+  ドメイン層でユーザーIDごとにまとめる。
+- ページングが必要なのは、行数が「ユーザー数 × 日数」のように増えるテーブル（`work_records` 等）だけとする。
+  ユーザー・案件ごとに1行のテーブル（`profiles`・`shift_settings`・`projects` 等）は、社内の小規模チーム向けツールであり
+  1000 行に達しない前提で、ページングせずに1回の `select` で取得する（既存の `getProfiles()`・`getProjects()` も同じ）。

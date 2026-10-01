@@ -28,6 +28,16 @@ internal class SupabaseShiftSettingsRepository(
             }.decodeSingleOrNull<ShiftSettingsDto>()
             ?.toDomain()
 
+    override suspend fun getShiftSettingsOfAllUsers(): Result<Map<String, ShiftSettings>> =
+        runCatchingData {
+            // RLS で参照できる行 (admin なら全員分、member なら本人の分) をまとめて取得する
+            supabaseClient
+                .from(TABLE)
+                .select(Columns.list(ShiftSettingsDto.COLUMNS))
+                .decodeList<ShiftSettingsDto>()
+                .associate { it.userId to it.toDomain() }
+        }
+
     override suspend fun saveShiftSettings(settings: ShiftSettings): Result<ShiftSettings> =
         runCatchingData {
             // 行がまだ無ければ追加、あれば上書きする (user_id は unique)。保存後の行を受け取って返す
