@@ -50,6 +50,11 @@ DB側（マイグレーション・RLS・トリガー・Hook の SQL）の規約
   - 例外は共通の `runCatchingData { ... }`（`data/profile/SupabaseProfileRepository.kt`）で
     `GenericDataFailureException` に変換して `Result` で返す。supabase-kt の例外の message は UI に出さない。
   - ログイン中のユーザーIDは `supabaseClient.auth.currentUserOrNull()?.id` で取得する。
+- 列の型ごとの受け渡し: `time` 型は PostgREST から `HH:mm:ss` 形式の文字列で返る（保存時は `HH:mm` で送ってよい）。
+  `numeric` 型は JSON の数値なので `Double` で受け、domain の `Hours` に変換するときに 0.01 単位に四捨五入する
+  （実例: `ShiftSettingsDto`）。
+- 「行が無ければ追加、あれば上書き」は `upsert(...) { onConflict = "<unique な列>" }` で行う（実例:
+  `SupabaseShiftSettingsRepository`。RLS の insert / update の両方のポリシーが必要）。
 - RLS で参照・変更できない行は、エラーにならず「0行」として扱われることがある（PostgREST の仕様）。
   例えば権限の無い `update` は失敗せず何も更新しない。変更の成否を確かめたい場合は、
   `select()` を付けて更新後の行を受け取り、0行なら失敗として扱う。

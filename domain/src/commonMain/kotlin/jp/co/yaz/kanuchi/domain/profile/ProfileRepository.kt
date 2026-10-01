@@ -19,4 +19,9 @@ interface ProfileRepository {
      * 参照できる範囲は DB のアクセス制御 (RLS) で決まる: admin は全員分、member は自分の分だけ。
      */
     suspend fun getProfiles(): Result<List<UserProfile>>
+
+    /**
+     * ログイン中のユーザー自身の表示名を変更し、変更後のプロフィールを返す。
+     */
+    suspend fun updateDisplayName(displayName: DisplayName): Result<UserProfile>
 }
