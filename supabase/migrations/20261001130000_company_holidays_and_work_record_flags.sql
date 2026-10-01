@@ -18,8 +18,15 @@ create table public.company_holidays (
   name text not null,
   created_by uuid default auth.uid() references public.profiles (id) on delete set null,
   created_at timestamptz not null default now(),
-  -- 名前は前後の空白なしで 1〜50 文字 (アプリ側の CompanyHoliday.MAX_NAME_LENGTH と一致させること)
-  constraint company_holidays_name_check check (name = btrim(name) and char_length(name) between 1 and 50)
+  -- 名前は前後の空白なしで 1〜50 文字 (アプリ側の CompanyHoliday.isValidName と一致させること)。
+  -- 文字数は char_length (コードポイント数)。btrim は半角スペースしか除かないため、前後の空白は
+  -- Kotlin の Char.isWhitespace と同じ文字の集合 (タブ・改行・全角スペース等) を正規表現で明示して拒否する
+  -- ([[:space:]] はロケール依存のため使わない)。DB とアプリで判定がずれると、取得時に変換できない行ができてしまう。
+  constraint company_holidays_name_check check (
+    char_length(name) between 1 and 50
+    and name !~ '^[\t\n\v\f\r\u001c-\u0020\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]'
+    and name !~ '[\t\n\v\f\r\u001c-\u0020\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]$'
+  )
 );
 
 comment on table public.company_holidays is '会社の休業日 (土日・日本の祝日以外の休み)。全員参照可、追加・削除はadminのみ。';
