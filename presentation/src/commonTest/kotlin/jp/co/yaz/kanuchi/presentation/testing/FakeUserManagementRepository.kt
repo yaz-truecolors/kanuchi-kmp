@@ -6,7 +6,7 @@ import kotlinx.coroutines.CompletableDeferred
 
 /**
  * ViewModel のテスト用の [UserManagementRepository] の偽物。
- * 招待リストはメモリ上に持ち、追加・取り消しで変化する。
+ * 招待リストはメモリ上に持ち、追加・取り消しで変化する (追加時は DB と同じく小文字にする)。
  */
 internal class FakeUserManagementRepository : UserManagementRepository {
     val invitedEmails = mutableListOf<String>()
@@ -26,7 +26,8 @@ internal class FakeUserManagementRepository : UserManagementRepository {
         return getInvitedEmailsResult.map { invitedEmails.toList() }
     }
 
-    override suspend fun invite(email: EmailAddress): Result<Unit> = inviteResult.onSuccess { invitedEmails.add(0, email.value) }
+    override suspend fun invite(email: EmailAddress): Result<Unit> =
+        inviteResult.onSuccess { invitedEmails.add(0, email.value.lowercase()) }
 
     override suspend fun revokeInvitation(email: String): Result<Unit> = revokeResult.onSuccess { invitedEmails.remove(email) }
 

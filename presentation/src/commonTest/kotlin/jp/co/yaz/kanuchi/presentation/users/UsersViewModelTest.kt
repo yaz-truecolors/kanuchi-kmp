@@ -69,10 +69,10 @@ class UsersViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun `invited email is added to the list and the input is cleared`() {
+    fun `invited email is added to the list as normalized and the input is cleared`() {
         val viewModel = createViewModel()
 
-        viewModel.onInviteEmailChanged(" hanako2@example.com ")
+        viewModel.onInviteEmailChanged(" Hanako2@Example.com ")
         viewModel.onInviteClicked()
 
         val state = viewModel.uiState.value

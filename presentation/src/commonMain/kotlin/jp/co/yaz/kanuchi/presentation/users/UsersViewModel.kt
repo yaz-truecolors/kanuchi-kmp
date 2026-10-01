@@ -51,8 +51,9 @@ class UsersViewModel(
         viewModelScope.launch {
             inviteUserUseCase(state.inviteEmail)
                 .onSuccess {
+                    // DB 側で前後の空白除去・小文字化して登録されるため、表示も合わせる
                     _uiState.update {
-                        it.copy(isSubmitting = false, inviteEmail = "", invitedEmail = state.inviteEmail.trim())
+                        it.copy(isSubmitting = false, inviteEmail = "", invitedEmail = state.inviteEmail.trim().lowercase())
                     }
                     load()
                 }.onFailure { e ->
