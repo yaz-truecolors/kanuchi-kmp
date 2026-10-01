@@ -20,9 +20,9 @@ import jp.co.yaz.kanuchi.presentation.home.HomeScreen
 import jp.co.yaz.kanuchi.presentation.project.ProjectMembersScreen
 import jp.co.yaz.kanuchi.presentation.project.ProjectsScreen
 import jp.co.yaz.kanuchi.presentation.settings.SettingsScreen
+import jp.co.yaz.kanuchi.presentation.users.UsersScreen
 import kanuchi.presentation.generated.resources.Res
 import kanuchi.presentation.generated.resources.roles_title
-import kanuchi.presentation.generated.resources.users_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -82,7 +82,7 @@ fun KanuchiNavHost(authGateViewModel: AuthGateViewModel = koinViewModel()) {
         }
         projectRoutes(navController)
         composable(KanuchiDestinations.USERS) {
-            ComingSoonScreen(title = stringResource(Res.string.users_title), onBack = navController::backToHome)
+            UsersScreen(onBack = navController::backToHome)
         }
         composable(KanuchiDestinations.ROLES) {
             ComingSoonScreen(title = stringResource(Res.string.roles_title), onBack = navController::backToHome)

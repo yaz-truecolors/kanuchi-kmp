@@ -15,6 +15,11 @@ import jp.co.yaz.kanuchi.domain.project.SaveProjectAssignmentUseCase
 import jp.co.yaz.kanuchi.domain.project.SetProjectActiveUseCase
 import jp.co.yaz.kanuchi.domain.shift.GetShiftSettingsUseCase
 import jp.co.yaz.kanuchi.domain.shift.SaveShiftSettingsUseCase
+import jp.co.yaz.kanuchi.domain.user.GetUserManagementOverviewUseCase
+import jp.co.yaz.kanuchi.domain.user.InviteUserUseCase
+import jp.co.yaz.kanuchi.domain.user.ReactivateUserUseCase
+import jp.co.yaz.kanuchi.domain.user.RevokeInvitationUseCase
+import jp.co.yaz.kanuchi.domain.user.SuspendUserUseCase
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
@@ -29,6 +34,11 @@ val domainModule =
         factoryOf(::SignOutUseCase)
         factoryOf(::GetCurrentUserProfileUseCase)
         factoryOf(::GetProfilesUseCase)
+        factoryOf(::GetUserManagementOverviewUseCase)
+        factoryOf(::InviteUserUseCase)
+        factoryOf(::RevokeInvitationUseCase)
+        factoryOf(::SuspendUserUseCase)
+        factoryOf(::ReactivateUserUseCase)
         factoryOf(::UpdateDisplayNameUseCase)
         factoryOf(::GetShiftSettingsUseCase)
         factoryOf(::SaveShiftSettingsUseCase)

@@ -6,6 +6,7 @@ import jp.co.yaz.kanuchi.presentation.navigation.AuthGateViewModel
 import jp.co.yaz.kanuchi.presentation.project.ProjectMembersViewModel
 import jp.co.yaz.kanuchi.presentation.project.ProjectsViewModel
 import jp.co.yaz.kanuchi.presentation.settings.SettingsViewModel
+import jp.co.yaz.kanuchi.presentation.users.UsersViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -19,6 +20,7 @@ val presentationModule =
         viewModelOf(::AuthGateViewModel)
         viewModelOf(::LoginViewModel)
         viewModelOf(::HomeViewModel)
+        viewModelOf(::UsersViewModel)
         viewModelOf(::SettingsViewModel)
         viewModelOf(::ProjectsViewModel)
         // 案件のIDは画面のルートの引数から koinViewModel { parametersOf(projectId) } で渡す

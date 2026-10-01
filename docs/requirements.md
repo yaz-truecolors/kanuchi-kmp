@@ -110,8 +110,8 @@ Domain Service側で都度計算する「導出値」として扱う。
     本方式はSQL（マイグレーション）とRLSのみで完結する。
   - 招待メールは自動送信されない。admin は招待リスト登録後、アプリのURLを本人へ別途（Slack等で）伝える。
   - 招待リストへの登録方法：
-    - （招待画面の実装までの暫定運用）Supabase管理画面（Supabase Studio）のTable Editorから`invitations`に行を追加
-    - （v1で実装予定）アプリ内の管理者用「ユーザー管理」画面から登録・取り消し（RLSによりadminのみ）
+    - アプリ内の管理者用「ユーザー管理」画面から登録・取り消し（RLSによりadminのみ）
+    - （初期adminの登録など、アプリを使えない場合）Supabase管理画面（Supabase Studio）のTable Editorから`invitations`に行を追加
   - ログイン画面は「入力されたメールアドレスが招待済みかどうか」を区別するエラーを返す。
     メール列挙（招待済みアドレスの推測）に悪用され得るが、社内チーム向けツールであり、
     入力ミス・未招待をその場で本人に伝えるUXを優先して**意図的に許容する**。
@@ -138,6 +138,8 @@ Domain Service側で都度計算する「導出値」として扱う。
   - 利用停止したメンバーはログインできなくなる。アカウントと過去の稼働記録は削除せず、集計に使えるよう残す
   - 復帰させると、再びログインできるようになる
   - 自分自身の利用停止と、利用中のadminが1人もいなくなる利用停止はできない（DB側で強制する）
+  - 利用停止中のユーザーがログインしようとすると、マジックリンクのメールは届くが、リンクを開いた時点でログイン画面に
+    利用停止中である旨を表示する（Supabase Authの仕様上、メールの送信時点では拒否できない）
 - 初期admin：運用開始時、Supabase管理画面から手動で最初の1人のみ`profiles.role`を`admin`に設定
 - RLS（Row Level Security）方針：
   - `work_records` / `allocations`：本人データのみ参照・編集可、adminは全員分を参照可
@@ -147,7 +149,7 @@ Domain Service側で都度計算する「導出値」として扱う。
 
 | テーブル | 主な列 | 説明 |
 |---|---|---|
-| `profiles` | id, email, display_name, role(`member`/`admin`) | `auth.users` と1:1のユーザー情報 |
+| `profiles` | id, email, display_name, role(`member`/`admin`), suspended_at（利用停止日時。NULLなら利用中） | `auth.users` と1:1のユーザー情報 |
 | `projects` | id, name, is_active | 案件マスタ（チーム共有、admin管理） |
 | `user_projects` | user_id, project_id | ユーザーごとの担当案件割当（多対多） |
 | `shift_settings` | id, user_id(unique), start_time, end_time, break_hours, min_hours, max_hours | ユーザーごとの勤務時間設定 |

@@ -25,6 +25,7 @@ import kanuchi.presentation.generated.resources.login_email_label
 import kanuchi.presentation.generated.resources.login_error_prefix
 import kanuchi.presentation.generated.resources.login_magic_link_error_message
 import kanuchi.presentation.generated.resources.login_magic_link_expired_message
+import kanuchi.presentation.generated.resources.login_magic_link_suspended_message
 import kanuchi.presentation.generated.resources.login_send_button
 import kanuchi.presentation.generated.resources.login_sending_button
 import kanuchi.presentation.generated.resources.login_success_message
@@ -93,5 +94,6 @@ fun LoginScreen(viewModel: LoginViewModel = koinViewModel()) {
 private fun MagicLinkCallbackError.message(): String =
     when (this) {
         MagicLinkCallbackError.EXPIRED -> stringResource(Res.string.login_magic_link_expired_message)
+        MagicLinkCallbackError.SUSPENDED -> stringResource(Res.string.login_magic_link_suspended_message)
         MagicLinkCallbackError.UNKNOWN -> stringResource(Res.string.login_magic_link_error_message)
     }

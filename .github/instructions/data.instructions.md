@@ -50,6 +50,12 @@ DB側（マイグレーション・RLS・トリガー・Hook の SQL）の規約
   - 例外は共通の `runCatchingData { ... }`（`data/profile/SupabaseProfileRepository.kt`）で
     `GenericDataFailureException` に変換して `Result` で返す。supabase-kt の例外の message は UI に出さない。
   - ログイン中のユーザーIDは `supabaseClient.auth.currentUserOrNull()?.id` で取得する。
+  - DB が返す特定のエラーを画面で個別に表示したい場合は、`runCatchingData` が包んだ例外の `cause` を
+    `PostgrestRestException` として取り出し、`code`（SQLSTATE。例: 一意制約違反 `23505`、`raise exception` の既定 `P0001`）と
+    `error`（例外のメッセージ。例: `last_active_admin_required`）で判別して domain のマーカー例外に変換する
+    （`data/user/UserManagementFailureMapping.kt` の `toUserManagementFailure`）。判別は HTTP ステータスではなく
+    SQLSTATE とメッセージで行う（PostgREST は `P0001` を 400、`42501` を 403 等に変換するため、ステータスでは区別できない）。
+    `PostgrestRestException` は HttpResponse が無いと作れずテストしにくいため、判別はコードとメッセージを受け取る関数に分けてテストする。
 - 列の型ごとの受け渡し: `time` 型は PostgREST から `HH:mm:ss` 形式の文字列で返る（保存時は `HH:mm` で送ってよい）。
   `numeric` 型は JSON の数値なので `Double` で受け、domain の `Hours` に変換するときに 0.01 単位に四捨五入する
   （実例: `ShiftSettingsDto`）。
@@ -61,7 +67,8 @@ DB側（マイグレーション・RLS・トリガー・Hook の SQL）の規約
   （`insert` は RLS で拒否されると HTTP 403・`code` `42501` のエラーになる。`delete` も `update` と同じく0行になるので、
   `select()` を付けて削除した行数を確かめる。実例: `SupabaseProjectRepository`）
 - 制約違反などをユーザーに理由を伝えるエラーに変換する場合は、`PostgrestRestException.code`（Postgres のエラーコード。
-  unique 制約違反は `23505`）で判別する（message の文字列で判別しない）。`runCatchingData` で `GenericDataFailureException` に
+  unique 制約違反は `23505`）で判別する（制約違反の message は Postgres が組み立てる文言なので判別に使わない。
+  `raise exception` で独自に投げたエラーは、上記のとおり `code` と独自のメッセージで判別する）。`runCatchingData` で `GenericDataFailureException` に
   包んだ後、`cause` の `code` を見て domain の専用例外（例: `DuplicateProjectNameException`）に変換する。
   `PostgrestRestException` は `HttpResponse` が必要でテストで作りにくいため、「コード → 例外」の変換は純粋な関数に分けてテストする
   （例: `projectNameSaveFailure`）。
@@ -83,6 +90,9 @@ DB側（マイグレーション・RLS・トリガー・Hook の SQL）の規約
   `AuthEvent.OtpError` を `auth.events`（`@SupabaseExperimental`、replay=1）に流す。`consumeMagicLinkCallbackError()` は
   その `replayCache` を1回だけ読む。**`errorDescription` はURLを書き換えれば任意の文字列にできるため、UIに表示しない**
   （`errorCode` だけで `MagicLinkCallbackError` に変換する）。
+  利用停止中（`auth.users.banned_until` が未来）のユーザーは、マジックリンクの要求（`signInWith(OTP)`）は成功しメールも届くが、
+  リンクを開くと `#error_code=user_banned` で戻る（`AuthErrorCode.UserBanned` → `MagicLinkCallbackError.SUSPENDED`）。
+  そのため、利用停止のエラーはマジックリンク送信時ではなく、リンクを開いた後のログイン画面に表示される。
 - `SessionStatus.RefreshFailure`（トークン更新のネットワークエラー等。supabase-kt が自動で再試行する）は
   `AuthState.Unknown` に変換する。`SignedOut` にすると、一時的な通信断でログイン画面に戻されてしまう。
 - `auth.signOut()`（既定の LOCAL スコープ）は、Supabase がエラーを返した場合（`RestException`）はローカルのセッションを

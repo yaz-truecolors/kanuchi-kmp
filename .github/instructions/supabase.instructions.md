@@ -83,6 +83,9 @@ RLS の権限方針（誰が何を参照・編集できるか）は `docs/requir
     拒否されるべき追加には後続で使わない値を使う。
   - テストデータのメールアドレスは `@db-test.invalid` を使う（ローカルの開発用データと衝突させない）。
   - テストを追加したら、検証したいルールを一時的に壊して（ポリシーを緩める等）テストが失敗することを確認する。
+  - ローカルの Supabase には開発用のユーザー（admin を含む）がいる。「admin が何人いるか」に依存するテストは、
+    テスト内（rollback される）で `@db-test.invalid` 以外の admin を降格してから実行する（`09_user_suspension.test.sql` 参照）。
+    降格は直接DB接続（`tests.clear_authentication()` の状態）で行えば、admin ガードのトリガーの対象外になる。
 - 既知の問題を記録する場合は pgTAP の `todo()` を使う（失敗してもテスト全体は成功扱いになる）。
   問題を修正したら `todo` を外すこと。
 
@@ -102,6 +105,20 @@ RLS の権限方針（誰が何を参照・編集できるか）は `docs/requir
   無限再帰（自分自身のテーブルのRLSを評価するために自分自身のRLSを再評価する）になり得る。
   `SECURITY DEFINER` な `is_admin()` 関数として切り出し、テーブル所有者権限で実行することで
   再帰を回避している。
+- `current_setting('role', true)` は `SECURITY DEFINER` の関数の中でも呼び出し元の実行ロール（`authenticated`）を返す
+  （`SECURITY DEFINER` が変えるのは `current_user` だけ）。そのため、`set_user_suspended()` のような
+  `SECURITY DEFINER` の RPC から `profiles` を更新しても、`authenticated` 限定のトリガー（`enforce_role_change_permission` /
+  `guard_active_admins`）は適用される。判定に `current_user` を使うと、`SECURITY DEFINER` 経由で迂回されるので使わない。
+- 「最後の1人は残す」のような、他の行の状態に依存するチェックをトリガーで行う場合は、同時実行で2つの
+  トランザクションが互いの未コミットの変更を見ずに通過しないよう、確認の前に `pg_advisory_xact_lock` 等で直列化する
+  （`guard_active_admins` 参照）。
+- 利用停止中のユーザーのアクセス拒否は、RLS ではなく PostgREST の pre-request 関数（`reject_suspended_user`）で行っている
+  （全テーブル・RPC に一律で効く）。pre-request 関数は PostgREST がロールを `anon` / `authenticated` に切り替えた後に
+  呼ぶため、それらのロールに `EXECUTE` 権限が必要。登録は `alter role authenticator in database ... set pgrst.db_pre_request`
+  で行い、`notify pgrst, 'reload config'` で反映する。pre-request 関数が例外を投げると Data API の全リクエストが失敗するため、
+  変更時は慎重に（ローカルで PostgREST 経由の動作も確認する）。
+- `auth.users.banned_until` を設定したユーザーも、`/auth/v1/otp`（マジックリンク要求）は成功しメールも送られる。
+  拒否されるのはリンクを開いたとき（`#error_code=user_banned` でリダイレクト）とトークン更新時。
 - RLSポリシー・トリガー・Hook の振る舞いは DBテスト（`supabase/tests/database/`）で検証する
   （上記「DBテスト（`supabase/tests/`）」）。Supabase実機に適用する前に、ローカルの Docker 上で
   `./supabase/tests/run.sh` を実行して確認すること。実物の Supabase Auth（HTTP）経由の動作など
