@@ -1,6 +1,7 @@
 package jp.co.yaz.kanuchi.presentation.di
 
 import jp.co.yaz.kanuchi.presentation.auth.LoginViewModel
+import jp.co.yaz.kanuchi.presentation.holiday.CompanyHolidaysViewModel
 import jp.co.yaz.kanuchi.presentation.home.HomeViewModel
 import jp.co.yaz.kanuchi.presentation.navigation.AuthGateViewModel
 import jp.co.yaz.kanuchi.presentation.project.ProjectMembersViewModel
@@ -27,4 +28,5 @@ val presentationModule =
         viewModelOf(::ProjectsViewModel)
         // 案件のIDは画面のルートの引数から koinViewModel { parametersOf(projectId) } で渡す
         viewModel { params -> ProjectMembersViewModel(params.get(), get(), get()) }
+        viewModelOf(::CompanyHolidaysViewModel)
     }

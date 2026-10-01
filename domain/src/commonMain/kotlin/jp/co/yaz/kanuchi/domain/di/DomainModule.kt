@@ -4,6 +4,9 @@ import jp.co.yaz.kanuchi.domain.auth.ConsumeMagicLinkCallbackErrorUseCase
 import jp.co.yaz.kanuchi.domain.auth.ObserveAuthStateUseCase
 import jp.co.yaz.kanuchi.domain.auth.SendMagicLinkUseCase
 import jp.co.yaz.kanuchi.domain.auth.SignOutUseCase
+import jp.co.yaz.kanuchi.domain.calendar.AddCompanyHolidaysUseCase
+import jp.co.yaz.kanuchi.domain.calendar.DeleteCompanyHolidayUseCase
+import jp.co.yaz.kanuchi.domain.calendar.GetCompanyHolidaysOfYearUseCase
 import jp.co.yaz.kanuchi.domain.calendar.GetTodayUseCase
 import jp.co.yaz.kanuchi.domain.profile.GetCurrentUserProfileUseCase
 import jp.co.yaz.kanuchi.domain.profile.GetProfilesUseCase
@@ -59,4 +62,7 @@ val domainModule =
         single<Clock> { Clock.System }
         factoryOf(::GetTodayUseCase)
         factoryOf(::GetMonthlyWorkSheetUseCase)
+        factoryOf(::GetCompanyHolidaysOfYearUseCase)
+        factoryOf(::AddCompanyHolidaysUseCase)
+        factoryOf(::DeleteCompanyHolidayUseCase)
     }

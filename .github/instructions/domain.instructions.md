@@ -62,3 +62,8 @@ domain 層の設計原則は領域共通の原則として [copilot-construction
   仕様は `docs/requirements.md` の「9. 日次入力・集計の仕様」。
 - 負になり得る時間（過不足・未配分）は `SignedHours`（`Hours` と同じく 0.01 時間単位の整数）で表す。`Hours - Hours` は `SignedHours` を返す。
   割合は `AllocationRatio`（0.1% 単位の整数、分母が 0 なら null）で表す。
+- 利用者が入力する日付（`YYYY-MM-DD`。区切りは `/` も可、月日は1桁も可）の解釈は `CompanyHolidayInput.parseDate`（`domain/calendar/`）を使う。
+  `JapaneseHolidays.SUPPORTED_YEARS`（2000〜2099年）の範囲外の年は不正な日付として扱う。
+- 複数の日をまとめて追加するユースケース（`AddCompanyHolidaysUseCase`）は、Repository に一括追加の API が無いため1日ずつ追加する。
+  途中で失敗すると一部だけ追加された状態になるので、追加の前に重複を確かめて何も追加せずに失敗させ、それでも途中で失敗した場合は
+  呼び出し側（ViewModel）が一覧を読み込み直す。
