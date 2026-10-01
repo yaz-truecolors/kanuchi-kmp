@@ -39,6 +39,21 @@ Compose Multiplatform の UI・ViewModel・リソース（`presentation/`）と�
 - `LoginViewModel` は生成時にマジックリンクのエラーを1回だけ取り出す。ログイン画面はログイン状態の確認後にしか
   表示されないため、この時点でエラーは確定している（`SupabaseAuthRepository.consumeMagicLinkCallbackError()` のコメント参照）。
 
+## ホーム画面から開く画面の追加
+
+- ホーム画面のメニューから開く画面（個人設定・案件管理等）は、ルートを `KanuchiDestinations` に定義し、
+  `KanuchiNavHost` に `composable(...)` を追加する。メニューのボタンは `HomeScreen` に追加する
+  （admin 用の画面は `if (uiState.showsAdminMenu)` の中に置く）。未実装の画面は `ComingSoonScreen` で仮置きしておき、
+  実装時に本物の画面に置き換える。
+- 画面の枠は `SubScreenScaffold`（「戻る」ボタン・タイトル・縦スクロール・幅上限 720.dp）を使う。
+  「戻る」には `KanuchiNavHost` の `backToHome()` を渡す。画面側は `NavController` を受け取らず、
+  `onBack: () -> Unit` のようなコールバックだけを受け取る（画面を Navigation に依存させないため）。
+- admin 用の画面でも、メニューを隠しているのは使い勝手のためで、アクセス制御ではない。
+  データの参照・変更の可否は必ず DB 側（RLS・トリガー・関数）で強制する。
+- データの読み込み・保存の失敗（`GenericDataFailureException`）は、共通の文言
+  `common_data_load_error_message` / `common_data_save_error_message` で表示する。読み込みの失敗には
+  `common_retry_button` で再読み込みできるようにする。
+
 ## ViewModel のテスト
 
 - ViewModel のテストは `presentation/src/commonTest/` に置く。Karma（ChromeHeadless）で実行されるため、
@@ -98,6 +113,10 @@ Compose Multiplatform の UI・ViewModel・リソース（`presentation/`）と�
   `import.meta` を使う ES モジュール）。
   - 2026年9月時点の構成（Kotlin 2.4.20）では webpack が UMD 形式にバンドルし `import.meta` が残らないため、
     外しても描画されることをスモークテストで確認している。ただしバンドル形式や設定が変われば再発しうるので付けたままにする。
+- `index.html` の `html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }` は外さない。
+  `ComposeViewport(document.body)` は body の大きさに合わせて描画するため、body の高さが固定されていないと
+  中身に応じた中途半端な高さ（実測で約400px）になり、**それより下が描画されず、スクロールもできない**事故があった
+  （ホーム画面のメニューが増えて下の方が切れた）。スクロールは Compose 側の `Modifier.verticalScroll` で行う。
 - `./gradlew build` や `ktlintCheck`/`detekt`、単体テストはこの種のランタイムエラーを検知できない。
   **本番ビルドが起動して `<canvas>` に描画されるかは、UI 描画スモークテスト（`./gradlew :app-wasmjs:smokeTest`。
   `verify` に含まれる）が自動で確認する**（規約は [e2e.instructions.md](e2e.instructions.md)）。

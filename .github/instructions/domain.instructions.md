@@ -28,5 +28,8 @@ domain 層の設計原則は領域共通の原則として [copilot-construction
   `EmailNotInvitedException` と `GenericAuthFailureException` は `presentation` 層が文言に変換して表示し、
   それ以外の例外で message が非nullの場合は「UIにそのまま表示してよい（実装側が安全なメッセージに変換する
   責任を持つ）」。実装側の変換ルールは [data.instructions.md](data.instructions.md) の「例外の扱い」を参照。
+- DB へのアクセスの失敗で具体的な理由を表示できない場合は `GenericDataFailureException`（`domain/common/`）を使う。
+  入力内容に問題がある等、ユーザーに理由を伝えたい失敗は、専用の例外（文言は持たない）を domain に定義し、
+  presentation 層で `strings.xml` の文言に変換する。
 - マジックリンクから戻った際のエラーは `MagicLinkCallbackError`（種別のみの enum）で表す。URLに含まれる説明文は
   誰でも書き換えられるため、domain にメッセージとして持ち込まない。

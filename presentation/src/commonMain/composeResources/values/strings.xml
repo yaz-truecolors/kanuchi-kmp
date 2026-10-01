@@ -1,6 +1,12 @@
 <resources>
     <!-- 全画面共通 -->
     <string name="app_title">Kanuchi（鍛冶）</string>
+    <string name="common_back_button">← 戻る</string>
+    <string name="common_retry_button">再読み込み</string>
+    <string name="common_coming_soon_message">この画面は準備中です。</string>
+    <!-- DBへのアクセスが失敗し、具体的な理由を表示できない場合 (GenericDataFailureException) の汎用文言 -->
+    <string name="common_data_load_error_message">データの読み込みに失敗しました。通信環境を確認して、再読み込みしてください。</string>
+    <string name="common_data_save_error_message">保存に失敗しました。通信環境を確認して、もう一度お試しください。</string>
 
     <!-- ログイン画面 (マジックリンク送信フロー) -->
     <string name="login_description">メールアドレスにログイン用のリンクを送ります。</string>
@@ -20,10 +26,20 @@
 
     <!-- ホーム画面 (ログイン後の画面) -->
     <string name="home_signed_in_as">ログイン中: %1$s</string>
+    <!-- %1$s: 表示名、%2$s: メールアドレス -->
+    <string name="home_signed_in_as_with_name">ログイン中: %1$s（%2$s）</string>
+    <string name="home_profile_load_error_message">ユーザー情報の読み込みに失敗しました。管理者メニューは、読み込みに成功すると表示されます。</string>
+    <string name="home_admin_menu_header">管理者メニュー</string>
     <!-- ログイン中のユーザーのメールアドレスが取得できなかった場合に home_signed_in_as に埋め込む文言 -->
     <string name="home_email_unknown">(不明)</string>
     <string name="home_coming_soon_message">作業時間の入力・集計の画面は準備中です。</string>
     <string name="home_sign_out_button">ログアウト</string>
     <string name="home_signing_out_button">ログアウト中...</string>
     <string name="home_sign_out_error_message">ログアウトに失敗しました。通信環境を確認して、もう一度お試しください。</string>
+
+    <!-- ホーム画面のメニューから開く各画面のタイトル (メニューのボタンにも使う) -->
+    <string name="settings_title">個人設定</string>
+    <string name="projects_title">案件管理</string>
+    <string name="users_title">ユーザー管理</string>
+    <string name="roles_title">権限管理</string>
 </resources>
