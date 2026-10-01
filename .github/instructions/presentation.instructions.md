@@ -55,6 +55,12 @@ Compose Multiplatform の UI・ViewModel・リソース（`presentation/`）と�
   増やす場合も、ここで読み込み直すようにする。
 - admin 用の画面でも、メニューを隠しているのは使い勝手のためで、アクセス制御ではない。
   データの参照・変更の可否は必ず DB 側（RLS・トリガー・関数）で強制する。
+- 画面からさらに別の画面を開く（引数付きのルート）場合の実例は、案件管理 → 担当メンバー（`KanuchiDestinations.PROJECT_MEMBERS`）。
+  ルートは `"projects/{projectId}/members"` の形で定義し、引数は `backStackEntry.arguments?.read { getStringOrNull(...) }` で取り出して
+  画面に渡す。ViewModel への引数は `koinViewModel { parametersOf(projectId) }` で渡し、`PresentationModule` では
+  `viewModel { params -> XxxViewModel(params.get(), get(), ...) }` で登録する。「戻る」は連打で戻りすぎないよう
+  `popBackStack(<開いた元の画面のルート>, inclusive = false)` にする。`KanuchiNavHost` の関数が長くなりすぎる（detekt の `LongMethod`）
+  場合は、関連するルートを `NavGraphBuilder` の拡張関数（例: `projectRoutes`）に分ける。
 - データの読み込み・保存の失敗（`GenericDataFailureException`）は、共通の文言
   `common_data_load_error_message` / `common_data_save_error_message` で表示する。読み込みの失敗には
   `common_retry_button` で再読み込みできるようにする。

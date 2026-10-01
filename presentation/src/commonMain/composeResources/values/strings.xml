@@ -69,4 +69,35 @@
     <string name="settings_hours_too_large_error">%1$s以下で入力してください。</string>
     <string name="settings_min_hours_exceeds_max_hours_error">上限は下限以上にしてください。</string>
     <string name="settings_shift_saved_message">勤務時間を保存しました。</string>
+    <!-- 案件管理画面 (admin のみ) -->
+    <string name="projects_new_name_label">新しい案件名</string>
+    <string name="projects_add_button">追加</string>
+    <string name="projects_adding_button">追加中...</string>
+    <string name="projects_empty_message">案件はまだありません。</string>
+    <string name="projects_status_active">有効</string>
+    <string name="projects_status_inactive">無効</string>
+    <string name="projects_rename_button">名前変更</string>
+    <string name="projects_name_label">案件名</string>
+    <string name="projects_save_button">保存</string>
+    <string name="projects_saving_button">保存中...</string>
+    <string name="projects_cancel_button">キャンセル</string>
+    <string name="projects_deactivate_button">無効にする</string>
+    <string name="projects_activate_button">有効にする</string>
+    <string name="projects_members_button">担当メンバー</string>
+    <string name="projects_blank_name_error_message">案件名を入力してください。</string>
+    <string name="projects_duplicate_name_error_message">同じ名前の案件があります。別の名前を入力してください。</string>
+    <string name="projects_inactive_note">無効にした案件は、日々の入力で選べなくなります（過去の記録は残ります）。案件は削除できません。</string>
+
+    <!-- 案件の担当メンバー画面 (admin のみ) -->
+    <string name="project_members_title">担当メンバー</string>
+    <!-- %1$s: 案件名 -->
+    <string name="project_members_project_name">案件: %1$s</string>
+    <!-- %1$s: 案件名 -->
+    <string name="project_members_project_name_inactive">案件: %1$s（無効）</string>
+    <string name="project_members_description">この案件を担当するメンバーを選んで保存してください。</string>
+    <!-- %1$s: 表示名、%2$s: メールアドレス -->
+    <string name="project_members_user_label">%1$s（%2$s）</string>
+    <string name="project_members_save_button">保存</string>
+    <string name="project_members_saving_button">保存中...</string>
+    <string name="project_members_saved_message">保存しました。</string>
 </resources>

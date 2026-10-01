@@ -7,6 +7,12 @@ import jp.co.yaz.kanuchi.domain.auth.SignOutUseCase
 import jp.co.yaz.kanuchi.domain.profile.GetCurrentUserProfileUseCase
 import jp.co.yaz.kanuchi.domain.profile.GetProfilesUseCase
 import jp.co.yaz.kanuchi.domain.profile.UpdateDisplayNameUseCase
+import jp.co.yaz.kanuchi.domain.project.AddProjectUseCase
+import jp.co.yaz.kanuchi.domain.project.GetProjectAssignmentUseCase
+import jp.co.yaz.kanuchi.domain.project.GetProjectsUseCase
+import jp.co.yaz.kanuchi.domain.project.RenameProjectUseCase
+import jp.co.yaz.kanuchi.domain.project.SaveProjectAssignmentUseCase
+import jp.co.yaz.kanuchi.domain.project.SetProjectActiveUseCase
 import jp.co.yaz.kanuchi.domain.shift.GetShiftSettingsUseCase
 import jp.co.yaz.kanuchi.domain.shift.SaveShiftSettingsUseCase
 import org.koin.core.module.dsl.factoryOf
@@ -26,4 +32,10 @@ val domainModule =
         factoryOf(::UpdateDisplayNameUseCase)
         factoryOf(::GetShiftSettingsUseCase)
         factoryOf(::SaveShiftSettingsUseCase)
+        factoryOf(::GetProjectsUseCase)
+        factoryOf(::AddProjectUseCase)
+        factoryOf(::RenameProjectUseCase)
+        factoryOf(::SetProjectActiveUseCase)
+        factoryOf(::GetProjectAssignmentUseCase)
+        factoryOf(::SaveProjectAssignmentUseCase)
     }
