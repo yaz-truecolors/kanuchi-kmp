@@ -34,6 +34,8 @@ class FakeWorkRecordRepository : WorkRecordRepository {
     override suspend fun deleteWorkRecord(date: LocalDate): Result<Unit> {
         deletedDates += date
         return deleteResult
+    }
+
     /** getWorkRecordsOfAllUsers() を失敗させる場合の例外。 */
     var getAllFailure: Throwable? = null
 

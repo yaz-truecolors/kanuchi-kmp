@@ -302,6 +302,10 @@ class ProjectSummaryViewModelTest : MainDispatcherTest() {
         }
 
         override suspend fun getWorkRecordsOfAllUsers(yearMonth: YearMonth): Result<Map<String, List<WorkRecord>>> = error("not used")
+
+        override suspend fun saveWorkRecord(record: WorkRecord): Result<Unit> = error("not used")
+
+        override suspend fun deleteWorkRecord(date: LocalDate): Result<Unit> = error("not used")
     }
 
     private class FakeCompanyHolidayRepository : CompanyHolidayRepository {

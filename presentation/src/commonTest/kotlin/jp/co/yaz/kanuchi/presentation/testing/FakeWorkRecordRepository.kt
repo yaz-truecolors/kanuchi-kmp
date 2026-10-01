@@ -47,4 +47,6 @@ internal class FakeWorkRecordRepository : WorkRecordRepository {
         gate?.await()
         return deleteResult
     }
+
+    override suspend fun getWorkRecordsOfAllUsers(yearMonth: YearMonth): Result<Map<String, List<WorkRecord>>> = error("not used")
 }

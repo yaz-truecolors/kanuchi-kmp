@@ -14,7 +14,6 @@ import androidx.navigation.navArgument
 import androidx.savedstate.read
 import jp.co.yaz.kanuchi.domain.auth.AuthState
 import jp.co.yaz.kanuchi.presentation.auth.LoginScreen
-import jp.co.yaz.kanuchi.presentation.common.ComingSoonScreen
 import jp.co.yaz.kanuchi.presentation.common.LoadingScreen
 import jp.co.yaz.kanuchi.presentation.dailyinput.DailyInputDayScreen
 import jp.co.yaz.kanuchi.presentation.dailyinput.DailyInputScreen
@@ -27,13 +26,7 @@ import jp.co.yaz.kanuchi.presentation.role.RolesScreen
 import jp.co.yaz.kanuchi.presentation.settings.SettingsScreen
 import jp.co.yaz.kanuchi.presentation.summary.ProjectSummaryScreen
 import jp.co.yaz.kanuchi.presentation.users.UsersScreen
-import kanuchi.presentation.generated.resources.Res
-import kanuchi.presentation.generated.resources.admin_dashboard_title
-import kanuchi.presentation.generated.resources.company_holidays_title
-import kanuchi.presentation.generated.resources.summary_title
 import kotlinx.datetime.LocalDate
-import kanuchi.presentation.generated.resources.daily_input_title
-import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 /**

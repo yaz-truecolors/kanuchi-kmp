@@ -29,9 +29,9 @@ import jp.co.yaz.kanuchi.domain.user.SuspendUserUseCase
 import jp.co.yaz.kanuchi.domain.work.DeleteWorkRecordUseCase
 import jp.co.yaz.kanuchi.domain.work.GetCurrentUserMonthlyWorkSheetUseCase
 import jp.co.yaz.kanuchi.domain.work.GetMonthlyWorkSheetUseCase
+import jp.co.yaz.kanuchi.domain.work.GetTeamMonthlySummaryUseCase
 import jp.co.yaz.kanuchi.domain.work.GetWorkDayEntryUseCase
 import jp.co.yaz.kanuchi.domain.work.SaveWorkRecordUseCase
-import jp.co.yaz.kanuchi.domain.work.GetTeamMonthlySummaryUseCase
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 import kotlin.time.Clock

@@ -105,9 +105,6 @@ internal class SupabaseWorkRecordRepository(
 
     private fun currentUserId(): String = checkNotNull(supabaseClient.auth.currentUserOrNull()?.id) { "not signed in" }
 
-    private companion object {
-        const val TABLE = "work_records"
-        const val ALLOCATIONS = "allocations"
     override suspend fun getWorkRecordsOfAllUsers(yearMonth: YearMonth): Result<Map<String, List<WorkRecord>>> =
         runCatchingData {
             // PostgREST は1回の応答の行数に上限 (max_rows) があるため、ページに分けて全件を取得する
@@ -133,6 +130,7 @@ internal class SupabaseWorkRecordRepository(
 
     private companion object {
         const val TABLE = "work_records"
+        const val ALLOCATIONS = "allocations"
 
         // supabase/config.toml の max_rows (Supabase の既定値) と同じ。これより小さい上限の環境では途中までしか取得できない
         const val PAGE_SIZE = 1000

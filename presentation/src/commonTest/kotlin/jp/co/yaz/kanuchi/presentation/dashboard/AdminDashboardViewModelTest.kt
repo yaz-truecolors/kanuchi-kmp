@@ -166,6 +166,10 @@ private class FakeWorkRecordRepository : WorkRecordRepository {
         gates[yearMonth]?.await()
         return Result.success(records[yearMonth].orEmpty())
     }
+
+    override suspend fun saveWorkRecord(record: WorkRecord): Result<Unit> = error("not used")
+
+    override suspend fun deleteWorkRecord(date: LocalDate): Result<Unit> = error("not used")
 }
 
 /** 管理者ダッシュボードのテスト用の [CompanyHolidayRepository] の偽物 (休業日なし)。 */
