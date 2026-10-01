@@ -124,6 +124,10 @@ RLS の権限方針（誰が何を参照・編集できるか）は `docs/requir
   `./supabase/tests/run.sh` を実行して確認すること。実物の Supabase Auth（HTTP）経由の動作など
   DBテストで検証できないものは `supabase/README.md` の「自動テストでは検証していないもの」に挙げており、
   該当箇所を変更した場合は `supabase start` によるローカルのSupabase一式で手動確認する。
+- 「誰が作ったか」等、クライアントに送らせたくない列（例: `company_holidays.created_by`。既定値 `auth.uid()`）がある
+  テーブルは、`grant insert (<送ってよい列>, ...)` のように列単位で insert を許可する。テーブル単位で許可すると、
+  クライアントが他人の ID を送って既定値を上書きできてしまう（DBテストで「送ると 42501 になる」ことを確認する。実例:
+  `10_company_holidays.test.sql`）。
 
 ## 招待制アカウント作成（Before User Created Hook）
 

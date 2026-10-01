@@ -42,3 +42,23 @@ domain 層の設計原則は領域共通の原則として [copilot-construction
 - 入力の検証は domain に置き、DB の check 制約と同じ条件と、列の型に収まる範囲（例: `numeric(4, 2)` なら 99.99 以下）を
   確認する（実例: `ShiftSettingsInput.toShiftSettings()`、`DisplayName.of()`）。満たしていない条件は文言を持たない
   enum（例: `ShiftSettingsViolation`）で返し、presentation 層が入力欄ごとの文言に変換する。
+
+## 日付・祝日・稼働時間の計算
+
+- 日付・月は kotlinx-datetime の `LocalDate` / `YearMonth` を使う（domain は `api` で公開しているので、data・presentation からも使える）。
+  月の初日・末日・日数は `YearMonth.firstDay` / `lastDay` / `numberOfDays`、前月・翌月は `minusMonth()` / `plusMonth()`。
+- 「今日」は日本時間（Asia/Tokyo）の日付で、`kotlin.time.Clock` を注入して `Clock.todayInJapan()`（`domain/calendar/JapanTime.kt`）で求める。
+  テストでは固定の `Clock` を渡す（実例: `GetTodayUseCaseTest` の `FixedClock`）。`Clock.System` は `DomainModule` で登録している。
+  - 日本時間は `TimeZone.of("Asia/Tokyo")` ではなく固定の UTC+9（`JAPAN_TIME_ZONE`）で表す。wasmJs ではタイムゾーンのデータベース
+    （tzdb）を別途組み込まないと地域名のタイムゾーンを使えないため。日本は夏時間が無いので固定オフセットで同じ結果になる。
+- 日本の祝日は `JapaneseHolidays`（`domain/calendar/`）で判定する（外部 API・年ごとのデータは使わない）。祝日法の改正や特例
+  （2019年の即位、2020・2021年のオリンピック等）があった年は、年ごとの条件分岐として追加し、内閣府の祝日一覧
+  （https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv、Shift_JIS）と照合するテスト（`JapaneseHolidaysTest`）にその年の一覧を加える。
+  一覧では振替休日・国民の休日が「休日」と表記される点に注意。
+  - 振替休日の判定は国民の休日の後に行う（両方に当たる日は振替休日になる）。2006年以前は「翌日のみ」・「日曜日は国民の休日にならない」と
+    ルールが違う。春分・秋分の日は浮動小数の誤差を避けるため整数演算の近似式で求めている（2000〜2099年で有効）。
+- 稼働日・稼働時間・過不足・月次の集計は `WorkCalendar` / `WorkingHoursCalculator` / `AllocationBalancer` / `MonthlyWorkSheet`
+  （`domain/work/`）に集約している。画面側で同じ計算を書かず、`MonthlyWorkSheet` の値（`WorkDay` の各値・月の集計値）を表示する。
+  仕様は `docs/requirements.md` の「9. 日次入力・集計の仕様」。
+- 負になり得る時間（過不足・未配分）は `SignedHours`（`Hours` と同じく 0.01 時間単位の整数）で表す。`Hours - Hours` は `SignedHours` を返す。
+  割合は `AllocationRatio`（0.1% 単位の整数、分母が 0 なら null）で表す。

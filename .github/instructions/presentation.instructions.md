@@ -64,6 +64,13 @@ Compose Multiplatform の UI・ViewModel・リソース（`presentation/`）と�
 - データの読み込み・保存の失敗（`GenericDataFailureException`）は、共通の文言
   `common_data_load_error_message` / `common_data_save_error_message` で表示する。読み込みの失敗には
   `common_retry_button` で再読み込みできるようにする。
+- 日次入力・案件別集計・管理者ダッシュボードの月の切り替えは共通の `MonthSelector`（`presentation/common/`）を使う。
+  時間数・符号付きの時間数・割合の表示は `formatHours` / `formatSignedHours` / `formatRatio`（`common/HoursFormat.kt`）を使い、
+  単位（時間・%）は `strings.xml` の文言で付ける。
+- 省略できる引数を取るルートは、クエリ引数の形（例: `"summary?userId={userId}&yearMonth={yearMonth}"`）で定義し、
+  `navArgument` を `nullable = true`・`defaultValue = null` にする。遷移先のルートは引数を省略して組み立てる関数
+  （例: `KanuchiDestinations.summaryOf(userId, yearMonth)`）を用意する。複数の画面から開く画面の「戻る」は、
+  `popBackStack(<元の画面>, inclusive = false)` が false（バックスタックに無い）ならホーム画面に戻す（例: `backFromSummary`）。
 
 ## ViewModel のテスト
 
