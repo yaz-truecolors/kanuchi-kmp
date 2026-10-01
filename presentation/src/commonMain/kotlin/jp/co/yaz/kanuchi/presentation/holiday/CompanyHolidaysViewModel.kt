@@ -66,7 +66,7 @@ class CompanyHolidaysViewModel(
                 nationalHolidays = JapaneseHolidays.holidaysOf(year).map { (date, name) -> NationalHolidayItem(date, name) },
                 isLoading = true,
                 loadFailed = false,
-                deleteFailedDate = null,
+                deleteFailedHoliday = if (year == it.year) it.deleteFailedHoliday else null,
             )
         }
 
@@ -121,7 +121,7 @@ class CompanyHolidaysViewModel(
 
     fun onDeleteClicked(holiday: CompanyHoliday) {
         if (!_uiState.value.canEdit) return
-        _uiState.update { it.copy(deleteTarget = holiday, deleteFailedDate = null) }
+        _uiState.update { it.copy(deleteTarget = holiday, deleteFailedHoliday = null) }
     }
 
     fun onDeleteDismissed() {
@@ -132,7 +132,7 @@ class CompanyHolidaysViewModel(
         val state = _uiState.value
         val target = state.deleteTarget ?: return
         if (!state.canEdit) return
-        _uiState.update { it.copy(deleteTarget = null, deletingDate = target.date, deleteFailedDate = null) }
+        _uiState.update { it.copy(deleteTarget = null, deletingDate = target.date, deleteFailedHoliday = null) }
 
         viewModelScope.launch {
             deleteCompanyHolidayUseCase(target.date)
@@ -147,7 +147,9 @@ class CompanyHolidaysViewModel(
                         )
                     }
                 }.onFailure {
-                    _uiState.update { it.copy(deletingDate = null, deleteFailedDate = target.date) }
+                    _uiState.update { it.copy(deletingDate = null, deleteFailedHoliday = target) }
+                    // 他の admin が先に削除していた (0件削除) 場合などに、存在しない行を残さないよう一覧を最新にする
+                    load(_uiState.value.year)
                 }
         }
     }

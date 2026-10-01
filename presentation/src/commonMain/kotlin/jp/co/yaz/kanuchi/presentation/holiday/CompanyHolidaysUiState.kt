@@ -47,8 +47,8 @@ data class CompanyHolidaysUiState(
     val deleteTarget: CompanyHoliday? = null,
     /** 削除中の休業日の日付。 */
     val deletingDate: LocalDate? = null,
-    /** 削除に失敗した休業日の日付。 */
-    val deleteFailedDate: LocalDate? = null,
+    /** 削除に失敗した休業日。失敗後に一覧を読み込み直して行が消えても、失敗したことが分かるよう一覧の上に表示し続ける。 */
+    val deleteFailedHoliday: CompanyHoliday? = null,
 ) {
     /** いずれかの保存 (追加・削除) の処理中か。処理中は他の保存と年の切り替えを受け付けない。 */
     val isSaving: Boolean get() = isAdding || deletingDate != null

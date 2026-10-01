@@ -198,6 +198,8 @@
     <string name="company_holidays_empty_message">この年の会社の休業日はまだありません。</string>
     <!-- %1$s: 月、%2$s: 日、%3$s: 曜日 -->
     <string name="company_holidays_date">%1$s/%2$s（%3$s）</string>
+    <!-- 一覧の1行。%1$s: 日付 (company_holidays_date)、%2$s: 休業日の名前 -->
+    <string name="company_holidays_item">%1$s　%2$s</string>
     <string name="company_holidays_overlaps_day_off_note">土日・祝日と重なっています</string>
     <string name="company_holidays_delete_button">削除</string>
     <string name="company_holidays_deleting_button">削除中...</string>
@@ -205,6 +207,8 @@
     <!-- %1$s: 日付 (YYYY-MM-DD)、%2$s: 休業日の名前 -->
     <string name="company_holidays_delete_confirm_message">%1$s（%2$s）を休業日から削除します。</string>
     <string name="company_holidays_delete_confirm_button">削除する</string>
+    <!-- %1$s: 日付 (company_holidays_date)、%2$s: 休業日の名前 -->
+    <string name="company_holidays_delete_error">%1$s（%2$s）を削除できませんでした。一覧を読み込み直したので、内容を確認してください。</string>
     <string name="company_holidays_cancel_button">キャンセル</string>
     <string name="company_holidays_national_holidays_header">日本の祝日（自動判定）</string>
     <string name="company_holidays_national_holidays_description">祝日（振替休日・国民の休日を含む）は自動で休みになるため、登録は不要です。</string>

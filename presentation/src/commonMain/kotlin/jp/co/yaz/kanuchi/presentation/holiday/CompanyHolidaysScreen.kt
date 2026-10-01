@@ -25,7 +25,6 @@ import jp.co.yaz.kanuchi.domain.calendar.CompanyHolidayInput
 import jp.co.yaz.kanuchi.presentation.common.SubScreenScaffold
 import kanuchi.presentation.generated.resources.Res
 import kanuchi.presentation.generated.resources.common_data_load_error_message
-import kanuchi.presentation.generated.resources.common_data_save_error_message
 import kanuchi.presentation.generated.resources.common_retry_button
 import kanuchi.presentation.generated.resources.company_holidays_add_button
 import kanuchi.presentation.generated.resources.company_holidays_added_message
@@ -36,11 +35,13 @@ import kanuchi.presentation.generated.resources.company_holidays_delete_button
 import kanuchi.presentation.generated.resources.company_holidays_delete_confirm_button
 import kanuchi.presentation.generated.resources.company_holidays_delete_confirm_message
 import kanuchi.presentation.generated.resources.company_holidays_delete_confirm_title
+import kanuchi.presentation.generated.resources.company_holidays_delete_error
 import kanuchi.presentation.generated.resources.company_holidays_deleting_button
 import kanuchi.presentation.generated.resources.company_holidays_description
 import kanuchi.presentation.generated.resources.company_holidays_empty_message
 import kanuchi.presentation.generated.resources.company_holidays_end_date_label
 import kanuchi.presentation.generated.resources.company_holidays_header
+import kanuchi.presentation.generated.resources.company_holidays_item
 import kanuchi.presentation.generated.resources.company_holidays_name_hint
 import kanuchi.presentation.generated.resources.company_holidays_name_label
 import kanuchi.presentation.generated.resources.company_holidays_national_holidays_description
@@ -77,6 +78,9 @@ fun CompanyHolidaysScreen(
         AddCompanyHolidayForm(uiState = uiState, onInputChange = viewModel::onInputChanged, onAdd = viewModel::onAddClicked)
         HorizontalDivider()
 
+        uiState.deleteFailedHoliday?.let { failed ->
+            ErrorText(stringResource(Res.string.company_holidays_delete_error, formatDate(failed.date), failed.name))
+        }
         when {
             uiState.isLoading -> CircularProgressIndicator()
             uiState.loadFailed -> {
@@ -207,7 +211,7 @@ private fun CompanyHolidayRow(
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
-            Text("${formatDate(holiday.date)}  ${holiday.name}")
+            Text(stringResource(Res.string.company_holidays_item, formatDate(holiday.date), holiday.name))
             if (holiday.date.isWeekendOrNationalHoliday()) {
                 Text(
                     text = stringResource(Res.string.company_holidays_overlaps_day_off_note),
@@ -226,9 +230,6 @@ private fun CompanyHolidayRow(
             )
         }
     }
-    if (uiState.deleteFailedDate == holiday.date) {
-        ErrorText(stringResource(Res.string.common_data_save_error_message))
-    }
 }
 
 @Composable
@@ -237,7 +238,7 @@ private fun NationalHolidays(nationalHolidays: List<NationalHolidayItem>) {
     Text(text = stringResource(Res.string.company_holidays_national_holidays_description), style = MaterialTheme.typography.bodySmall)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         nationalHolidays.forEach { holiday ->
-            Text("${formatDate(holiday.date)}  ${holiday.name}")
+            Text(stringResource(Res.string.company_holidays_item, formatDate(holiday.date), holiday.name))
         }
     }
 }

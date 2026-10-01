@@ -265,16 +265,18 @@ class CompanyHolidaysViewModelTest : MainDispatcherTest() {
     }
 
     @Test
-    fun `delete failure is shown on the holiday`() {
+    fun `delete failure is shown and the list is reloaded`() {
         val viewModel = createViewModel()
         repository.deleteResult = CompletableDeferred(Result.failure(GenericDataFailureException()))
+        // 他の admin が先に削除していた場合を想定し、再読み込みでは一覧から消えている
+        repository.holidays.clear()
 
         viewModel.onDeleteClicked(HOLIDAY_2026)
         viewModel.onDeleteConfirmed()
 
-        assertEquals(HOLIDAY_2026.date, viewModel.uiState.value.deleteFailedDate)
+        assertEquals(HOLIDAY_2026, viewModel.uiState.value.deleteFailedHoliday)
         assertNull(viewModel.uiState.value.deletingDate)
-        assertEquals(listOf(HOLIDAY_2026), viewModel.uiState.value.companyHolidays)
+        assertEquals(emptyList(), viewModel.uiState.value.companyHolidays)
     }
 
     private class FixedClock(

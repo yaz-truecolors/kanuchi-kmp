@@ -103,6 +103,25 @@ class CompanyHolidayInputTest {
     }
 
     @Test
+    fun `name length counts code points like the DB`() {
+        // 絵文字 (サロゲートペア) は String.length では2だが、DB の char_length では1文字
+        val maxEmojiName = "🎍".repeat(CompanyHoliday.MAX_NAME_LENGTH)
+
+        assertEquals(
+            maxEmojiName,
+            CompanyHolidayInput(startDate = "2026-05-01", endDate = "", name = maxEmojiName)
+                .toCompanyHolidays()
+                .getOrThrow()
+                .single()
+                .name,
+        )
+        assertEquals(
+            setOf(CompanyHolidayViolation.NAME_TOO_LONG),
+            violationsOf(CompanyHolidayInput(startDate = "2026-05-01", endDate = "", name = maxEmojiName + "🎍")),
+        )
+    }
+
+    @Test
     fun `date accepts slash separator and single digit month and day`() {
         assertEquals(LocalDate(2026, 5, 1), CompanyHolidayInput.parseDate("2026/5/1"))
         assertEquals(LocalDate(2026, 5, 1), CompanyHolidayInput.parseDate(" 2026-05-01 "))
