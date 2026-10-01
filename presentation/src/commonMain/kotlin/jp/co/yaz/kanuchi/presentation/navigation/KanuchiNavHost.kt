@@ -22,11 +22,11 @@ import jp.co.yaz.kanuchi.presentation.project.ProjectMembersScreen
 import jp.co.yaz.kanuchi.presentation.project.ProjectsScreen
 import jp.co.yaz.kanuchi.presentation.role.RolesScreen
 import jp.co.yaz.kanuchi.presentation.settings.SettingsScreen
+import jp.co.yaz.kanuchi.presentation.summary.ProjectSummaryScreen
 import jp.co.yaz.kanuchi.presentation.users.UsersScreen
 import kanuchi.presentation.generated.resources.Res
 import kanuchi.presentation.generated.resources.admin_dashboard_title
 import kanuchi.presentation.generated.resources.daily_input_title
-import kanuchi.presentation.generated.resources.summary_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -152,8 +152,13 @@ private fun NavGraphBuilder.workRecordRoutes(navController: NavHostController) {
                     defaultValue = null
                 },
             ),
-    ) {
-        ComingSoonScreen(title = stringResource(Res.string.summary_title), onBack = navController::backFromSummary)
+    ) { backStackEntry ->
+        val arguments = backStackEntry.arguments
+        ProjectSummaryScreen(
+            userId = arguments?.read { getStringOrNull(KanuchiDestinations.SUMMARY_USER_ID_ARG) },
+            yearMonth = arguments?.read { getStringOrNull(KanuchiDestinations.SUMMARY_YEAR_MONTH_ARG) },
+            onBack = navController::backFromSummary,
+        )
     }
     composable(KanuchiDestinations.ADMIN_DASHBOARD) {
         ComingSoonScreen(title = stringResource(Res.string.admin_dashboard_title), onBack = navController::backToHome)
