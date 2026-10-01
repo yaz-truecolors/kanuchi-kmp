@@ -39,6 +39,21 @@ DB側（マイグレーション・RLS・トリガー・Hook の SQL）の規約
 - コルーチン内で `catch (e: Exception)` する際の `CancellationException` の扱いは
   `copilot-construction.md` の「3. コード規約（共通）」を参照（先に `catch` して再送出する）。
 
+## DB アクセス（PostgREST）の実装パターン
+
+- Repository 実装は `SupabaseProfileRepository` を手本にする。
+  - テーブルの1行は `@Serializable` の DTO（`internal`、列名が snake_case の場合は `@SerialName`）で受け、
+    `toDomain()` で domain のモデルに変換する。DTO と変換はテストしやすいよう Repository と分け、
+    `data/src/commonTest/` に変換のテスト（JSON → DTO → domain）を書く。
+  - 取得する列は `Columns.list(...)` で明示する（`select()` の既定の `*` だと、テーブルに列が増えたときに
+    DTO にない列で失敗したり、不要な列まで取得したりするため）。
+  - 例外は共通の `runCatchingData { ... }`（`data/profile/SupabaseProfileRepository.kt`）で
+    `GenericDataFailureException` に変換して `Result` で返す。supabase-kt の例外の message は UI に出さない。
+  - ログイン中のユーザーIDは `supabaseClient.auth.currentUserOrNull()?.id` で取得する。
+- RLS で参照・変更できない行は、エラーにならず「0行」として扱われることがある（PostgREST の仕様）。
+  例えば権限の無い `update` は失敗せず何も更新しない。変更の成否を確かめたい場合は、
+  `select()` を付けて更新後の行を受け取り、0行なら失敗として扱う。
+
 ## ログイン状態（セッション）・マジックリンクの戻り
 
 - マジックリンクから戻った際のURL（`#access_token=...`）の取り込み、URLの掃除、セッションの localStorage への保存・

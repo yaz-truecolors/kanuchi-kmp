@@ -3,6 +3,20 @@
 <head>
     <meta charset="UTF-8" />
     <title>Kanuchi（鍛冶）</title>
+    <!--
+      ComposeViewport(document.body) は body の大きさに合わせて描画する。body の高さを画面いっぱいに固定しないと
+      中身の高さで決まってしまい、画面の下の方が描画されない (スクロールもしない) ため、ブラウザの画面全体に広げる。
+      スクロールは Compose 側 (Modifier.verticalScroll) で行うので、ページ自体はスクロールさせない。
+    -->
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
 </head>
 <body>
     <script type="module" src="kanuchi.js"></script>

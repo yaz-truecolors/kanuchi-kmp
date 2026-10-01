@@ -5,7 +5,10 @@ import jp.co.yaz.kanuchi.domain.auth.AuthenticatedUser
 import jp.co.yaz.kanuchi.domain.auth.GenericAuthFailureException
 import jp.co.yaz.kanuchi.domain.auth.ObserveAuthStateUseCase
 import jp.co.yaz.kanuchi.domain.auth.SignOutUseCase
+import jp.co.yaz.kanuchi.domain.common.GenericDataFailureException
+import jp.co.yaz.kanuchi.domain.profile.GetCurrentUserProfileUseCase
 import jp.co.yaz.kanuchi.presentation.testing.FakeAuthRepository
+import jp.co.yaz.kanuchi.presentation.testing.FakeProfileRepository
 import jp.co.yaz.kanuchi.presentation.testing.MainDispatcherTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -18,7 +21,48 @@ class HomeViewModelTest : MainDispatcherTest() {
             authState.value = AuthState.SignedIn(AuthenticatedUser(id = "user-1", email = "taro@example.com"))
         }
 
-    private fun createViewModel() = HomeViewModel(ObserveAuthStateUseCase(repository), SignOutUseCase(repository))
+    private val profileRepository = FakeProfileRepository()
+
+    private fun createViewModel() =
+        HomeViewModel(
+            ObserveAuthStateUseCase(repository),
+            GetCurrentUserProfileUseCase(profileRepository),
+            SignOutUseCase(repository),
+        )
+
+    @Test
+    fun `profile is loaded and admin menu is hidden for members`() {
+        val viewModel = createViewModel()
+
+        assertEquals(FakeProfileRepository.MEMBER, viewModel.uiState.value.profile)
+        assertFalse(viewModel.uiState.value.isLoadingProfile)
+        assertFalse(viewModel.uiState.value.showsAdminMenu)
+    }
+
+    @Test
+    fun `admin menu is shown for admins`() {
+        profileRepository.currentUserProfileResult = Result.success(FakeProfileRepository.ADMIN)
+
+        val viewModel = createViewModel()
+
+        assertTrue(viewModel.uiState.value.showsAdminMenu)
+    }
+
+    @Test
+    fun `profile load failure hides admin menu and can be retried`() {
+        profileRepository.currentUserProfileResult = Result.failure(GenericDataFailureException())
+        val viewModel = createViewModel()
+
+        assertTrue(viewModel.uiState.value.profileLoadFailed)
+        assertFalse(viewModel.uiState.value.showsAdminMenu)
+
+        profileRepository.currentUserProfileResult = Result.success(FakeProfileRepository.ADMIN)
+        viewModel.onRetryProfileClicked()
+
+        assertFalse(viewModel.uiState.value.profileLoadFailed)
+        assertTrue(viewModel.uiState.value.showsAdminMenu)
+        assertEquals(2, profileRepository.getCurrentUserProfileCallCount)
+    }
 
     @Test
     fun `email of the signed in user is shown`() {

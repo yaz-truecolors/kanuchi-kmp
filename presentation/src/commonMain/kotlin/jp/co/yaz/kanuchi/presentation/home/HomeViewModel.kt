@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import jp.co.yaz.kanuchi.domain.auth.AuthState
 import jp.co.yaz.kanuchi.domain.auth.ObserveAuthStateUseCase
 import jp.co.yaz.kanuchi.domain.auth.SignOutUseCase
+import jp.co.yaz.kanuchi.domain.profile.GetCurrentUserProfileUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel(
     observeAuthStateUseCase: ObserveAuthStateUseCase,
+    private val getCurrentUserProfileUseCase: GetCurrentUserProfileUseCase,
     private val signOutUseCase: SignOutUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -24,6 +26,25 @@ class HomeViewModel(
             observeAuthStateUseCase()
                 .filterIsInstance<AuthState.SignedIn>()
                 .collect { signedIn -> _uiState.update { it.copy(email = signedIn.user.email) } }
+        }
+        loadProfile()
+    }
+
+    fun onRetryProfileClicked() {
+        loadProfile()
+    }
+
+    private fun loadProfile() {
+        if (_uiState.value.isLoadingProfile) return
+        _uiState.update { it.copy(isLoadingProfile = true, profileLoadFailed = false) }
+
+        viewModelScope.launch {
+            getCurrentUserProfileUseCase()
+                .onSuccess { profile ->
+                    _uiState.update { it.copy(profile = profile, isLoadingProfile = false) }
+                }.onFailure {
+                    _uiState.update { it.copy(isLoadingProfile = false, profileLoadFailed = true) }
+                }
         }
     }
 

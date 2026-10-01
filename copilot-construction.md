@@ -18,12 +18,12 @@ GitHub Copilot（cloud agent / code review）はフロントマターの `applyT
 | 触るパス | 読むファイル | 主な内容 |
 |---|---|---|
 | `**/*.gradle.kts`, `gradle/**`, `gradle.properties`, `config/detekt/**`, `.editorconfig`, `renovate.json` | [.github/instructions/build.instructions.md](.github/instructions/build.instructions.md) | モジュールごとの wasmJs ターゲット設定、detekt/ktlint のビルド設定（KMPのソースセット・生成コード除外）、集約タスク `verify`（スモークテストのタスク構成）、Gradle デーモンの JDK（Daemon JVM criteria）、本番ビルドの静的配信（`serveDistribution`）、Node.js・Supabase CLI のバージョン固定と Renovate、Version Catalog・BOM、wasmJs の Gradle DSL の注意点 |
-| `presentation/**`, `app-wasmjs/**` | [.github/instructions/presentation.instructions.md](.github/instructions/presentation.instructions.md) | 文言の `strings.xml` 集約、ログイン状態による画面切り替え（`KanuchiNavHost`）、ViewModel のテスト、エラー表示、フォント（Noto Sans JP）、アクセシビリティ対応を行わない方針、Chrome基準、`index.html` の `type="module"` などブラウザ実行時の注意点 |
-| `data/**` | [.github/instructions/data.instructions.md](.github/instructions/data.instructions.md) | 認証方式・RLS準拠クエリ・鍵の扱い、supabase-kt 例外の変換、ログイン状態（セッション）とマジックリンクの戻り先・エラー、招待制のクライアント側（`createUser`・例外変換・Hookメッセージ定数・意図的なトレードオフ） |
+| `presentation/**`, `app-wasmjs/**` | [.github/instructions/presentation.instructions.md](.github/instructions/presentation.instructions.md) | 文言の `strings.xml` 集約、ログイン状態による画面切り替え（`KanuchiNavHost`）、ホーム画面から開く画面の追加方法（`SubScreenScaffold`）、ViewModel のテスト、エラー表示、フォント（Noto Sans JP）、アクセシビリティ対応を行わない方針、Chrome基準、`index.html` の `type="module"` などブラウザ実行時の注意点 |
+| `data/**` | [.github/instructions/data.instructions.md](.github/instructions/data.instructions.md) | 認証方式・RLS準拠クエリ・鍵の扱い、supabase-kt 例外の変換、DB アクセス（PostgREST）の実装パターン、ログイン状態（セッション）とマジックリンクの戻り先・エラー、招待制のクライアント側（`createUser`・例外変換・Hookメッセージ定数・意図的なトレードオフ） |
 | `supabase/**` | [.github/instructions/supabase.instructions.md](.github/instructions/supabase.instructions.md) | マイグレーション運用、新規テーブルの RLS/grant/policy の3点セット、DBテスト（`supabase/tests/`、pgTAP）の規約、ロール変更トリガー・`is_admin()`、Before User Created Hook のサーバー側規約 |
 | `.github/workflows/**`, `.github/github-app.yml` | [.github/instructions/ci.instructions.md](.github/instructions/ci.instructions.md) | 検証環境（CI・Copilot cloud agent・GitHub Copilot app）の3箇所をそろえる規約、`ci.yml`（Chromeセットアップ・`verify`・スモークテストの artifact・DBテストの `db-test` ジョブ・Pagesデプロイ・必須チェックのジョブ名）、`supabase-deploy.yml`（Secrets・トークン有効期限）、`copilot-setup-steps.yml` / `copilot-code-review.yml`（ジョブ名固定・事前取得）、`.github/github-app.yml`（承認・資格情報・スクリプト・`server_ready_pattern`） |
 | `e2e/**` | [.github/instructions/e2e.instructions.md](.github/instructions/e2e.instructions.md) | UI 描画スモークテスト（Playwright）の位置付け（起動して描画されるかだけを見る）、実行方法、外部通信の遮断と許容する `console.error`、Canvas 描画の判定方法 |
-| `domain/**` | [.github/instructions/domain.instructions.md](.github/instructions/domain.instructions.md) | domain 層に関わるアーキテクチャ原則（本ファイル1節）への参照、UI文言を持たない・マーカー例外、`AuthRepository` の契約 |
+| `domain/**` | [.github/instructions/domain.instructions.md](.github/instructions/domain.instructions.md) | domain 層に関わるアーキテクチャ原則（本ファイル1節）への参照、UI文言を持たない・マーカー例外、`AuthRepository` の契約、`GenericDataFailureException` |
 
 コードレビュー時の観点（指摘しない事項・重点的に確認すべき事項）は
 [.github/skills/code-review/SKILL.md](.github/skills/code-review/SKILL.md) にまとめています。
