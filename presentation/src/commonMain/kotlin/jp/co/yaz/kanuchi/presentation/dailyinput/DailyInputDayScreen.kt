@@ -94,12 +94,14 @@ fun DailyInputDayScreen(
         if (uiState.isFinished) onFinished()
     }
 
-    SubScreenScaffold(title = formatDate(date), onBack = onBack) {
+    // 保存・削除の途中で戻ると ViewModel の処理がキャンセルされ、途中まで保存された状態になり得るため、戻れないようにする
+    val backIfIdle = { if (!viewModel.uiState.value.isBusy) onBack() }
+    SubScreenScaffold(title = formatDate(date), onBack = backIfIdle, backEnabled = !uiState.isBusy) {
         val entry = uiState.entry
         when {
             entry != null -> {
                 Text(text = dayKindLabel(entry.day.dayKind), color = dayColor(date, entry.day.dayKind))
-                DayForm(uiState, entry, viewModel, onCancel = onBack)
+                DayForm(uiState, entry, viewModel, onCancel = backIfIdle)
             }
             uiState.loadFailed -> {
                 Text(stringResource(Res.string.common_data_load_error_message))
