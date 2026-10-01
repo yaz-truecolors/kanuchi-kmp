@@ -152,3 +152,5 @@ Compose Multiplatform の UI・ViewModel・リソース（`presentation/`）と�
   - 開発サーバーは Kotlin Gradle プラグインの既定（`devServer.open = true`）でシステムの既定ブラウザも開く。
 - Gradle 側の wasmJs 設定（`outputModuleName`、Compose Resources 依存の追加タイミング、`kotlinx-browser` 等）は
   [build.instructions.md](build.instructions.md) を参照。
+- `strings.xml` の文言には `%` をそのまま書いてよい（例: `%1$s%` で「33.3%」と表示される。案件別集計画面で確認済み）。
+  Compose Resources の `stringResource(id, args)` は `%1$s` の形の書式指定だけを置き換える。
