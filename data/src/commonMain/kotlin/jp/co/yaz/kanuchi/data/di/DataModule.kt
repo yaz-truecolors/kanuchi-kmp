@@ -4,8 +4,10 @@ import io.github.jan.supabase.SupabaseClient
 import jp.co.yaz.kanuchi.data.auth.SupabaseAuthRepository
 import jp.co.yaz.kanuchi.data.auth.createKanuchiSupabaseClient
 import jp.co.yaz.kanuchi.data.profile.SupabaseProfileRepository
+import jp.co.yaz.kanuchi.data.user.SupabaseUserManagementRepository
 import jp.co.yaz.kanuchi.domain.auth.AuthRepository
 import jp.co.yaz.kanuchi.domain.profile.ProfileRepository
+import jp.co.yaz.kanuchi.domain.user.UserManagementRepository
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -22,4 +24,5 @@ val dataModule =
         single<SupabaseClient> { createKanuchiSupabaseClient() }
         singleOf(::SupabaseAuthRepository) bind AuthRepository::class
         singleOf(::SupabaseProfileRepository) bind ProfileRepository::class
+        singleOf(::SupabaseUserManagementRepository) bind UserManagementRepository::class
     }
