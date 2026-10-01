@@ -201,10 +201,11 @@ adminはアプリの **ユーザー管理** 画面で、ユーザーを利用停
 | profiles | 本人 or admin | 本人 or admin（ただし role の変更は admin のみ、トリガーで強制。自分自身の降格・利用中のadminが0人になる降格は不可。`suspended_at` は直接変更できず、`set_user_suspended()`（adminのみ）で変更する） |
 | projects | 全員 | admin のみ |
 | user_projects | 本人 or admin | admin のみ |
-| shift_settings | 本人のみ（adminの例外なし） | 本人のみ |
+| shift_settings | 本人 or admin（参照のみ） | 本人のみ |
 | work_records | 本人 or admin（参照のみ） | 本人のみ |
 | allocations | 本人 or admin（参照のみ、work_records経由で判定） | 本人のみ（work_records経由で判定） |
 | invitations | admin のみ | admin のみ（追加・削除。アプリ経由の追加は email 列のみで、invited_by は登録したadminに自動設定。Studioからの登録は invited_by が空になる） |
+| company_holidays | 全員 | admin のみ（追加・削除。変更は不可。アプリ経由の追加は holiday_date・name 列のみで、created_by は登録したadminに自動設定） |
 
 未ログイン（`anon`ロール）には一切のテーブル権限（参照・追加・変更・削除を含むすべて）を付与していない
 （マジックリンク認証必須のため、`authenticated`ロールにのみGRANTしている）。
@@ -256,12 +257,13 @@ Docker（起動済み）と [Supabase CLI](https://supabase.com/docs/guides/loca
 | `01_profiles.test.sql` | `profiles` 行の自動作成（`display_name` の初期値含む）・`auth.users.email` 変更の同期、直接DB接続では role を変更できること、member は自分の role を昇格できないこと、admin は他ユーザーを昇格・降格できること、`email` 列を直接変更できないこと、RLS（本人/他人/admin/anon × 参照/追加/変更/削除） |
 | `02_projects.test.sql` | RLS（member/admin/anon × 参照/追加/変更/削除） |
 | `03_user_projects.test.sql` | RLS（本人/他人/admin/anon × 参照/追加/変更/削除） |
-| `04_shift_settings.test.sql` | RLS（本人/他人/admin/anon × 参照/追加/変更/削除。adminの例外なし）、CHECK制約（終業 <= 始業、休憩・下限が負、下限 > 上限）と境界値 |
+| `04_shift_settings.test.sql` | RLS（本人/他人/admin/anon × 参照/追加/変更/削除。adminは参照のみ全員分、利用停止中のadminは他人の分を参照できない）、CHECK制約（終業 <= 始業、休憩・下限が負、下限 > 上限）と境界値 |
 | `05_work_records.test.sql` | RLS（本人/他人/admin/anon × 参照/追加/変更/削除。adminは参照のみ、他人への付け替え不可）、CHECK制約（`flag`・休憩）、1ユーザー1日1件の一意制約 |
 | `06_allocations.test.sql` | RLS（work_records 経由の所有者判定。本人/他人/admin/anon × 参照/追加/変更/削除、他人の work_records への付け替え不可）、CHECK・一意・外部キー（`on delete restrict` / `cascade`）制約 |
 | `07_invitations.test.sql` | RLS（admin/member/anon × 参照/追加/変更/削除）、メールアドレスの正規化（追加・変更時）、`invited_by` の自動設定と偽装の拒否、直接DB接続での登録（`invited_by` が空）、CHECK制約（形式・正規化）、重複の拒否、招待したadmin削除時の `on delete set null` |
 | `08_hook_before_user_created.test.sql` | Hook 関数を SQL から直接呼び出し、招待済みは許可（`{}`）・未招待は拒否（`{"error": {"http_code": 403, "message": "email_not_invited"}}`）、正規化した照合、メールアドレスが無い/空のイベントの拒否、招待取り消し後の拒否。`PUBLIC` / `anon` / `authenticated` に `EXECUTE` 権限が無く呼び出すと権限エラーになること、`supabase_auth_admin` は実行できること、`SECURITY DEFINER` であること |
 | `09_user_suspension.test.sql` | `set_user_suspended()` による利用停止・復帰（`suspended_at`・`auth.users.banned_until`・セッション削除）、admin 以外（member・利用停止中のadmin・anon）は実行できないこと、自分自身の利用停止・降格の拒否、利用中のadminが0人になる利用停止・降格の拒否、`suspended_at` を直接変更できないこと、`is_admin()` が利用停止中のadminを除外すること、pre-request 関数 `reject_suspended_user()` が利用停止中のユーザーだけを拒否すること。ローカルDBに開発用のadminがいても検証できるよう、テスト内（rollback される）で `@db-test.invalid` 以外のadminを降格してから実行する |
+| `10_company_holidays.test.sql` | RLS（member/admin/利用停止中のadmin/anon × 参照/追加/変更/削除）、`created_by` の自動設定と偽装の拒否（列単位の insert 権限）、直接DB接続での登録（`created_by` が空）、CHECK制約（名前の空・前後の空白・長さ）・主キー（同じ日付の重複）、`work_records.flag` の列コメント（休・欠の意味） |
 
 ### 自動テストでは検証していないもの
 

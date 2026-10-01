@@ -72,6 +72,12 @@ DB側（マイグレーション・RLS・トリガー・Hook の SQL）の規約
   包んだ後、`cause` の `code` を見て domain の専用例外（例: `DuplicateProjectNameException`）に変換する。
   `PostgrestRestException` は `HttpResponse` が必要でテストで作りにくいため、「コード → 例外」の変換は純粋な関数に分けてテストする
   （例: `projectNameSaveFailure`）。
+- 親子のテーブル（例: `work_records` と `allocations`）は、外部キーを使った埋め込み（resource embedding）で1回のリクエストで取得する
+  （例: `select(Columns.raw("work_date, ..., allocations(project_id, hours)"))`。`Columns.raw` は引用符の外の空白を取り除いて送る）。
+  埋め込んだ子の行は DTO の `List<...>` で受ける（子が無ければ空の配列で返る）。子のテーブルの RLS も適用される。
+  実例: `SupabaseWorkRecordRepository`・`WorkRecordDto`。
+- `date` 型は PostgREST から `yyyy-MM-dd` の文字列で返るので `LocalDate.parse` で変換し、絞り込み（`gte` / `lte`）には
+  `LocalDate.toString()` を渡す。`time` 型・`numeric` 型の変換は `data/common/DbValues.kt`（`parseDbTime` / `hoursOf` / `Hours.toDbValue()`）を使う。
 
 ## ログイン状態（セッション）・マジックリンクの戻り
 
