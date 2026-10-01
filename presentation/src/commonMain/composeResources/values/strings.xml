@@ -28,7 +28,6 @@
     <string name="home_signed_in_as">ログイン中: %1$s</string>
     <!-- %1$s: 表示名、%2$s: メールアドレス -->
     <string name="home_signed_in_as_with_name">ログイン中: %1$s（%2$s）</string>
-    <string name="home_profile_load_error_message">ユーザー情報の読み込みに失敗しました。管理者メニューは、読み込みに成功すると表示されます。</string>
     <string name="home_admin_menu_header">管理者メニュー</string>
     <!-- ログイン中のユーザーのメールアドレスが取得できなかった場合に home_signed_in_as に埋め込む文言 -->
     <string name="home_email_unknown">(不明)</string>

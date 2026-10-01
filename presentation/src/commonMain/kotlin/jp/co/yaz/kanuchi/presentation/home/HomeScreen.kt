@@ -25,11 +25,11 @@ import androidx.compose.ui.unit.dp
 import jp.co.yaz.kanuchi.presentation.navigation.KanuchiDestinations
 import kanuchi.presentation.generated.resources.Res
 import kanuchi.presentation.generated.resources.app_title
+import kanuchi.presentation.generated.resources.common_data_load_error_message
 import kanuchi.presentation.generated.resources.common_retry_button
 import kanuchi.presentation.generated.resources.home_admin_menu_header
 import kanuchi.presentation.generated.resources.home_coming_soon_message
 import kanuchi.presentation.generated.resources.home_email_unknown
-import kanuchi.presentation.generated.resources.home_profile_load_error_message
 import kanuchi.presentation.generated.resources.home_sign_out_button
 import kanuchi.presentation.generated.resources.home_sign_out_error_message
 import kanuchi.presentation.generated.resources.home_signed_in_as
@@ -112,7 +112,7 @@ private fun ProfileLoadStatus(
     when {
         uiState.isLoadingProfile -> CircularProgressIndicator()
         uiState.profileLoadFailed -> {
-            Text(stringResource(Res.string.home_profile_load_error_message))
+            Text(stringResource(Res.string.common_data_load_error_message))
             TextButton(onClick = onRetry) { Text(stringResource(Res.string.common_retry_button)) }
         }
     }
