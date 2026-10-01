@@ -35,6 +35,37 @@ class ProfileUseCasesTest {
         }
 
     @Test
+    fun `display name is validated and updated`() =
+        runTest {
+            val repository = FakeProfileRepository()
+
+            val profile = UpdateDisplayNameUseCase(repository)("  山田  ").getOrThrow()
+
+            assertEquals("山田", profile.displayName)
+            assertEquals(listOf("山田"), repository.updatedDisplayNames.map { it.value })
+        }
+
+    @Test
+    fun `invalid display name is not saved`() =
+        runTest {
+            val repository = FakeProfileRepository()
+
+            val error = assertIs<InvalidDisplayNameException>(UpdateDisplayNameUseCase(repository)(" ").exceptionOrNull())
+
+            assertEquals(DisplayNameViolation.BLANK, error.violation)
+            assertTrue(repository.updatedDisplayNames.isEmpty())
+        }
+
+    @Test
+    fun `failure of display name update is propagated as-is`() =
+        runTest {
+            val repository =
+                FakeProfileRepository().apply { updateDisplayNameResult = Result.failure(GenericDataFailureException()) }
+
+            assertIs<GenericDataFailureException>(UpdateDisplayNameUseCase(repository)("山田").exceptionOrNull())
+        }
+
+    @Test
     fun `only admin role is admin`() {
         assertTrue(FakeProfileRepository.PROFILE.copy(role = UserRole.ADMIN).isAdmin)
         assertFalse(FakeProfileRepository.PROFILE.isAdmin)

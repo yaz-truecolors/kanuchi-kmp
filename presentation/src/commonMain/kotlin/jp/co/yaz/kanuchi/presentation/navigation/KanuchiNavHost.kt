@@ -4,21 +4,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import androidx.savedstate.read
 import jp.co.yaz.kanuchi.domain.auth.AuthState
 import jp.co.yaz.kanuchi.presentation.auth.LoginScreen
-import jp.co.yaz.kanuchi.presentation.common.ComingSoonScreen
 import jp.co.yaz.kanuchi.presentation.common.LoadingScreen
 import jp.co.yaz.kanuchi.presentation.home.HomeScreen
+import jp.co.yaz.kanuchi.presentation.project.ProjectMembersScreen
+import jp.co.yaz.kanuchi.presentation.project.ProjectsScreen
 import jp.co.yaz.kanuchi.presentation.role.RolesScreen
+import jp.co.yaz.kanuchi.presentation.settings.SettingsScreen
 import jp.co.yaz.kanuchi.presentation.users.UsersScreen
-import kanuchi.presentation.generated.resources.Res
-import kanuchi.presentation.generated.resources.projects_title
-import kanuchi.presentation.generated.resources.settings_title
-import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -73,11 +75,9 @@ fun KanuchiNavHost(authGateViewModel: AuthGateViewModel = koinViewModel()) {
             HomeScreen(onNavigate = { route -> navController.navigate(route) { launchSingleTop = true } })
         }
         composable(KanuchiDestinations.SETTINGS) {
-            ComingSoonScreen(title = stringResource(Res.string.settings_title), onBack = navController::backToHome)
+            SettingsScreen(onBack = navController::backToHome)
         }
-        composable(KanuchiDestinations.PROJECTS) {
-            ComingSoonScreen(title = stringResource(Res.string.projects_title), onBack = navController::backToHome)
-        }
+        projectRoutes(navController)
         composable(KanuchiDestinations.USERS) {
             UsersScreen(onBack = navController::backToHome)
         }
@@ -93,4 +93,29 @@ fun KanuchiNavHost(authGateViewModel: AuthGateViewModel = koinViewModel()) {
  */
 private fun NavHostController.backToHome() {
     popBackStack(KanuchiDestinations.HOME, inclusive = false)
+}
+
+/**
+ * 案件管理画面と、そこから開く担当メンバー画面のルート。
+ */
+private fun NavGraphBuilder.projectRoutes(navController: NavHostController) {
+    composable(KanuchiDestinations.PROJECTS) {
+        ProjectsScreen(
+            onBack = navController::backToHome,
+            onOpenMembers = { projectId ->
+                navController.navigate(KanuchiDestinations.projectMembers(projectId)) { launchSingleTop = true }
+            },
+        )
+    }
+    composable(
+        KanuchiDestinations.PROJECT_MEMBERS,
+        arguments = listOf(navArgument(KanuchiDestinations.PROJECT_ID_ARG) { type = NavType.StringType }),
+    ) { backStackEntry ->
+        val projectId = backStackEntry.arguments?.read { getStringOrNull(KanuchiDestinations.PROJECT_ID_ARG) }.orEmpty()
+        // 戻る操作の連打で案件管理画面より前に戻らないよう、backToHome と同じく popBackStack(route) を使う
+        ProjectMembersScreen(
+            projectId = projectId,
+            onBack = { navController.popBackStack(KanuchiDestinations.PROJECTS, inclusive = false) },
+        )
+    }
 }

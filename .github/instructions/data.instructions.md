@@ -56,9 +56,22 @@ DB側（マイグレーション・RLS・トリガー・Hook の SQL）の規約
     （`data/user/UserManagementFailureMapping.kt` の `toUserManagementFailure`）。判別は HTTP ステータスではなく
     SQLSTATE とメッセージで行う（PostgREST は `P0001` を 400、`42501` を 403 等に変換するため、ステータスでは区別できない）。
     `PostgrestRestException` は HttpResponse が無いと作れずテストしにくいため、判別はコードとメッセージを受け取る関数に分けてテストする。
+- 列の型ごとの受け渡し: `time` 型は PostgREST から `HH:mm:ss` 形式の文字列で返る（保存時は `HH:mm` で送ってよい）。
+  `numeric` 型は JSON の数値なので `Double` で受け、domain の `Hours` に変換するときに 0.01 単位に四捨五入する
+  （実例: `ShiftSettingsDto`）。
+- 「行が無ければ追加、あれば上書き」は `upsert(...) { onConflict = "<unique な列>" }` で行う（実例:
+  `SupabaseShiftSettingsRepository`。RLS の insert / update の両方のポリシーが必要）。
 - RLS で参照・変更できない行は、エラーにならず「0行」として扱われることがある（PostgREST の仕様）。
   例えば権限の無い `update` は失敗せず何も更新しない。変更の成否を確かめたい場合は、
   `select()` を付けて更新後の行を受け取り、0行なら失敗として扱う。
+  （`insert` は RLS で拒否されると HTTP 403・`code` `42501` のエラーになる。`delete` も `update` と同じく0行になるので、
+  `select()` を付けて削除した行数を確かめる。実例: `SupabaseProjectRepository`）
+- 制約違反などをユーザーに理由を伝えるエラーに変換する場合は、`PostgrestRestException.code`（Postgres のエラーコード。
+  unique 制約違反は `23505`）で判別する（制約違反の message は Postgres が組み立てる文言なので判別に使わない。
+  `raise exception` で独自に投げたエラーは、上記のとおり `code` と独自のメッセージで判別する）。`runCatchingData` で `GenericDataFailureException` に
+  包んだ後、`cause` の `code` を見て domain の専用例外（例: `DuplicateProjectNameException`）に変換する。
+  `PostgrestRestException` は `HttpResponse` が必要でテストで作りにくいため、「コード → 例外」の変換は純粋な関数に分けてテストする
+  （例: `projectNameSaveFailure`）。
 
 ## ログイン状態（セッション）・マジックリンクの戻り
 
