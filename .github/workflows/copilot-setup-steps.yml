@@ -44,7 +44,7 @@ jobs:
 
       # ジョブレベルの env はこのファイルでは無視されるため、ステップの env でバージョンを指定する
       - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v3
         env:
           # Renovate が更新する（renovate.json の customManagers）。ci.yml・supabase-deploy.yml と同じバージョンにそろえること。
           SUPABASE_CLI_VERSION: 2.117.0
