@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew *)",
+      "Bash(./supabase/tests/run.sh)",
+      "Bash(supabase status)",
+      "Bash(supabase start)",
+      "Bash(supabase stop)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh pr diff *)",
+      "Bash(gh run view *)",
+      "Bash(gh run list *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./local.properties)"
+    ]
+  }
+}

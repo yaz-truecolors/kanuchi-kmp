@@ -1,5 +1,6 @@
 ---
 applyTo: "data/**"
+paths: "data/**"
 ---
 
 # Supabase 連携・data 層（`data/`）の規約

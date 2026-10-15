@@ -1,5 +1,6 @@
 ---
 applyTo: "**/*.gradle.kts,gradle/**,gradle.properties,config/detekt/**,.editorconfig,renovate.json"
+paths: "**/*.gradle.kts,gradle/**,gradle.properties,config/detekt/**,.editorconfig,renovate.json"
 ---
 
 # Gradle・依存関係・wasmJs ビルド設定の規約

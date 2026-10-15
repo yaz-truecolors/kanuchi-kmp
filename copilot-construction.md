@@ -12,8 +12,8 @@ PR作成〜レビュー対応の手順は [AGENTS.md](AGENTS.md) を参照して
 ## 領域別の規約ファイル（索引）
 
 触るファイルのパスに対応する領域別ファイルを、作業前に必ず読むこと。
-GitHub Copilot（cloud agent / code review）はフロントマターの `applyTo` に一致するファイルを扱うときに
-自動で読み込むが、`applyTo` を解釈しないエージェント・人間は下表を見て該当ファイルを読むこと。
+GitHub Copilot（cloud agent / code review）はフロントマターの `applyTo` に、Claude Code は `paths`（`.claude/rules/` のリンク経由）に
+一致するファイルを扱うときに自動で読み込むが、`applyTo` を解釈しないエージェント・人間は下表を見て該当ファイルを読むこと。
 
 | 触るパス | 読むファイル | 主な内容 |
 |---|---|---|
@@ -119,7 +119,8 @@ app-wasmjs -> domain
 （`.github/instructions/<領域>.instructions.md`。索引は上表）に追記すること。
 領域を問わず常に適用されるもの（アーキテクチャ原則・モジュール依存関係・共通のコード規約・テスト実行）だけを
 このファイルに追記する。どの領域にも当てはまらないパスの規約が出てきた場合は、新しい領域別ファイルを作り
-（フロントマターの `applyTo` で対象パスを指定する）、上の索引表に追加する。
+（フロントマターの `applyTo` で対象パスを指定し、Claude Code 用に同じ値の `paths` も書く）、上の索引表に追加する。
+あわせて `.claude/rules/<領域>.md` にそのファイルへのシンボリックリンクを作る（Claude Code が `paths` に一致するファイルを扱うときに自動で読み込む）。
 意図的に対応しないと決めた事項が増えた場合は、根拠とあわせて
 [.github/skills/code-review/SKILL.md](.github/skills/code-review/SKILL.md) の「指摘しない事項」にも追加する。
 `docs/requirements.md` は要件・設計の「why」を記録する場所、このファイルと領域別ファイルは実装者向けの
