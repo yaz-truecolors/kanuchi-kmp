@@ -100,9 +100,13 @@ def main() -> None:
             sys.exit("リンクを開いてもリダイレクトされませんでした。")
         except urllib.error.HTTPError as e:
             location = e.headers.get("Location") or ""
-        if "#" not in location:
-            sys.exit(f"リダイレクト先にトークンがありません: {location.split('?')[0]}")
-        print(args.base + location[location.index("#"):])
+        fragment = location.partition("#")[2]
+        params = urllib.parse.parse_qs(fragment)
+        # 利用停止中のユーザー等は #error_code=user_banned のようなエラーで戻るため、トークンがそろっている場合だけ成功とする
+        if not (params.get("access_token") and params.get("refresh_token")):
+            reason = (params.get("error_code") or params.get("error") or ["トークンがありません"])[0]
+            sys.exit(f"ログインに失敗しました: {reason}")
+        print(args.base + "#" + fragment)
         return
     sys.exit("マジックリンクのメールが届きませんでした（Mailpit: http://127.0.0.1:54324/）。")
 
