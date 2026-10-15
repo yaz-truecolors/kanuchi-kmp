@@ -37,4 +37,8 @@
 - `./gradlew` の実行には JDK（`JAVA_HOME` か PATH の `java`）が、`presentation` のテスト（`verify` に含まれる）には
   Chrome か `CHROME_BIN` が、DBテスト（`./supabase/tests/run.sh`）には起動済みの Docker と Supabase CLI が必要
   （詳細は `copilot-construction.md`「4. テスト・検証（共通）」）。不足していて検証できなかった場合は、そのことをユーザーに報告する。
+  - JDK・Chrome が PATH に無い端末では、各自の `.claude/settings.local.json`（コミットしない）の `env` で `JAVA_HOME`・`CHROME_BIN` を設定する。
+  - Docker が起動していなければ `open -a Docker`（Docker Desktop）で起動してよい。
 - `verify` は数分かかるため、Bash のバックグラウンド実行で走らせる。
+- UI に関わる変更の実ブラウザでの確認（ログインした状態の画面の操作・スクリーンショット）は、skill `local-ui-check`
+  （`.claude/skills/local-ui-check/`）の手順で、ローカル Supabase に接続したビルドを使って行う。
