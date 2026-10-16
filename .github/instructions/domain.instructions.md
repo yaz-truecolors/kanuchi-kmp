@@ -1,5 +1,6 @@
 ---
 applyTo: "domain/**"
+paths: "domain/**"
 ---
 
 # domain 層（`domain/`）の規約

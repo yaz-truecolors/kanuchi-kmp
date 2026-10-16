@@ -5,7 +5,8 @@
 - Think and reason in English.
 - Use Japanese when communicating with the user.
 
-このリポジトリで作業するコーディングエージェント（GitHub Copilot 等）向けの指示です。
+このリポジトリで作業するコーディングエージェント（Claude Code・GitHub Copilot 等）向けの指示です。
+Claude Code 固有の読み替え（規約ファイルの自動読み込み・PR レビュー対応のコマンド等）は [CLAUDE.md](CLAUDE.md) にある。
 
 ## 必読ドキュメント
 
@@ -77,7 +78,7 @@ GitHub Copilot が自動で読み込む。`applyTo` を解釈しないエージ�
     該当箇所を根拠として示す。意図的に対応しないと決めている事項の一覧と根拠は
     `.github/skills/code-review/SKILL.md` の「指摘しない事項」にある。
 - 返信後、スレッドを Resolve する。GitHub Copilot app では `reply_and_resolve_review_thread`
-  ツールを使う（スレッドへの返信と Resolve を1回で行える）。
+  ツールを使う（スレッドへの返信と Resolve を1回で行える）。Claude Code では `gh api graphql` で行う（コマンドは [CLAUDE.md](CLAUDE.md)）。
   トップレベルの PR コメントで返信しないこと。
 - 修正内容が大きい場合は `gh pr edit <PR番号> --add-reviewer @copilot` で再レビューを依頼し、
   新たな指摘があれば同様に対応する。

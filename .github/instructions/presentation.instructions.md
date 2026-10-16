@@ -1,5 +1,6 @@
 ---
 applyTo: "presentation/**,app-wasmjs/**"
+paths: "presentation/**,app-wasmjs/**"
 ---
 
 # UI / presentation 層（`presentation/`・`app-wasmjs/`）の規約

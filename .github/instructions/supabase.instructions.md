@@ -1,5 +1,6 @@
 ---
 applyTo: "supabase/**"
+paths: "supabase/**"
 ---
 
 # Supabase マイグレーション・RLS・Hook（`supabase/`）の規約

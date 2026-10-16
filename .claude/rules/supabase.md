@@ -1,0 +1,1 @@
+../../.github/instructions/supabase.instructions.md

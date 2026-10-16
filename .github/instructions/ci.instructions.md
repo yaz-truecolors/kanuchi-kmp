@@ -1,5 +1,6 @@
 ---
 applyTo: ".github/workflows/**,.github/github-app.yml"
+paths: ".github/workflows/**,.github/github-app.yml"
 ---
 
 # CI（GitHub Actions ワークフロー）・Copilot の作業環境の規約
