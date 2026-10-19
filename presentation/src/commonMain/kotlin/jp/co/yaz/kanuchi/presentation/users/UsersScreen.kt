@@ -24,11 +24,28 @@ import jp.co.yaz.kanuchi.domain.profile.UserProfile
 import jp.co.yaz.kanuchi.domain.profile.UserRole
 import jp.co.yaz.kanuchi.domain.user.Invitation
 import jp.co.yaz.kanuchi.domain.user.UserManagementOverview
+import jp.co.yaz.kanuchi.presentation.common.ButtonLabel
+import jp.co.yaz.kanuchi.presentation.common.EmptyMessage
+import jp.co.yaz.kanuchi.presentation.common.IconText
+import jp.co.yaz.kanuchi.presentation.common.LoadErrorMessage
+import jp.co.yaz.kanuchi.presentation.common.SectionHeader
+import jp.co.yaz.kanuchi.presentation.common.SimpleIcon
+import jp.co.yaz.kanuchi.presentation.common.StatusKind
+import jp.co.yaz.kanuchi.presentation.common.StatusMessage
 import jp.co.yaz.kanuchi.presentation.common.SubScreenScaffold
 import kanuchi.presentation.generated.resources.Res
-import kanuchi.presentation.generated.resources.common_data_load_error_message
 import kanuchi.presentation.generated.resources.common_data_save_error_message
-import kanuchi.presentation.generated.resources.common_retry_button
+import kanuchi.presentation.generated.resources.ic_block
+import kanuchi.presentation.generated.resources.ic_check_circle
+import kanuchi.presentation.generated.resources.ic_error
+import kanuchi.presentation.generated.resources.ic_group
+import kanuchi.presentation.generated.resources.ic_hourglass_empty
+import kanuchi.presentation.generated.resources.ic_how_to_reg
+import kanuchi.presentation.generated.resources.ic_mail
+import kanuchi.presentation.generated.resources.ic_person
+import kanuchi.presentation.generated.resources.ic_person_add
+import kanuchi.presentation.generated.resources.ic_person_remove
+import kanuchi.presentation.generated.resources.ic_shield_person
 import kanuchi.presentation.generated.resources.users_cancel_button
 import kanuchi.presentation.generated.resources.users_invitation_has_account
 import kanuchi.presentation.generated.resources.users_invitation_no_account
@@ -75,10 +92,7 @@ fun UsersScreen(
     SubScreenScaffold(title = stringResource(Res.string.users_title), onBack = onBack) {
         val overview = uiState.overview
         when {
-            uiState.loadFailed -> {
-                Text(stringResource(Res.string.common_data_load_error_message))
-                TextButton(onClick = viewModel::onRetryClicked) { Text(stringResource(Res.string.common_retry_button)) }
-            }
+            uiState.loadFailed -> LoadErrorMessage(onRetry = viewModel::onRetryClicked)
             overview == null -> CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             else -> {
                 InviteSection(uiState, viewModel)
@@ -103,13 +117,14 @@ private fun InviteSection(
     uiState: UsersUiState,
     viewModel: UsersViewModel,
 ) {
-    Text(text = stringResource(Res.string.users_invite_header), style = MaterialTheme.typography.titleMedium)
+    SectionHeader(Res.drawable.ic_person_add, stringResource(Res.string.users_invite_header))
     Text(stringResource(Res.string.users_invite_description))
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedTextField(
             value = uiState.inviteEmail,
             onValueChange = viewModel::onInviteEmailChanged,
             label = { Text(stringResource(Res.string.users_invite_email_label)) },
+            leadingIcon = { SimpleIcon(Res.drawable.ic_mail) },
             singleLine = true,
             enabled = !uiState.isSubmitting,
             modifier = Modifier.weight(1f),
@@ -118,14 +133,14 @@ private fun InviteSection(
             onClick = viewModel::onInviteClicked,
             enabled = uiState.canOperate && uiState.inviteEmail.isNotBlank(),
         ) {
-            Text(stringResource(Res.string.users_invite_button))
+            ButtonLabel(Res.drawable.ic_person_add, stringResource(Res.string.users_invite_button))
         }
     }
     val inviteError = uiState.inviteError
     val invitedEmail = uiState.invitedEmail
     when {
-        inviteError != null -> Text(inviteError.message(), color = MaterialTheme.colorScheme.error)
-        invitedEmail != null -> Text(stringResource(Res.string.users_invite_success_message, invitedEmail))
+        inviteError != null -> StatusMessage(inviteError.message(), StatusKind.ERROR)
+        invitedEmail != null -> StatusMessage(stringResource(Res.string.users_invite_success_message, invitedEmail), StatusKind.SUCCESS)
     }
 }
 
@@ -135,16 +150,17 @@ private fun InvitationList(
     enabled: Boolean,
     onRevoke: (email: String) -> Unit,
 ) {
-    Text(text = stringResource(Res.string.users_invitations_header), style = MaterialTheme.typography.titleMedium)
+    SectionHeader(Res.drawable.ic_mail, stringResource(Res.string.users_invitations_header))
     if (invitations.isEmpty()) {
-        Text(stringResource(Res.string.users_invitations_empty))
+        EmptyMessage(stringResource(Res.string.users_invitations_empty))
         return
     }
     invitations.forEach { invitation ->
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(invitation.email)
-                Text(
+                IconText(
+                    icon = if (invitation.hasAccount) Res.drawable.ic_check_circle else Res.drawable.ic_hourglass_empty,
                     text =
                         if (invitation.hasAccount) {
                             stringResource(Res.string.users_invitation_has_account)
@@ -152,10 +168,11 @@ private fun InvitationList(
                             stringResource(Res.string.users_invitation_no_account)
                         },
                     style = MaterialTheme.typography.bodySmall,
+                    iconSize = 16.dp,
                 )
             }
             TextButton(onClick = { onRevoke(invitation.email) }, enabled = enabled) {
-                Text(stringResource(Res.string.users_invitation_revoke_button))
+                ButtonLabel(Res.drawable.ic_person_remove, stringResource(Res.string.users_invitation_revoke_button))
             }
         }
     }
@@ -168,7 +185,7 @@ private fun UserList(
     enabled: Boolean,
     viewModel: UsersViewModel,
 ) {
-    Text(text = stringResource(Res.string.users_list_header), style = MaterialTheme.typography.titleMedium)
+    SectionHeader(Res.drawable.ic_group, stringResource(Res.string.users_list_header))
     overview.users.forEach { user ->
         val isCurrentUser = user.id == overview.currentUserId
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
@@ -181,21 +198,28 @@ private fun UserList(
                     },
                 )
                 Text(text = user.email, style = MaterialTheme.typography.bodySmall)
-                Text(
+                IconText(
+                    icon =
+                        when {
+                            user.isSuspended -> Res.drawable.ic_block
+                            user.role == UserRole.ADMIN -> Res.drawable.ic_shield_person
+                            else -> Res.drawable.ic_person
+                        },
                     text = stringResource(Res.string.users_role_and_status, user.role.label(), user.statusLabel()),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (user.isSuspended) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                    iconSize = 16.dp,
                 )
             }
             when {
                 isCurrentUser -> Unit
                 user.isSuspended ->
                     OutlinedButton(onClick = { viewModel.onReactivateClicked(user) }, enabled = enabled) {
-                        Text(stringResource(Res.string.users_reactivate_button))
+                        ButtonLabel(Res.drawable.ic_how_to_reg, stringResource(Res.string.users_reactivate_button))
                     }
                 else ->
                     OutlinedButton(onClick = { viewModel.onSuspendClicked(user) }, enabled = enabled) {
-                        Text(stringResource(Res.string.users_suspend_button))
+                        ButtonLabel(Res.drawable.ic_block, stringResource(Res.string.users_suspend_button))
                     }
             }
         }
@@ -210,6 +234,7 @@ private fun SuspendConfirmationDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        icon = { SimpleIcon(Res.drawable.ic_block) },
         title = { Text(stringResource(Res.string.users_suspend_confirm_title)) },
         text = { Text(stringResource(Res.string.users_suspend_confirm_message, target.displayName, target.email)) },
         confirmButton = {
@@ -228,6 +253,7 @@ private fun ActionErrorDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        icon = { SimpleIcon(Res.drawable.ic_error) },
         text = {
             Text(
                 when (error) {

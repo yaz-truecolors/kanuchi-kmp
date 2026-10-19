@@ -9,6 +9,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -29,13 +30,19 @@ import jp.co.yaz.kanuchi.domain.work.AllocatableProject
 import jp.co.yaz.kanuchi.domain.work.DayFlag
 import jp.co.yaz.kanuchi.domain.work.WorkDayEntry
 import jp.co.yaz.kanuchi.domain.work.WorkRecordField
+import jp.co.yaz.kanuchi.presentation.common.ButtonLabel
+import jp.co.yaz.kanuchi.presentation.common.EmptyMessage
+import jp.co.yaz.kanuchi.presentation.common.IconText
+import jp.co.yaz.kanuchi.presentation.common.LoadErrorMessage
+import jp.co.yaz.kanuchi.presentation.common.SectionHeader
+import jp.co.yaz.kanuchi.presentation.common.SimpleIcon
+import jp.co.yaz.kanuchi.presentation.common.StatusKind
+import jp.co.yaz.kanuchi.presentation.common.StatusMessage
 import jp.co.yaz.kanuchi.presentation.common.SubScreenScaffold
 import jp.co.yaz.kanuchi.presentation.common.formatHours
 import jp.co.yaz.kanuchi.presentation.common.formatSignedHours
 import kanuchi.presentation.generated.resources.Res
-import kanuchi.presentation.generated.resources.common_data_load_error_message
 import kanuchi.presentation.generated.resources.common_data_save_error_message
-import kanuchi.presentation.generated.resources.common_retry_button
 import kanuchi.presentation.generated.resources.daily_input_allocated_hours_preview
 import kanuchi.presentation.generated.resources.daily_input_allocation_hint
 import kanuchi.presentation.generated.resources.daily_input_balance_preview
@@ -69,6 +76,14 @@ import kanuchi.presentation.generated.resources.daily_input_shift_placeholder
 import kanuchi.presentation.generated.resources.daily_input_time_hint
 import kanuchi.presentation.generated.resources.daily_input_weekend_time_note
 import kanuchi.presentation.generated.resources.daily_input_working_hours_preview
+import kanuchi.presentation.generated.resources.ic_close
+import kanuchi.presentation.generated.resources.ic_coffee
+import kanuchi.presentation.generated.resources.ic_delete
+import kanuchi.presentation.generated.resources.ic_flag
+import kanuchi.presentation.generated.resources.ic_save
+import kanuchi.presentation.generated.resources.ic_schedule
+import kanuchi.presentation.generated.resources.ic_sticky_note_2
+import kanuchi.presentation.generated.resources.ic_work
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -103,10 +118,7 @@ fun DailyInputDayScreen(
                 Text(text = dayKindLabel(entry.day.dayKind), color = dayColor(date, entry.day.dayKind))
                 DayForm(uiState, entry, viewModel, onCancel = backIfIdle)
             }
-            uiState.loadFailed -> {
-                Text(stringResource(Res.string.common_data_load_error_message))
-                TextButton(onClick = viewModel::onRetryClicked) { Text(stringResource(Res.string.common_retry_button)) }
-            }
+            uiState.loadFailed -> LoadErrorMessage(onRetry = viewModel::onRetryClicked)
             else -> CircularProgressIndicator()
         }
     }
@@ -153,35 +165,40 @@ private fun DayForm(
         value = input.note,
         onValueChange = viewModel::onNoteChanged,
         label = { Text(stringResource(Res.string.daily_input_note_label)) },
+        leadingIcon = { SimpleIcon(Res.drawable.ic_sticky_note_2) },
         enabled = enabled,
         minLines = 2,
         modifier = Modifier.fillMaxWidth(),
     )
 
     if (uiState.saveFailed || uiState.deleteFailed) {
-        Text(text = stringResource(Res.string.common_data_save_error_message), color = MaterialTheme.colorScheme.error)
+        StatusMessage(stringResource(Res.string.common_data_save_error_message), StatusKind.ERROR)
     }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         Button(onClick = viewModel::onSaveClicked, enabled = enabled) {
-            Text(stringResource(if (uiState.isSaving) Res.string.daily_input_saving_button else Res.string.daily_input_save_button))
+            ButtonLabel(
+                icon = Res.drawable.ic_save,
+                text = stringResource(if (uiState.isSaving) Res.string.daily_input_saving_button else Res.string.daily_input_save_button),
+                inProgress = uiState.isSaving,
+            )
         }
-        OutlinedButton(onClick = onCancel, enabled = enabled) { Text(stringResource(Res.string.daily_input_cancel_button)) }
+        OutlinedButton(onClick = onCancel, enabled = enabled) {
+            ButtonLabel(Res.drawable.ic_close, stringResource(Res.string.daily_input_cancel_button))
+        }
     }
     if (uiState.hasSavedRecord) {
-        TextButton(onClick = viewModel::onDeleteClicked, enabled = enabled) {
-            Text(
+        TextButton(
+            onClick = viewModel::onDeleteClicked,
+            enabled = enabled,
+            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+        ) {
+            ButtonLabel(
+                icon = Res.drawable.ic_delete,
                 text =
                     stringResource(
                         if (uiState.isDeleting) Res.string.daily_input_deleting_button else Res.string.daily_input_delete_button,
                     ),
-                color =
-                    if (enabled) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.onSurface.copy(
-                            alpha = DISABLED_ALPHA,
-                        )
-                    },
+                inProgress = uiState.isDeleting,
             )
         }
     }
@@ -194,7 +211,7 @@ private fun FlagSelector(
     onFlagChange: (DayFlag?) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(text = stringResource(Res.string.daily_input_flag_label), style = MaterialTheme.typography.titleSmall)
+        SectionHeader(Res.drawable.ic_flag, stringResource(Res.string.daily_input_flag_label), MaterialTheme.typography.titleSmall)
         Row(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             FlagOption(null, Res.string.daily_input_flag_none_option, flag, enabled, onFlagChange)
             FlagOption(DayFlag.VACATION, Res.string.daily_input_flag_vacation_option, flag, enabled, onFlagChange)
@@ -223,7 +240,11 @@ private fun FlagOption(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         RadioButton(selected = option == selected, onClick = null, enabled = enabled)
-        Text(stringResource(label))
+        if (option != null) {
+            IconText(icon = flagIcon(option), text = stringResource(label))
+        } else {
+            Text(stringResource(label))
+        }
     }
 }
 
@@ -252,7 +273,7 @@ private fun TimeFields(
         Text(text = stringResource(Res.string.daily_input_weekend_time_note), style = MaterialTheme.typography.bodySmall)
     }
     TextButton(onClick = viewModel::onFillShiftClicked, enabled = enabled) {
-        Text(stringResource(Res.string.daily_input_fill_shift_button))
+        ButtonLabel(Res.drawable.ic_schedule, stringResource(Res.string.daily_input_fill_shift_button))
     }
 }
 
@@ -282,6 +303,7 @@ private fun RowScope.WorkField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(stringResource(label)) },
+        leadingIcon = { SimpleIcon(if (field == WorkRecordField.BREAK_HOURS) Res.drawable.ic_coffee else Res.drawable.ic_schedule) },
         placeholder = { Text(stringResource(Res.string.daily_input_shift_placeholder, shiftValue)) },
         supportingText = { Text(error ?: stringResource(hint, shiftValue)) },
         isError = error != null,
@@ -298,9 +320,9 @@ private fun AllocationFields(
     enabled: Boolean,
     onAllocationChange: (projectId: String, hours: String) -> Unit,
 ) {
-    Text(text = stringResource(Res.string.daily_input_projects_header), style = MaterialTheme.typography.titleSmall)
+    SectionHeader(Res.drawable.ic_work, stringResource(Res.string.daily_input_projects_header), MaterialTheme.typography.titleSmall)
     if (projects.isEmpty()) {
-        Text(stringResource(Res.string.daily_input_projects_empty_message))
+        EmptyMessage(stringResource(Res.string.daily_input_projects_empty_message))
         return
     }
     projects.forEach { allocatable ->
@@ -316,6 +338,7 @@ private fun AllocationFields(
             value = uiState.input.allocations[project.id].orEmpty(),
             onValueChange = { onAllocationChange(project.id, it) },
             label = { Text(label) },
+            leadingIcon = { SimpleIcon(Res.drawable.ic_work) },
             supportingText = { Text(error ?: stringResource(Res.string.daily_input_allocation_hint)) },
             isError = error != null,
             singleLine = true,
@@ -344,9 +367,9 @@ private fun Preview(uiState: DailyInputDayUiState) {
             color = if (hasImbalance) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
         )
         if (preview.workingHours?.isNegative == true || uiState.violationOf(WorkRecordField.WORKING_HOURS) != null) {
-            Text(text = stringResource(Res.string.daily_input_negative_working_hours_warning), color = MaterialTheme.colorScheme.error)
+            StatusMessage(stringResource(Res.string.daily_input_negative_working_hours_warning), StatusKind.WARNING)
         } else if (hasImbalance) {
-            Text(text = stringResource(Res.string.daily_input_balance_warning), color = MaterialTheme.colorScheme.error)
+            StatusMessage(stringResource(Res.string.daily_input_balance_warning), StatusKind.WARNING)
         }
     }
 }
@@ -358,6 +381,7 @@ private fun DeleteConfirmDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        icon = { SimpleIcon(Res.drawable.ic_delete) },
         title = { Text(stringResource(Res.string.daily_input_delete_confirm_title)) },
         text = { Text(stringResource(Res.string.daily_input_delete_confirm_message)) },
         confirmButton = {
@@ -368,5 +392,3 @@ private fun DeleteConfirmDialog(
         },
     )
 }
-
-private const val DISABLED_ALPHA = 0.38f

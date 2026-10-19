@@ -22,7 +22,14 @@ import jp.co.yaz.kanuchi.domain.work.MemberMonthlySummary
 import jp.co.yaz.kanuchi.domain.work.TeamMonthlySummary
 import jp.co.yaz.kanuchi.domain.work.TeamProjectHours
 import jp.co.yaz.kanuchi.domain.work.WorkingHoursRangeStatus
+import jp.co.yaz.kanuchi.presentation.common.ButtonLabel
+import jp.co.yaz.kanuchi.presentation.common.EmptyMessage
+import jp.co.yaz.kanuchi.presentation.common.IconText
+import jp.co.yaz.kanuchi.presentation.common.LoadErrorMessage
 import jp.co.yaz.kanuchi.presentation.common.MonthSelector
+import jp.co.yaz.kanuchi.presentation.common.SectionHeader
+import jp.co.yaz.kanuchi.presentation.common.StatusKind
+import jp.co.yaz.kanuchi.presentation.common.StatusMessage
 import jp.co.yaz.kanuchi.presentation.common.SubScreenScaffold
 import jp.co.yaz.kanuchi.presentation.common.formatHours
 import kanuchi.presentation.generated.resources.Res
@@ -44,8 +51,10 @@ import kanuchi.presentation.generated.resources.admin_dashboard_range_within
 import kanuchi.presentation.generated.resources.admin_dashboard_suspended_label
 import kanuchi.presentation.generated.resources.admin_dashboard_title
 import kanuchi.presentation.generated.resources.admin_dashboard_working_hours
-import kanuchi.presentation.generated.resources.common_data_load_error_message
-import kanuchi.presentation.generated.resources.common_retry_button
+import kanuchi.presentation.generated.resources.ic_bar_chart
+import kanuchi.presentation.generated.resources.ic_block
+import kanuchi.presentation.generated.resources.ic_group
+import kanuchi.presentation.generated.resources.ic_work
 import kotlinx.datetime.YearMonth
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -69,10 +78,7 @@ fun AdminDashboardScreen(
         val summary = uiState.summary
         when {
             uiState.isLoading -> CircularProgressIndicator()
-            uiState.loadFailed -> {
-                Text(stringResource(Res.string.common_data_load_error_message))
-                TextButton(onClick = viewModel::onRetryClicked) { Text(stringResource(Res.string.common_retry_button)) }
-            }
+            uiState.loadFailed -> LoadErrorMessage(onRetry = viewModel::onRetryClicked)
             summary != null -> SummaryContent(summary, onOpenMember = { userId -> onOpenMember(userId, summary.yearMonth) })
         }
     }
@@ -83,10 +89,10 @@ private fun SummaryContent(
     summary: TeamMonthlySummary,
     onOpenMember: (userId: String) -> Unit,
 ) {
-    Text(stringResource(Res.string.admin_dashboard_members_header), style = MaterialTheme.typography.titleMedium)
+    SectionHeader(Res.drawable.ic_group, stringResource(Res.string.admin_dashboard_members_header))
     Text(stringResource(Res.string.admin_dashboard_members_note), style = MaterialTheme.typography.bodySmall)
     if (summary.members.isEmpty()) {
-        Text(stringResource(Res.string.admin_dashboard_members_empty_message))
+        EmptyMessage(stringResource(Res.string.admin_dashboard_members_empty_message))
     } else {
         summary.members.forEach { member ->
             HorizontalDivider()
@@ -95,10 +101,10 @@ private fun SummaryContent(
         HorizontalDivider()
     }
 
-    Text(stringResource(Res.string.admin_dashboard_projects_header), style = MaterialTheme.typography.titleMedium)
+    SectionHeader(Res.drawable.ic_work, stringResource(Res.string.admin_dashboard_projects_header))
     Text(stringResource(Res.string.admin_dashboard_projects_note), style = MaterialTheme.typography.bodySmall)
     if (summary.projectHours.isEmpty()) {
-        Text(stringResource(Res.string.admin_dashboard_projects_empty_message))
+        EmptyMessage(stringResource(Res.string.admin_dashboard_projects_empty_message))
     } else {
         summary.projectHours.forEach { projectHours ->
             HorizontalDivider()
@@ -124,7 +130,11 @@ private fun MemberRow(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(text = profile.displayName, style = MaterialTheme.typography.titleSmall)
                 if (profile.isSuspended) {
-                    Text(stringResource(Res.string.admin_dashboard_suspended_label), color = MaterialTheme.colorScheme.error)
+                    IconText(
+                        icon = Res.drawable.ic_block,
+                        text = stringResource(Res.string.admin_dashboard_suspended_label),
+                        color = MaterialTheme.colorScheme.error,
+                    )
                 }
             }
             Text(text = profile.email, style = MaterialTheme.typography.bodySmall)
@@ -147,7 +157,9 @@ private fun MemberRow(
                 )
             }
         }
-        TextButton(onClick = onClick) { Text(stringResource(Res.string.admin_dashboard_open_member_button)) }
+        TextButton(onClick = onClick) {
+            ButtonLabel(Res.drawable.ic_bar_chart, stringResource(Res.string.admin_dashboard_open_member_button))
+        }
     }
 }
 
@@ -155,10 +167,11 @@ private fun MemberRow(
 private fun RangeStatusLabel(status: WorkingHoursRangeStatus) {
     when (status) {
         WorkingHoursRangeStatus.BELOW_MIN ->
-            Text(stringResource(Res.string.admin_dashboard_range_below_min), color = MaterialTheme.colorScheme.error)
+            StatusMessage(stringResource(Res.string.admin_dashboard_range_below_min), StatusKind.WARNING)
         WorkingHoursRangeStatus.ABOVE_MAX ->
-            Text(stringResource(Res.string.admin_dashboard_range_above_max), color = MaterialTheme.colorScheme.error)
-        WorkingHoursRangeStatus.WITHIN_RANGE -> Text(stringResource(Res.string.admin_dashboard_range_within))
+            StatusMessage(stringResource(Res.string.admin_dashboard_range_above_max), StatusKind.WARNING)
+        WorkingHoursRangeStatus.WITHIN_RANGE ->
+            StatusMessage(stringResource(Res.string.admin_dashboard_range_within), StatusKind.SUCCESS)
     }
 }
 

@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -18,8 +17,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import jp.co.yaz.kanuchi.domain.auth.MagicLinkCallbackError
+import jp.co.yaz.kanuchi.presentation.common.ButtonLabel
+import jp.co.yaz.kanuchi.presentation.common.SimpleIcon
+import jp.co.yaz.kanuchi.presentation.common.StatusKind
+import jp.co.yaz.kanuchi.presentation.common.StatusMessage
 import kanuchi.presentation.generated.resources.Res
 import kanuchi.presentation.generated.resources.app_title
+import kanuchi.presentation.generated.resources.ic_mail
+import kanuchi.presentation.generated.resources.ic_send
 import kanuchi.presentation.generated.resources.login_description
 import kanuchi.presentation.generated.resources.login_email_label
 import kanuchi.presentation.generated.resources.login_error_prefix
@@ -57,6 +62,7 @@ fun LoginScreen(viewModel: LoginViewModel = koinViewModel()) {
                 value = uiState.email,
                 onValueChange = viewModel::onEmailChanged,
                 label = { Text(stringResource(Res.string.login_email_label)) },
+                leadingIcon = { SimpleIcon(Res.drawable.ic_mail) },
                 singleLine = true,
                 enabled = !uiState.isSending,
                 modifier = Modifier.fillMaxWidth(),
@@ -67,24 +73,24 @@ fun LoginScreen(viewModel: LoginViewModel = koinViewModel()) {
                 enabled = !uiState.isSending && uiState.email.isNotBlank(),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                if (uiState.isSending) {
-                    CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp))
-                }
-                Text(
-                    if (uiState.isSending) {
-                        stringResource(Res.string.login_sending_button)
-                    } else {
-                        stringResource(Res.string.login_send_button)
-                    },
+                ButtonLabel(
+                    icon = Res.drawable.ic_send,
+                    text =
+                        if (uiState.isSending) {
+                            stringResource(Res.string.login_sending_button)
+                        } else {
+                            stringResource(Res.string.login_send_button)
+                        },
+                    inProgress = uiState.isSending,
                 )
             }
 
             val magicLinkCallbackError = uiState.magicLinkCallbackError
             when {
-                uiState.sentSuccessfully -> Text(stringResource(Res.string.login_success_message))
+                uiState.sentSuccessfully -> StatusMessage(stringResource(Res.string.login_success_message), StatusKind.SUCCESS)
                 uiState.errorMessage != null ->
-                    Text(stringResource(Res.string.login_error_prefix, uiState.errorMessage.orEmpty()))
-                magicLinkCallbackError != null -> Text(magicLinkCallbackError.message())
+                    StatusMessage(stringResource(Res.string.login_error_prefix, uiState.errorMessage.orEmpty()), StatusKind.ERROR)
+                magicLinkCallbackError != null -> StatusMessage(magicLinkCallbackError.message(), StatusKind.ERROR)
             }
         }
     }

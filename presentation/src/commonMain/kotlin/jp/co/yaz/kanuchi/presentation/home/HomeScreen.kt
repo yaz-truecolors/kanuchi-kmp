@@ -3,6 +3,7 @@ package jp.co.yaz.kanuchi.presentation.home
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -15,7 +16,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -23,12 +23,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import jp.co.yaz.kanuchi.presentation.common.ButtonLabel
+import jp.co.yaz.kanuchi.presentation.common.LoadErrorMessage
+import jp.co.yaz.kanuchi.presentation.common.SectionHeader
+import jp.co.yaz.kanuchi.presentation.common.StatusKind
+import jp.co.yaz.kanuchi.presentation.common.StatusMessage
 import jp.co.yaz.kanuchi.presentation.navigation.KanuchiDestinations
 import kanuchi.presentation.generated.resources.Res
 import kanuchi.presentation.generated.resources.admin_dashboard_title
 import kanuchi.presentation.generated.resources.app_title
-import kanuchi.presentation.generated.resources.common_data_load_error_message
-import kanuchi.presentation.generated.resources.common_retry_button
 import kanuchi.presentation.generated.resources.company_holidays_title
 import kanuchi.presentation.generated.resources.daily_input_title
 import kanuchi.presentation.generated.resources.home_admin_menu_header
@@ -38,11 +41,22 @@ import kanuchi.presentation.generated.resources.home_sign_out_error_message
 import kanuchi.presentation.generated.resources.home_signed_in_as
 import kanuchi.presentation.generated.resources.home_signed_in_as_with_name
 import kanuchi.presentation.generated.resources.home_signing_out_button
+import kanuchi.presentation.generated.resources.ic_admin_panel_settings
+import kanuchi.presentation.generated.resources.ic_bar_chart
+import kanuchi.presentation.generated.resources.ic_dashboard
+import kanuchi.presentation.generated.resources.ic_edit_calendar
+import kanuchi.presentation.generated.resources.ic_event_busy
+import kanuchi.presentation.generated.resources.ic_group
+import kanuchi.presentation.generated.resources.ic_logout
+import kanuchi.presentation.generated.resources.ic_manage_accounts
+import kanuchi.presentation.generated.resources.ic_shield_person
+import kanuchi.presentation.generated.resources.ic_work
 import kanuchi.presentation.generated.resources.projects_title
 import kanuchi.presentation.generated.resources.roles_title
 import kanuchi.presentation.generated.resources.settings_title
 import kanuchi.presentation.generated.resources.summary_title
 import kanuchi.presentation.generated.resources.users_title
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -77,23 +91,31 @@ fun HomeScreen(
             SignedInAs(uiState)
             ProfileLoadStatus(uiState, onRetry = viewModel::onRetryProfileClicked)
 
-            MenuButton(Res.string.daily_input_title) { onNavigate(KanuchiDestinations.DAILY_INPUT) }
-            MenuButton(Res.string.summary_title) { onNavigate(KanuchiDestinations.summaryOf()) }
-            MenuButton(Res.string.settings_title) { onNavigate(KanuchiDestinations.SETTINGS) }
+            MenuButton(Res.drawable.ic_edit_calendar, Res.string.daily_input_title) { onNavigate(KanuchiDestinations.DAILY_INPUT) }
+            MenuButton(Res.drawable.ic_bar_chart, Res.string.summary_title) { onNavigate(KanuchiDestinations.summaryOf()) }
+            MenuButton(Res.drawable.ic_manage_accounts, Res.string.settings_title) { onNavigate(KanuchiDestinations.SETTINGS) }
             if (uiState.showsAdminMenu) {
                 HorizontalDivider()
-                Text(text = stringResource(Res.string.home_admin_menu_header), style = MaterialTheme.typography.titleSmall)
-                MenuButton(Res.string.admin_dashboard_title) { onNavigate(KanuchiDestinations.ADMIN_DASHBOARD) }
-                MenuButton(Res.string.projects_title) { onNavigate(KanuchiDestinations.PROJECTS) }
-                MenuButton(Res.string.users_title) { onNavigate(KanuchiDestinations.USERS) }
-                MenuButton(Res.string.roles_title) { onNavigate(KanuchiDestinations.ROLES) }
-                MenuButton(Res.string.company_holidays_title) { onNavigate(KanuchiDestinations.COMPANY_HOLIDAYS) }
+                SectionHeader(
+                    icon = Res.drawable.ic_shield_person,
+                    text = stringResource(Res.string.home_admin_menu_header),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                MenuButton(Res.drawable.ic_dashboard, Res.string.admin_dashboard_title) {
+                    onNavigate(KanuchiDestinations.ADMIN_DASHBOARD)
+                }
+                MenuButton(Res.drawable.ic_work, Res.string.projects_title) { onNavigate(KanuchiDestinations.PROJECTS) }
+                MenuButton(Res.drawable.ic_group, Res.string.users_title) { onNavigate(KanuchiDestinations.USERS) }
+                MenuButton(Res.drawable.ic_admin_panel_settings, Res.string.roles_title) { onNavigate(KanuchiDestinations.ROLES) }
+                MenuButton(Res.drawable.ic_event_busy, Res.string.company_holidays_title) {
+                    onNavigate(KanuchiDestinations.COMPANY_HOLIDAYS)
+                }
             }
             HorizontalDivider()
 
             SignOutButton(uiState, onClick = viewModel::onSignOutClicked)
             if (uiState.signOutFailed) {
-                Text(stringResource(Res.string.home_sign_out_error_message))
+                StatusMessage(stringResource(Res.string.home_sign_out_error_message), StatusKind.ERROR)
             }
         }
     }
@@ -120,20 +142,20 @@ private fun ProfileLoadStatus(
 ) {
     when {
         uiState.isLoadingProfile -> CircularProgressIndicator()
-        uiState.profileLoadFailed -> {
-            Text(stringResource(Res.string.common_data_load_error_message))
-            TextButton(onClick = onRetry) { Text(stringResource(Res.string.common_retry_button)) }
-        }
+        uiState.profileLoadFailed -> LoadErrorMessage(onRetry)
     }
 }
 
 @Composable
 private fun MenuButton(
+    icon: DrawableResource,
     label: StringResource,
     onClick: () -> Unit,
 ) {
     Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Text(stringResource(label))
+        ButtonLabel(icon, stringResource(label))
+        // 文字を左寄せにして、アイコンと文字の位置をメニューの間でそろえる
+        Spacer(modifier = Modifier.weight(1f))
     }
 }
 
@@ -147,15 +169,15 @@ private fun SignOutButton(
         enabled = !uiState.isSigningOut,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        if (uiState.isSigningOut) {
-            CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp))
-        }
-        Text(
-            if (uiState.isSigningOut) {
-                stringResource(Res.string.home_signing_out_button)
-            } else {
-                stringResource(Res.string.home_sign_out_button)
-            },
+        ButtonLabel(
+            icon = Res.drawable.ic_logout,
+            text =
+                if (uiState.isSigningOut) {
+                    stringResource(Res.string.home_signing_out_button)
+                } else {
+                    stringResource(Res.string.home_sign_out_button)
+                },
+            inProgress = uiState.isSigningOut,
         )
     }
 }

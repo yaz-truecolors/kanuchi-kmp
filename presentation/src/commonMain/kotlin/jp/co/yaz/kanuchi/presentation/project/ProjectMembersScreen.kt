@@ -7,9 +7,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -18,11 +16,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import jp.co.yaz.kanuchi.domain.profile.UserProfile
+import jp.co.yaz.kanuchi.presentation.common.ButtonLabel
+import jp.co.yaz.kanuchi.presentation.common.LoadErrorMessage
+import jp.co.yaz.kanuchi.presentation.common.SectionHeader
+import jp.co.yaz.kanuchi.presentation.common.StatusKind
+import jp.co.yaz.kanuchi.presentation.common.StatusMessage
 import jp.co.yaz.kanuchi.presentation.common.SubScreenScaffold
 import kanuchi.presentation.generated.resources.Res
-import kanuchi.presentation.generated.resources.common_data_load_error_message
 import kanuchi.presentation.generated.resources.common_data_save_error_message
-import kanuchi.presentation.generated.resources.common_retry_button
+import kanuchi.presentation.generated.resources.ic_save
+import kanuchi.presentation.generated.resources.ic_work
 import kanuchi.presentation.generated.resources.project_members_description
 import kanuchi.presentation.generated.resources.project_members_project_name
 import kanuchi.presentation.generated.resources.project_members_project_name_inactive
@@ -52,10 +55,7 @@ fun ProjectMembersScreen(
     SubScreenScaffold(title = stringResource(Res.string.project_members_title), onBack = onBack) {
         when {
             uiState.isLoading -> CircularProgressIndicator()
-            uiState.loadFailed -> {
-                Text(stringResource(Res.string.common_data_load_error_message))
-                TextButton(onClick = viewModel::onRetryClicked) { Text(stringResource(Res.string.common_retry_button)) }
-            }
+            uiState.loadFailed -> LoadErrorMessage(onRetry = viewModel::onRetryClicked)
             else -> {
                 ProjectMembersContent(
                     uiState = uiState,
@@ -74,14 +74,14 @@ private fun ProjectMembersContent(
     onSave: () -> Unit,
 ) {
     val project = uiState.project ?: return
-    Text(
+    SectionHeader(
+        icon = Res.drawable.ic_work,
         text =
             if (project.isActive) {
                 stringResource(Res.string.project_members_project_name, project.name)
             } else {
                 stringResource(Res.string.project_members_project_name_inactive, project.name)
             },
-        style = MaterialTheme.typography.titleMedium,
     )
     Text(stringResource(Res.string.project_members_description))
 
@@ -101,21 +101,20 @@ private fun ProjectMembersContent(
         enabled = !uiState.isSaving && uiState.hasChanges,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Text(
-            if (uiState.isSaving) {
-                stringResource(Res.string.project_members_saving_button)
-            } else {
-                stringResource(Res.string.project_members_save_button)
-            },
+        ButtonLabel(
+            icon = Res.drawable.ic_save,
+            text =
+                if (uiState.isSaving) {
+                    stringResource(Res.string.project_members_saving_button)
+                } else {
+                    stringResource(Res.string.project_members_save_button)
+                },
+            inProgress = uiState.isSaving,
         )
     }
     when {
-        uiState.saveFailed ->
-            Text(
-                text = stringResource(Res.string.common_data_save_error_message),
-                color = MaterialTheme.colorScheme.error,
-            )
-        uiState.showsSavedMessage -> Text(stringResource(Res.string.project_members_saved_message))
+        uiState.saveFailed -> StatusMessage(stringResource(Res.string.common_data_save_error_message), StatusKind.ERROR)
+        uiState.showsSavedMessage -> StatusMessage(stringResource(Res.string.project_members_saved_message), StatusKind.SUCCESS)
     }
 }
 

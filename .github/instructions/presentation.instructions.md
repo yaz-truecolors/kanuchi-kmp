@@ -46,7 +46,7 @@ Compose Multiplatform の UI・ViewModel・リソース（`presentation/`）と�
   `KanuchiNavHost` に `composable(...)` を追加する。メニューのボタンは `HomeScreen` に追加する
   （admin 用の画面は `if (uiState.showsAdminMenu)` の中に置く）。未実装の画面は `ComingSoonScreen` で仮置きしておき、
   実装時に本物の画面に置き換える。
-- 画面の枠は `SubScreenScaffold`（「戻る」ボタン・タイトル・縦スクロール・幅上限 720.dp）を使う。
+- 画面の枠は `SubScreenScaffold`（「戻る」ボタン（矢印のアイコン）・タイトル・縦スクロール・幅上限 720.dp）を使う。
   「戻る」には `KanuchiNavHost` の `backToHome()` を渡す。画面側は `NavController` を受け取らず、
   `onBack: () -> Unit` のようなコールバックだけを受け取る（画面を Navigation に依存させないため）。
 - ホーム画面の ViewModel（`HomeViewModel`）は、ホーム画面から開いた画面を表示している間もバックスタックに残る。
@@ -63,8 +63,8 @@ Compose Multiplatform の UI・ViewModel・リソース（`presentation/`）と�
   `popBackStack(<開いた元の画面のルート>, inclusive = false)` にする。`KanuchiNavHost` の関数が長くなりすぎる（detekt の `LongMethod`）
   場合は、関連するルートを `NavGraphBuilder` の拡張関数（例: `projectRoutes`）に分ける。
 - データの読み込み・保存の失敗（`GenericDataFailureException`）は、共通の文言
-  `common_data_load_error_message` / `common_data_save_error_message` で表示する。読み込みの失敗には
-  `common_retry_button` で再読み込みできるようにする。
+  `common_data_load_error_message` / `common_data_save_error_message` で表示する。読み込みの失敗は
+  共通の `LoadErrorMessage`（`common/IconParts.kt`。エラーの文言と「再読み込み」ボタン）で表示する。
 - 日次入力・案件別集計・管理者ダッシュボードの月の切り替えは共通の `MonthSelector`（`presentation/common/`）を使う。
   時間数・符号付きの時間数・割合の表示は `formatHours` / `formatSignedHours` / `formatRatio`（`common/HoursFormat.kt`）を使い、
   単位（時間・%）は `strings.xml` の文言で付ける。
@@ -93,6 +93,32 @@ Compose Multiplatform の UI・ViewModel・リソース（`presentation/`）と�
 - ログイン画面が「入力したメールアドレスが招待済みかどうか」を区別できるエラーを表示するのは
   **意図的に許容しているトレードオフ**である。理由は [data.instructions.md](data.instructions.md) の
   「招待制アカウント作成（クライアント側）」を参照。
+
+## アイコン
+
+- **アイコンは Google の Material Symbols（Outlined・太さ400・24px）を、必要なものだけ Android の XML ベクター形式で
+  `presentation/src/commonMain/composeResources/drawable/ic_<アイコン名>.xml` に置いて使う**
+  （Apache License 2.0。ライセンス全文は `presentation/licenses/MaterialSymbols-LICENSE.txt`）。
+  `material-icons-core` / `material-icons-extended` ライブラリは使わない（Compose Multiplatform 1.8 以降は更新されておらず、
+  extended は wasm のバンドルが大きくなるため）。
+  - 元ファイルは `google/material-design-icons` リポジトリの
+    `symbols/android/<アイコン名>/materialsymbolsoutlined/<アイコン名>_24px.xml`。そのままでは Android のリソース参照
+    （`android:tint="?attr/colorControlNormal"`・`android:fillColor="@android:color/white"`）を含むため、
+    **`android:tint` の行を消し、`fillColor` を `#FF000000` に置き換えてから置く**（色は `Icon` の `tint` で付けるので、
+    `fillColor` の値は表示に影響しない）。
+  - 使わなくなったアイコンのファイルは消す（`Res.drawable.ic_xxx` の参照が無いファイルを残さない）。
+- アイコンは `common/IconParts.kt` の共通部品で表示する。
+  - ボタン: 中身を `ButtonLabel(icon, text, inProgress)`（アイコン＋文字）にする。保存中等は `inProgress = true` にすると、
+    アイコンの位置に同じ大きさの読み込み中の表示を出す（ボタンの中に大きな `CircularProgressIndicator` を直接置かない）。
+  - 「戻る」・前月／翌月・前年／翌年のように、矢印だけで意味が分かるものはアイコンだけのボタン（`IconButton`。
+    前・次の切り替えは `ArrowButton`）にする。それ以外のボタンは文字を残してアイコン＋文字にする。
+  - 結果・注意のメッセージ: `StatusMessage(text, StatusKind.SUCCESS / ERROR / WARNING)`（エラー・警告は文字も赤）。
+  - 見出し: `SectionHeader(icon, text)`。一覧が空のとき: `EmptyMessage(text)`。状態の小さな表示（「利用停止中」等）: `IconText`。
+  - 入力欄の先頭（`leadingIcon`）・確認ダイアログの上部（`AlertDialog` の `icon`）: `SimpleIcon(icon)`。
+  - 同じ意味には同じアイコンを使う（例: 保存 `ic_save`、削除 `ic_delete`、案件 `ic_work`、メンバー・ユーザー `ic_group`、
+    時刻 `ic_schedule`、休憩 `ic_coffee`）。新しく使うアイコンを選ぶときは、既存の画面で同じ意味に使っているアイコンを先に探す。
+- アイコンの `contentDescription` は付けない（`null` にする）。アクセシビリティ対応を行わない方針のため
+  （下の「アクセシビリティ・対象ブラウザ」）。
 
 ## フォント
 
