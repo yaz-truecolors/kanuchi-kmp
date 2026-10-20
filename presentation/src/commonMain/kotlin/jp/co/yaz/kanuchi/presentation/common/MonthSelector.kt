@@ -2,24 +2,27 @@ package jp.co.yaz.kanuchi.presentation.common
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kanuchi.presentation.generated.resources.Res
-import kanuchi.presentation.generated.resources.common_next_month_button
-import kanuchi.presentation.generated.resources.common_previous_month_button
 import kanuchi.presentation.generated.resources.common_year_month_format
+import kanuchi.presentation.generated.resources.ic_chevron_left
+import kanuchi.presentation.generated.resources.ic_chevron_right
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * 表示する月の切り替え部品 (「< 前月」「YYYY年M月」「翌月 >」)。日次入力・案件別集計・管理者ダッシュボードで共通に使う。
+ * 表示する月の切り替え部品 (「<」「YYYY年M月」「>」。矢印はアイコン)。日次入力・案件別集計・管理者ダッシュボードで共通に使う。
  *
  * @param yearMonth 表示中の月
  * @param onYearMonthChange 前月・翌月のボタンが押されたときに、切り替え先の月を受け取る
@@ -43,19 +46,29 @@ fun MonthSelector(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        TextButton(
+        ArrowButton(
+            icon = Res.drawable.ic_chevron_left,
             onClick = { onYearMonthChange(previous) },
             enabled = enabled && (minYearMonth == null || previous >= minYearMonth),
-        ) {
-            Text(stringResource(Res.string.common_previous_month_button))
-        }
+        )
         Text(text = formatYearMonth(yearMonth), style = MaterialTheme.typography.titleMedium)
-        TextButton(
+        ArrowButton(
+            icon = Res.drawable.ic_chevron_right,
             onClick = { onYearMonthChange(next) },
             enabled = enabled && (maxYearMonth == null || next <= maxYearMonth),
-        ) {
-            Text(stringResource(Res.string.common_next_month_button))
-        }
+        )
+    }
+}
+
+/** 前・次への切り替えの矢印ボタン (月の切り替えのほか、休業日管理の年の切り替えでも使う)。 */
+@Composable
+fun ArrowButton(
+    icon: DrawableResource,
+    onClick: () -> Unit,
+    enabled: Boolean,
+) {
+    IconButton(onClick = onClick, enabled = enabled) {
+        Icon(painterResource(icon), contentDescription = null)
     }
 }
 

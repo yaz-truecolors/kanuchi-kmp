@@ -3,14 +3,11 @@ package jp.co.yaz.kanuchi.presentation.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,11 +19,20 @@ import jp.co.yaz.kanuchi.domain.shift.ShiftSettings
 import jp.co.yaz.kanuchi.domain.shift.ShiftSettingsField
 import jp.co.yaz.kanuchi.domain.shift.ShiftSettingsInput
 import jp.co.yaz.kanuchi.domain.shift.ShiftSettingsViolation
+import jp.co.yaz.kanuchi.presentation.common.ButtonLabel
+import jp.co.yaz.kanuchi.presentation.common.LoadErrorMessage
+import jp.co.yaz.kanuchi.presentation.common.SectionHeader
+import jp.co.yaz.kanuchi.presentation.common.SimpleIcon
+import jp.co.yaz.kanuchi.presentation.common.StatusKind
+import jp.co.yaz.kanuchi.presentation.common.StatusMessage
 import jp.co.yaz.kanuchi.presentation.common.SubScreenScaffold
 import kanuchi.presentation.generated.resources.Res
-import kanuchi.presentation.generated.resources.common_data_load_error_message
 import kanuchi.presentation.generated.resources.common_data_save_error_message
-import kanuchi.presentation.generated.resources.common_retry_button
+import kanuchi.presentation.generated.resources.ic_badge
+import kanuchi.presentation.generated.resources.ic_coffee
+import kanuchi.presentation.generated.resources.ic_save
+import kanuchi.presentation.generated.resources.ic_schedule
+import kanuchi.presentation.generated.resources.ic_timer
 import kanuchi.presentation.generated.resources.settings_break_hours_label
 import kanuchi.presentation.generated.resources.settings_display_name_blank_error
 import kanuchi.presentation.generated.resources.settings_display_name_header
@@ -69,10 +75,7 @@ fun SettingsScreen(
     SubScreenScaffold(title = stringResource(Res.string.settings_title), onBack = onBack) {
         when {
             uiState.isLoading -> CircularProgressIndicator()
-            uiState.loadFailed -> {
-                Text(stringResource(Res.string.common_data_load_error_message))
-                TextButton(onClick = viewModel::onRetryClicked) { Text(stringResource(Res.string.common_retry_button)) }
-            }
+            uiState.loadFailed -> LoadErrorMessage(onRetry = viewModel::onRetryClicked)
             else -> {
                 DisplayNameSection(
                     uiState = uiState,
@@ -104,12 +107,13 @@ private fun DisplayNameSection(
             null -> null
         }
 
-    Text(text = stringResource(Res.string.settings_display_name_header), style = MaterialTheme.typography.titleMedium)
+    SectionHeader(Res.drawable.ic_badge, stringResource(Res.string.settings_display_name_header))
     // 入力欄の下には、エラーがあればエラーを、無ければ入力の説明を表示する (勤務時間の入力欄も同じ)
     OutlinedTextField(
         value = uiState.displayName,
         onValueChange = onDisplayNameChanged,
         label = { Text(stringResource(Res.string.settings_display_name_label)) },
+        leadingIcon = { SimpleIcon(Res.drawable.ic_badge) },
         supportingText = { Text(error ?: stringResource(Res.string.settings_display_name_hint, maxLength)) },
         isError = error != null,
         singleLine = true,
@@ -118,8 +122,8 @@ private fun DisplayNameSection(
     )
     SaveButton(isSaving = uiState.isSavingDisplayName, onClick = onSave)
     when {
-        uiState.displayNameSaved -> Text(stringResource(Res.string.settings_display_name_saved_message))
-        uiState.displayNameSaveFailed -> Text(stringResource(Res.string.common_data_save_error_message))
+        uiState.displayNameSaved -> StatusMessage(stringResource(Res.string.settings_display_name_saved_message), StatusKind.SUCCESS)
+        uiState.displayNameSaveFailed -> StatusMessage(stringResource(Res.string.common_data_save_error_message), StatusKind.ERROR)
     }
 }
 
@@ -131,7 +135,7 @@ private fun ShiftSettingsSection(
 ) {
     val input = uiState.shiftSettings
 
-    Text(text = stringResource(Res.string.settings_shift_header), style = MaterialTheme.typography.titleMedium)
+    SectionHeader(Res.drawable.ic_schedule, stringResource(Res.string.settings_shift_header))
     Text(text = stringResource(Res.string.settings_shift_description))
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
         ShiftField(
@@ -179,8 +183,8 @@ private fun ShiftSettingsSection(
     }
     SaveButton(isSaving = uiState.isSavingShiftSettings, onClick = onSave)
     when {
-        uiState.shiftSettingsSaved -> Text(stringResource(Res.string.settings_shift_saved_message))
-        uiState.shiftSettingsSaveFailed -> Text(stringResource(Res.string.common_data_save_error_message))
+        uiState.shiftSettingsSaved -> StatusMessage(stringResource(Res.string.settings_shift_saved_message), StatusKind.SUCCESS)
+        uiState.shiftSettingsSaveFailed -> StatusMessage(stringResource(Res.string.common_data_save_error_message), StatusKind.ERROR)
     }
 }
 
@@ -194,11 +198,18 @@ private fun ShiftField(
     modifier: Modifier,
 ) {
     val isTime = field == ShiftSettingsField.START_TIME || field == ShiftSettingsField.END_TIME
+    val icon =
+        when (field) {
+            ShiftSettingsField.START_TIME, ShiftSettingsField.END_TIME -> Res.drawable.ic_schedule
+            ShiftSettingsField.BREAK_HOURS -> Res.drawable.ic_coffee
+            ShiftSettingsField.MIN_HOURS, ShiftSettingsField.MAX_HOURS -> Res.drawable.ic_timer
+        }
     val error = uiState.shiftSettingsViolationOf(field)?.message()
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(stringResource(label)) },
+        leadingIcon = { SimpleIcon(icon) },
         supportingText = {
             Text(error ?: stringResource(if (isTime) Res.string.settings_time_hint else Res.string.settings_hours_hint))
         },
@@ -234,9 +245,10 @@ private fun SaveButton(
     onClick: () -> Unit,
 ) {
     Button(onClick = onClick, enabled = !isSaving, modifier = Modifier.fillMaxWidth()) {
-        if (isSaving) {
-            CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp))
-        }
-        Text(stringResource(if (isSaving) Res.string.settings_saving_button else Res.string.settings_save_button))
+        ButtonLabel(
+            icon = Res.drawable.ic_save,
+            text = stringResource(if (isSaving) Res.string.settings_saving_button else Res.string.settings_save_button),
+            inProgress = isSaving,
+        )
     }
 }

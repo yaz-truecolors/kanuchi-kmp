@@ -14,8 +14,6 @@ import kanuchi.presentation.generated.resources.daily_input_day_kind_company_hol
 import kanuchi.presentation.generated.resources.daily_input_day_kind_national_holiday
 import kanuchi.presentation.generated.resources.daily_input_day_kind_weekday
 import kanuchi.presentation.generated.resources.daily_input_day_kind_weekend
-import kanuchi.presentation.generated.resources.daily_input_flag_absence
-import kanuchi.presentation.generated.resources.daily_input_flag_vacation
 import kanuchi.presentation.generated.resources.daily_input_hours_format_error
 import kanuchi.presentation.generated.resources.daily_input_hours_too_large_error
 import kanuchi.presentation.generated.resources.daily_input_negative_working_hours_warning
@@ -27,8 +25,11 @@ import kanuchi.presentation.generated.resources.daily_input_weekday_sunday
 import kanuchi.presentation.generated.resources.daily_input_weekday_thursday
 import kanuchi.presentation.generated.resources.daily_input_weekday_tuesday
 import kanuchi.presentation.generated.resources.daily_input_weekday_wednesday
+import kanuchi.presentation.generated.resources.ic_beach_access
+import kanuchi.presentation.generated.resources.ic_person_off
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.stringResource
 
 /** 曜日の表示 (例: 「月」)。 */
@@ -78,11 +79,11 @@ internal fun holidayNameOf(dayKind: DayKind): String? =
         else -> null
     }
 
-@Composable
-internal fun flagLabel(flag: DayFlag): String =
+/** 印のアイコン (一覧の「印」の列と、1日分の入力画面の印の選択肢で使う)。 */
+internal fun flagIcon(flag: DayFlag): DrawableResource =
     when (flag) {
-        DayFlag.VACATION -> stringResource(Res.string.daily_input_flag_vacation)
-        DayFlag.ABSENCE -> stringResource(Res.string.daily_input_flag_absence)
+        DayFlag.VACATION -> Res.drawable.ic_beach_access
+        DayFlag.ABSENCE -> Res.drawable.ic_person_off
     }
 
 @Composable

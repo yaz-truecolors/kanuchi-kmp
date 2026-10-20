@@ -9,7 +9,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,14 +21,20 @@ import androidx.compose.ui.unit.dp
 import jp.co.yaz.kanuchi.domain.work.AllocationRatio
 import jp.co.yaz.kanuchi.domain.work.MonthlyWorkSheet
 import jp.co.yaz.kanuchi.domain.work.WorkingHoursRangeStatus
+import jp.co.yaz.kanuchi.presentation.common.EmptyMessage
+import jp.co.yaz.kanuchi.presentation.common.LoadErrorMessage
 import jp.co.yaz.kanuchi.presentation.common.MonthSelector
+import jp.co.yaz.kanuchi.presentation.common.SectionHeader
+import jp.co.yaz.kanuchi.presentation.common.StatusKind
+import jp.co.yaz.kanuchi.presentation.common.StatusMessage
 import jp.co.yaz.kanuchi.presentation.common.SubScreenScaffold
 import jp.co.yaz.kanuchi.presentation.common.formatHours
 import jp.co.yaz.kanuchi.presentation.common.formatRatio
 import jp.co.yaz.kanuchi.presentation.common.formatSignedHours
 import kanuchi.presentation.generated.resources.Res
-import kanuchi.presentation.generated.resources.common_data_load_error_message
-import kanuchi.presentation.generated.resources.common_retry_button
+import kanuchi.presentation.generated.resources.ic_calendar_month
+import kanuchi.presentation.generated.resources.ic_person
+import kanuchi.presentation.generated.resources.ic_work
 import kanuchi.presentation.generated.resources.summary_above_max_message
 import kanuchi.presentation.generated.resources.summary_below_min_message
 import kanuchi.presentation.generated.resources.summary_business_days_label
@@ -75,16 +80,10 @@ fun ProjectSummaryScreen(
     SubScreenScaffold(title = stringResource(Res.string.summary_title), onBack = onBack) {
         val targetUser = uiState.targetUser
         if (uiState.showsTargetUser && targetUser != null) {
-            Text(
-                text = stringResource(Res.string.summary_target_user, targetUser.displayName, targetUser.email),
-                style = MaterialTheme.typography.titleMedium,
-            )
+            SectionHeader(Res.drawable.ic_person, stringResource(Res.string.summary_target_user, targetUser.displayName, targetUser.email))
         }
         if (uiState.loadError == ProjectSummaryLoadError.USER_NOT_VIEWABLE) {
-            Text(
-                text = stringResource(Res.string.summary_user_not_viewable_message),
-                color = MaterialTheme.colorScheme.error,
-            )
+            StatusMessage(stringResource(Res.string.summary_user_not_viewable_message), StatusKind.ERROR)
             return@SubScreenScaffold
         }
         MonthSelector(
@@ -95,10 +94,7 @@ fun ProjectSummaryScreen(
         )
         when {
             uiState.isLoading -> CircularProgressIndicator()
-            uiState.loadError == ProjectSummaryLoadError.LOAD_FAILED -> {
-                Text(stringResource(Res.string.common_data_load_error_message))
-                TextButton(onClick = viewModel::onRetryClicked) { Text(stringResource(Res.string.common_retry_button)) }
-            }
+            uiState.loadError == ProjectSummaryLoadError.LOAD_FAILED -> LoadErrorMessage(onRetry = viewModel::onRetryClicked)
             else -> uiState.summary?.let { ProjectSummaryContent(it) }
         }
     }
@@ -109,13 +105,13 @@ private fun ProjectSummaryContent(summary: ProjectSummary) {
     val sheet = summary.sheet
     Overview(sheet)
     HorizontalDivider()
-    Text(text = stringResource(Res.string.summary_projects_header), style = MaterialTheme.typography.titleMedium)
+    SectionHeader(Res.drawable.ic_work, stringResource(Res.string.summary_projects_header))
     Text(
         text = stringResource(Res.string.summary_projects_description),
         style = MaterialTheme.typography.bodySmall,
     )
     if (summary.projectRows.isEmpty()) {
-        Text(stringResource(Res.string.summary_projects_empty))
+        EmptyMessage(stringResource(Res.string.summary_projects_empty))
     }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         summary.projectRows.forEach { row ->
@@ -145,7 +141,7 @@ private fun ProjectSummaryContent(summary: ProjectSummary) {
 
 @Composable
 private fun Overview(sheet: MonthlyWorkSheet) {
-    Text(text = stringResource(Res.string.summary_overview_header), style = MaterialTheme.typography.titleMedium)
+    SectionHeader(Res.drawable.ic_calendar_month, stringResource(Res.string.summary_overview_header))
     LabeledValue(
         label = stringResource(Res.string.summary_business_days_label),
         value = stringResource(Res.string.summary_days_value, sheet.businessDayCount.toString()),
@@ -166,10 +162,8 @@ private fun Overview(sheet: MonthlyWorkSheet) {
             ),
     )
     when (sheet.rangeStatus) {
-        WorkingHoursRangeStatus.BELOW_MIN ->
-            Text(text = stringResource(Res.string.summary_below_min_message), color = MaterialTheme.colorScheme.error)
-        WorkingHoursRangeStatus.ABOVE_MAX ->
-            Text(text = stringResource(Res.string.summary_above_max_message), color = MaterialTheme.colorScheme.error)
+        WorkingHoursRangeStatus.BELOW_MIN -> StatusMessage(stringResource(Res.string.summary_below_min_message), StatusKind.WARNING)
+        WorkingHoursRangeStatus.ABOVE_MAX -> StatusMessage(stringResource(Res.string.summary_above_max_message), StatusKind.WARNING)
         WorkingHoursRangeStatus.WITHIN_RANGE -> Unit
     }
     LabeledValue(

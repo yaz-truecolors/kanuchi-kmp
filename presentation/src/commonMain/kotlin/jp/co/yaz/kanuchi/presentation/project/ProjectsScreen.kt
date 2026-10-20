@@ -3,7 +3,6 @@ package jp.co.yaz.kanuchi.presentation.project
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -20,11 +19,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import jp.co.yaz.kanuchi.domain.project.Project
+import jp.co.yaz.kanuchi.presentation.common.ButtonLabel
+import jp.co.yaz.kanuchi.presentation.common.EmptyMessage
+import jp.co.yaz.kanuchi.presentation.common.IconText
+import jp.co.yaz.kanuchi.presentation.common.LoadErrorMessage
+import jp.co.yaz.kanuchi.presentation.common.SimpleIcon
+import jp.co.yaz.kanuchi.presentation.common.StatusKind
+import jp.co.yaz.kanuchi.presentation.common.StatusMessage
 import jp.co.yaz.kanuchi.presentation.common.SubScreenScaffold
 import kanuchi.presentation.generated.resources.Res
-import kanuchi.presentation.generated.resources.common_data_load_error_message
 import kanuchi.presentation.generated.resources.common_data_save_error_message
-import kanuchi.presentation.generated.resources.common_retry_button
+import kanuchi.presentation.generated.resources.ic_add
+import kanuchi.presentation.generated.resources.ic_close
+import kanuchi.presentation.generated.resources.ic_edit
+import kanuchi.presentation.generated.resources.ic_group
+import kanuchi.presentation.generated.resources.ic_save
+import kanuchi.presentation.generated.resources.ic_toggle_off
+import kanuchi.presentation.generated.resources.ic_toggle_on
+import kanuchi.presentation.generated.resources.ic_work
 import kanuchi.presentation.generated.resources.projects_activate_button
 import kanuchi.presentation.generated.resources.projects_add_button
 import kanuchi.presentation.generated.resources.projects_adding_button
@@ -71,11 +83,8 @@ fun ProjectsScreen(
 
         when {
             uiState.isLoading -> CircularProgressIndicator()
-            uiState.loadFailed -> {
-                Text(stringResource(Res.string.common_data_load_error_message))
-                TextButton(onClick = viewModel::onRetryClicked) { Text(stringResource(Res.string.common_retry_button)) }
-            }
-            uiState.projects.isEmpty() -> Text(stringResource(Res.string.projects_empty_message))
+            uiState.loadFailed -> LoadErrorMessage(onRetry = viewModel::onRetryClicked)
+            uiState.projects.isEmpty() -> EmptyMessage(stringResource(Res.string.projects_empty_message))
             else ->
                 uiState.projects.forEach { project ->
                     key(project.id) {
@@ -116,6 +125,7 @@ private fun AddProjectForm(
             value = uiState.newProjectName,
             onValueChange = onNameChange,
             label = { Text(stringResource(Res.string.projects_new_name_label)) },
+            leadingIcon = { SimpleIcon(Res.drawable.ic_work) },
             singleLine = true,
             enabled = !uiState.isAdding,
             modifier = Modifier.weight(1f),
@@ -124,12 +134,15 @@ private fun AddProjectForm(
             onClick = onAdd,
             enabled = uiState.canAdd && uiState.newProjectName.isNotBlank(),
         ) {
-            Text(
-                if (uiState.isAdding) {
-                    stringResource(Res.string.projects_adding_button)
-                } else {
-                    stringResource(Res.string.projects_add_button)
-                },
+            ButtonLabel(
+                icon = Res.drawable.ic_add,
+                text =
+                    if (uiState.isAdding) {
+                        stringResource(Res.string.projects_adding_button)
+                    } else {
+                        stringResource(Res.string.projects_add_button)
+                    },
+                inProgress = uiState.isAdding,
             )
         }
     }
@@ -150,7 +163,8 @@ private fun ProjectRow(
                 text = project.name,
                 color = if (project.isActive) Color.Unspecified else MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Text(
+            IconText(
+                icon = if (project.isActive) Res.drawable.ic_toggle_on else Res.drawable.ic_toggle_off,
                 text =
                     if (project.isActive) {
                         stringResource(Res.string.projects_status_active)
@@ -159,22 +173,28 @@ private fun ProjectRow(
                     },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                iconTint = if (project.isActive) MaterialTheme.colorScheme.primary else Color.Unspecified,
+                iconSize = 16.dp,
             )
         }
         TextButton(onClick = onRename, enabled = !uiState.isSaving) {
-            Text(stringResource(Res.string.projects_rename_button))
+            ButtonLabel(Res.drawable.ic_edit, stringResource(Res.string.projects_rename_button))
         }
         TextButton(onClick = onToggleActive, enabled = !uiState.isSaving) {
-            Text(
-                when {
-                    uiState.savingProjectId == project.id -> stringResource(Res.string.projects_saving_button)
-                    project.isActive -> stringResource(Res.string.projects_deactivate_button)
-                    else -> stringResource(Res.string.projects_activate_button)
-                },
+            ButtonLabel(
+                // 押したあとの状態のアイコン (有効な案件なら「無効にする」= オフ)
+                icon = if (project.isActive) Res.drawable.ic_toggle_off else Res.drawable.ic_toggle_on,
+                text =
+                    when {
+                        uiState.savingProjectId == project.id -> stringResource(Res.string.projects_saving_button)
+                        project.isActive -> stringResource(Res.string.projects_deactivate_button)
+                        else -> stringResource(Res.string.projects_activate_button)
+                    },
+                inProgress = uiState.savingProjectId == project.id,
             )
         }
         TextButton(onClick = onOpenMembers) {
-            Text(stringResource(Res.string.projects_members_button))
+            ButtonLabel(Res.drawable.ic_group, stringResource(Res.string.projects_members_button))
         }
     }
     if (uiState.activeChangeFailedProjectId == project.id) {
@@ -198,21 +218,25 @@ private fun RenameProjectRow(
             value = uiState.renamingName,
             onValueChange = onNameChange,
             label = { Text(stringResource(Res.string.projects_name_label)) },
+            leadingIcon = { SimpleIcon(Res.drawable.ic_work) },
             singleLine = true,
             enabled = !isSavingThis,
             modifier = Modifier.weight(1f),
         )
         TextButton(onClick = onSave, enabled = !uiState.isSaving && uiState.renamingName.isNotBlank()) {
-            Text(
-                if (isSavingThis) {
-                    stringResource(Res.string.projects_saving_button)
-                } else {
-                    stringResource(Res.string.projects_save_button)
-                },
+            ButtonLabel(
+                icon = Res.drawable.ic_save,
+                text =
+                    if (isSavingThis) {
+                        stringResource(Res.string.projects_saving_button)
+                    } else {
+                        stringResource(Res.string.projects_save_button)
+                    },
+                inProgress = isSavingThis,
             )
         }
         TextButton(onClick = onCancel, enabled = !isSavingThis) {
-            Text(stringResource(Res.string.projects_cancel_button))
+            ButtonLabel(Res.drawable.ic_close, stringResource(Res.string.projects_cancel_button))
         }
     }
     uiState.renameError?.let { ErrorText(it.message()) }
@@ -220,7 +244,7 @@ private fun RenameProjectRow(
 
 @Composable
 private fun ErrorText(text: String) {
-    Text(text = text, color = MaterialTheme.colorScheme.error, modifier = Modifier.fillMaxWidth())
+    StatusMessage(text, StatusKind.ERROR)
 }
 
 @Composable

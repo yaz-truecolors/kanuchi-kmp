@@ -1,7 +1,6 @@
 <resources>
     <!-- 全画面共通 -->
     <string name="app_title">Kanuchi（鍛冶）</string>
-    <string name="common_back_button">← 戻る</string>
     <string name="common_retry_button">再読み込み</string>
     <string name="common_coming_soon_message">この画面は準備中です。</string>
     <!-- DBへのアクセスが失敗し、具体的な理由を表示できない場合 (GenericDataFailureException) の汎用文言 -->
@@ -160,8 +159,6 @@
     <string name="project_members_saved_message">保存しました。</string>
 
     <!-- 日次入力・集計 (共通) -->
-    <string name="common_previous_month_button">&lt; 前月</string>
-    <string name="common_next_month_button">翌月 &gt;</string>
     <!-- %1$s: 年、%2$s: 月 (1〜12) -->
     <string name="common_year_month_format">%1$s年%2$s月</string>
     <string name="daily_input_title">日次入力</string>
@@ -190,7 +187,6 @@
     <string name="daily_input_column_balance">過不足</string>
     <string name="daily_input_column_note">備考</string>
     <!-- 一覧の、備考が入力されている日の印 -->
-    <string name="daily_input_note_mark">あり</string>
     <!-- %1$s: 日 (1〜31)、%2$s: 曜日 -->
     <string name="daily_input_row_date_format">%1$s日（%2$s）</string>
     <string name="daily_input_weekday_monday">月</string>
@@ -200,8 +196,6 @@
     <string name="daily_input_weekday_friday">金</string>
     <string name="daily_input_weekday_saturday">土</string>
     <string name="daily_input_weekday_sunday">日</string>
-    <string name="daily_input_flag_vacation">休</string>
-    <string name="daily_input_flag_absence">欠</string>
 
     <!-- 日次入力 (1日分の入力) -->
     <!-- %1$s: 年、%2$s: 月、%3$s: 日、%4$s: 曜日 -->
@@ -308,8 +302,6 @@
     <!-- 稼働時間合計が0で割合を求められない場合 -->
     <string name="summary_ratio_unavailable">-</string>
     <!-- 休業日管理画面 (admin のみ) -->
-    <string name="company_holidays_previous_year_button">&lt; 前年</string>
-    <string name="company_holidays_next_year_button">翌年 &gt;</string>
     <!-- %1$s: 年 -->
     <string name="company_holidays_year">%1$s年</string>
     <string name="company_holidays_header">会社の休業日</string>

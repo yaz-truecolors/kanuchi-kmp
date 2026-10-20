@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -20,11 +18,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import jp.co.yaz.kanuchi.domain.profile.UserRole
+import jp.co.yaz.kanuchi.presentation.common.ButtonLabel
+import jp.co.yaz.kanuchi.presentation.common.IconText
+import jp.co.yaz.kanuchi.presentation.common.LoadErrorMessage
+import jp.co.yaz.kanuchi.presentation.common.SimpleIcon
+import jp.co.yaz.kanuchi.presentation.common.StatusKind
+import jp.co.yaz.kanuchi.presentation.common.StatusMessage
 import jp.co.yaz.kanuchi.presentation.common.SubScreenScaffold
 import kanuchi.presentation.generated.resources.Res
-import kanuchi.presentation.generated.resources.common_data_load_error_message
 import kanuchi.presentation.generated.resources.common_data_save_error_message
-import kanuchi.presentation.generated.resources.common_retry_button
+import kanuchi.presentation.generated.resources.ic_arrow_downward
+import kanuchi.presentation.generated.resources.ic_arrow_upward
+import kanuchi.presentation.generated.resources.ic_block
+import kanuchi.presentation.generated.resources.ic_person
+import kanuchi.presentation.generated.resources.ic_shield_person
 import kanuchi.presentation.generated.resources.roles_cancel_button
 import kanuchi.presentation.generated.resources.roles_change_success_message
 import kanuchi.presentation.generated.resources.roles_changing_button
@@ -42,6 +49,7 @@ import kanuchi.presentation.generated.resources.roles_role_admin
 import kanuchi.presentation.generated.resources.roles_role_member
 import kanuchi.presentation.generated.resources.roles_suspended_label
 import kanuchi.presentation.generated.resources.roles_title
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -63,10 +71,7 @@ fun RolesScreen(
         SaveStatus(uiState)
         when {
             uiState.isLoading -> CircularProgressIndicator()
-            uiState.loadFailed -> {
-                Text(stringResource(Res.string.common_data_load_error_message))
-                TextButton(onClick = viewModel::onRetryClicked) { Text(stringResource(Res.string.common_retry_button)) }
-            }
+            uiState.loadFailed -> LoadErrorMessage(onRetry = viewModel::onRetryClicked)
             else ->
                 uiState.users.forEach { item ->
                     HorizontalDivider()
@@ -92,12 +97,15 @@ fun RolesScreen(
 @Composable
 private fun SaveStatus(uiState: RolesUiState) {
     uiState.completedChange?.let { change ->
-        Text(stringResource(Res.string.roles_change_success_message, change.user.displayName, stringResource(change.newRole.label())))
+        StatusMessage(
+            stringResource(Res.string.roles_change_success_message, change.user.displayName, stringResource(change.newRole.label())),
+            StatusKind.SUCCESS,
+        )
     }
     when (uiState.saveError) {
         RoleChangeError.LAST_ACTIVE_ADMIN_REQUIRED ->
-            Text(stringResource(Res.string.roles_last_active_admin_error_message), color = MaterialTheme.colorScheme.error)
-        RoleChangeError.GENERIC -> Text(stringResource(Res.string.common_data_save_error_message), color = MaterialTheme.colorScheme.error)
+            StatusMessage(stringResource(Res.string.roles_last_active_admin_error_message), StatusKind.ERROR)
+        RoleChangeError.GENERIC -> StatusMessage(stringResource(Res.string.common_data_save_error_message), StatusKind.ERROR)
         null -> Unit
     }
 }
@@ -127,9 +135,13 @@ private fun UserRow(
             )
             Text(text = profile.email, style = MaterialTheme.typography.bodySmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(profile.role.label()))
+                IconText(icon = profile.role.icon(), text = stringResource(profile.role.label()))
                 if (profile.isSuspended) {
-                    Text(stringResource(Res.string.roles_suspended_label), color = MaterialTheme.colorScheme.error)
+                    IconText(
+                        icon = Res.drawable.ic_block,
+                        text = stringResource(Res.string.roles_suspended_label),
+                        color = MaterialTheme.colorScheme.error,
+                    )
                 }
             }
         }
@@ -137,16 +149,19 @@ private fun UserRow(
             val newRole = if (profile.isAdmin) UserRole.MEMBER else UserRole.ADMIN
             val isSavingThisUser = savingChange?.user?.id == profile.id
             OutlinedButton(onClick = { onChangeRole(newRole) }, enabled = enabled) {
-                if (isSavingThisUser) {
-                    CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp).size(16.dp), strokeWidth = 2.dp)
-                    Text(stringResource(Res.string.roles_changing_button))
-                } else {
-                    Text(
+                val promotes = newRole == UserRole.ADMIN
+                ButtonLabel(
+                    icon = if (promotes) Res.drawable.ic_arrow_upward else Res.drawable.ic_arrow_downward,
+                    text =
                         stringResource(
-                            if (newRole == UserRole.ADMIN) Res.string.roles_promote_button else Res.string.roles_demote_button,
+                            when {
+                                isSavingThisUser -> Res.string.roles_changing_button
+                                promotes -> Res.string.roles_promote_button
+                                else -> Res.string.roles_demote_button
+                            },
                         ),
-                    )
-                }
+                    inProgress = isSavingThisUser,
+                )
             }
         }
     }
@@ -161,6 +176,7 @@ private fun ConfirmDialog(
     val promotes = change.newRole == UserRole.ADMIN
     AlertDialog(
         onDismissRequest = onDismiss,
+        icon = { SimpleIcon(if (promotes) Res.drawable.ic_arrow_upward else Res.drawable.ic_arrow_downward) },
         title = {
             Text(stringResource(if (promotes) Res.string.roles_promote_confirm_title else Res.string.roles_demote_confirm_title))
         },
@@ -181,6 +197,12 @@ private fun ConfirmDialog(
         },
     )
 }
+
+private fun UserRole.icon(): DrawableResource =
+    when (this) {
+        UserRole.ADMIN -> Res.drawable.ic_shield_person
+        UserRole.MEMBER -> Res.drawable.ic_person
+    }
 
 private fun UserRole.label(): StringResource =
     when (this) {

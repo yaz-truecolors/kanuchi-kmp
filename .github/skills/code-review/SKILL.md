@@ -16,7 +16,7 @@ description: kanuchi-kmp リポジトリのプルリクエストをレビュー�
 
 | 事項 | 指摘しない内容 | 根拠 |
 |---|---|---|
-| アクセシビリティ | スクリーンリーダー向けの `Modifier.semantics { ... }`、`liveRegion` 等のアクセシビリティ対応の追加・不足 | `docs/requirements.md`「2. アプリ概要」UI/UX方針（アクセシビリティ）、`.github/instructions/presentation.instructions.md`「アクセシビリティ・対象ブラウザ」 |
+| アクセシビリティ | スクリーンリーダー向けの `Modifier.semantics { ... }`、`liveRegion` 等のアクセシビリティ対応の追加・不足（アイコンの `contentDescription` が `null` であることを含む） | `docs/requirements.md`「2. アプリ概要」UI/UX方針（アクセシビリティ）、`.github/instructions/presentation.instructions.md`「アクセシビリティ・対象ブラウザ」「アイコン」 |
 | 対象ブラウザ | Google Chrome 以外のブラウザでの見た目・挙動の差異、ブラウザ互換性への対応 | `docs/requirements.md`「2. アプリ概要」（対象ブラウザ）、`.github/instructions/presentation.instructions.md`「アクセシビリティ・対象ブラウザ」 |
 | 招待済みかどうかが分かるエラー表示 | ログイン画面のエラーから招待済みメールアドレスを推測できる（メール列挙）こと。意図的に許容しているトレードオフ | `docs/requirements.md`「5. 認証・権限設計」、`.github/instructions/data.instructions.md`「招待制アカウント作成（クライアント側）」 |
 | `OTP.Config.createUser = true` | 未招待ユーザーのアカウント作成を許してしまう、という指摘（未招待の拒否はサーバー側のHookで強制している） | `.github/instructions/data.instructions.md`「招待制アカウント作成（クライアント側）」 |

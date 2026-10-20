@@ -3,16 +3,18 @@ package jp.co.yaz.kanuchi.presentation.dailyinput
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -26,13 +28,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import jp.co.yaz.kanuchi.domain.work.MonthlyWorkSheet
 import jp.co.yaz.kanuchi.domain.work.WorkingHoursRangeStatus
+import jp.co.yaz.kanuchi.presentation.common.LoadErrorMessage
 import jp.co.yaz.kanuchi.presentation.common.MonthSelector
+import jp.co.yaz.kanuchi.presentation.common.StatusKind
+import jp.co.yaz.kanuchi.presentation.common.StatusMessage
 import jp.co.yaz.kanuchi.presentation.common.SubScreenScaffold
 import jp.co.yaz.kanuchi.presentation.common.formatHours
 import jp.co.yaz.kanuchi.presentation.common.formatSignedHours
 import kanuchi.presentation.generated.resources.Res
-import kanuchi.presentation.generated.resources.common_data_load_error_message
-import kanuchi.presentation.generated.resources.common_retry_button
 import kanuchi.presentation.generated.resources.daily_input_business_day_count
 import kanuchi.presentation.generated.resources.daily_input_column_balance
 import kanuchi.presentation.generated.resources.daily_input_column_break_hours
@@ -47,14 +50,17 @@ import kanuchi.presentation.generated.resources.daily_input_counted_days_note
 import kanuchi.presentation.generated.resources.daily_input_imbalance_day_count
 import kanuchi.presentation.generated.resources.daily_input_list_hint
 import kanuchi.presentation.generated.resources.daily_input_negative_day_count
-import kanuchi.presentation.generated.resources.daily_input_note_mark
 import kanuchi.presentation.generated.resources.daily_input_range_above_max
 import kanuchi.presentation.generated.resources.daily_input_range_below_min
 import kanuchi.presentation.generated.resources.daily_input_row_date_format
 import kanuchi.presentation.generated.resources.daily_input_title
 import kanuchi.presentation.generated.resources.daily_input_total_working_hours
+import kanuchi.presentation.generated.resources.ic_sticky_note_2
+import kanuchi.presentation.generated.resources.ic_warning
 import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -82,10 +88,7 @@ fun DailyInputScreen(
         val sheet = uiState.sheet?.takeIf { it.yearMonth == uiState.yearMonth }
         when {
             uiState.isLoading -> CircularProgressIndicator()
-            uiState.loadFailed || sheet == null -> {
-                Text(stringResource(Res.string.common_data_load_error_message))
-                TextButton(onClick = viewModel::onRetryClicked) { Text(stringResource(Res.string.common_retry_button)) }
-            }
+            uiState.loadFailed || sheet == null -> LoadErrorMessage(onRetry = viewModel::onRetryClicked)
             else -> {
                 MonthSummary(sheet, hasFutureDays = uiState.hasFutureDays)
                 Text(text = stringResource(Res.string.daily_input_list_hint), style = MaterialTheme.typography.bodySmall)
@@ -111,25 +114,23 @@ private fun MonthSummary(
             ),
         )
         when (sheet.rangeStatus) {
-            WorkingHoursRangeStatus.BELOW_MIN -> WarningText(stringResource(Res.string.daily_input_range_below_min))
-            WorkingHoursRangeStatus.ABOVE_MAX -> WarningText(stringResource(Res.string.daily_input_range_above_max))
+            WorkingHoursRangeStatus.BELOW_MIN -> StatusMessage(stringResource(Res.string.daily_input_range_below_min), StatusKind.WARNING)
+            WorkingHoursRangeStatus.ABOVE_MAX -> StatusMessage(stringResource(Res.string.daily_input_range_above_max), StatusKind.WARNING)
             WorkingHoursRangeStatus.WITHIN_RANGE -> Unit
         }
         Text(stringResource(Res.string.daily_input_business_day_count, sheet.businessDayCount.toString()))
         val imbalance = stringResource(Res.string.daily_input_imbalance_day_count, sheet.imbalanceDayCount.toString())
-        if (sheet.imbalanceDayCount > 0) WarningText(imbalance) else Text(imbalance)
+        if (sheet.imbalanceDayCount > 0) StatusMessage(imbalance, StatusKind.WARNING) else Text(imbalance)
         if (sheet.negativeWorkingHoursDayCount > 0) {
-            WarningText(stringResource(Res.string.daily_input_negative_day_count, sheet.negativeWorkingHoursDayCount.toString()))
+            StatusMessage(
+                stringResource(Res.string.daily_input_negative_day_count, sheet.negativeWorkingHoursDayCount.toString()),
+                StatusKind.WARNING,
+            )
         }
         if (hasFutureDays) {
             Text(text = stringResource(Res.string.daily_input_counted_days_note), style = MaterialTheme.typography.bodySmall)
         }
     }
-}
-
-@Composable
-private fun WarningText(text: String) {
-    Text(text = text, color = MaterialTheme.colorScheme.error)
 }
 
 /** 一覧の列の幅。1行に収めるため固定幅にする。 */
@@ -139,7 +140,7 @@ private object ColumnWidth {
     val FLAG: Dp = 28.dp
     val TIME: Dp = 52.dp
     val HOURS: Dp = 52.dp
-    val BALANCE: Dp = 60.dp
+    val BALANCE: Dp = 76.dp
     val NOTE: Dp = 40.dp
 }
 
@@ -215,7 +216,7 @@ private fun DayRow(
             align = TextAlign.Start,
             color = dayColor(row.date, row.dayKind),
         )
-        Cell(text = row.flag?.let { flagLabel(it) }.orEmpty(), width = ColumnWidth.FLAG, align = TextAlign.Center)
+        IconCell(icon = row.flag?.let(::flagIcon), width = ColumnWidth.FLAG)
         ShownValueCell(row.clockIn, ColumnWidth.TIME)
         ShownValueCell(row.clockOut, ColumnWidth.TIME)
         ShownValueCell(row.breakHours, ColumnWidth.HOURS)
@@ -230,22 +231,55 @@ private fun DayRow(
                     else -> Color.Unspecified
                 },
         )
-        Cell(
+        BalanceCell(row, uncountedColor)
+        IconCell(icon = if (row.hasNote) Res.drawable.ic_sticky_note_2 else null, width = ColumnWidth.NOTE)
+    }
+}
+
+/** 過不足の列。合計に数える日で過不足があれば、警告のアイコンを付けて赤で表示する。 */
+@Composable
+private fun BalanceCell(
+    row: DailyInputRow,
+    uncountedColor: Color,
+) {
+    val warns = row.isCounted && row.hasImbalance
+    Row(
+        modifier = Modifier.width(ColumnWidth.BALANCE),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.End),
+    ) {
+        if (warns) {
+            Icon(
+                painterResource(Res.drawable.ic_warning),
+                contentDescription = null,
+                modifier = Modifier.size(TABLE_ICON_SIZE),
+                tint = MaterialTheme.colorScheme.error,
+            )
+        }
+        Text(
             text = row.balance?.let(::formatSignedHours).orEmpty(),
-            width = ColumnWidth.BALANCE,
-            align = TextAlign.End,
             color =
                 when {
                     !row.isCounted -> uncountedColor
-                    row.hasImbalance -> MaterialTheme.colorScheme.error
+                    warns -> MaterialTheme.colorScheme.error
                     else -> Color.Unspecified
                 },
+            maxLines = 1,
+            style = MaterialTheme.typography.bodyMedium,
         )
-        Cell(
-            text = if (row.hasNote) stringResource(Res.string.daily_input_note_mark) else "",
-            width = ColumnWidth.NOTE,
-            align = TextAlign.Center,
-        )
+    }
+}
+
+/** 印・備考の列。値があればアイコンを中央に表示する (無ければ空欄)。 */
+@Composable
+private fun IconCell(
+    icon: DrawableResource?,
+    width: Dp,
+) {
+    Box(modifier = Modifier.width(width), contentAlignment = Alignment.Center) {
+        if (icon != null) {
+            Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(TABLE_ICON_SIZE))
+        }
     }
 }
 
@@ -282,3 +316,5 @@ private fun Cell(
 }
 
 private const val DIMMED_ALPHA = 0.4f
+
+private val TABLE_ICON_SIZE = 18.dp
