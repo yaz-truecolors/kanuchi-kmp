@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import jp.co.yaz.kanuchi.domain.project.AddProjectUseCase
 import jp.co.yaz.kanuchi.domain.project.BlankProjectNameException
 import jp.co.yaz.kanuchi.domain.project.DuplicateProjectNameException
-import jp.co.yaz.kanuchi.domain.project.GetProjectsUseCase
+import jp.co.yaz.kanuchi.domain.project.GetSharedProjectsUseCase
 import jp.co.yaz.kanuchi.domain.project.Project
 import jp.co.yaz.kanuchi.domain.project.RenameProjectUseCase
 import jp.co.yaz.kanuchi.domain.project.SetProjectActiveUseCase
@@ -16,11 +16,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * 案件管理画面の ViewModel。案件の一覧・追加・名前変更・有効／無効の切り替え。
- * 案件は削除できない (使わなくなった案件は無効にする)。
+ * 案件管理画面の ViewModel。共有の案件の一覧・追加・名前変更・有効／無効の切り替え。
+ * 案件は削除できない (使わなくなった案件は無効にする)。各ユーザーの個人の案件は扱わない。
  */
 class ProjectsViewModel(
-    private val getProjectsUseCase: GetProjectsUseCase,
+    private val getSharedProjectsUseCase: GetSharedProjectsUseCase,
     private val addProjectUseCase: AddProjectUseCase,
     private val renameProjectUseCase: RenameProjectUseCase,
     private val setProjectActiveUseCase: SetProjectActiveUseCase,
@@ -41,7 +41,7 @@ class ProjectsViewModel(
         _uiState.update { it.copy(isLoading = true, loadFailed = false) }
 
         viewModelScope.launch {
-            getProjectsUseCase()
+            getSharedProjectsUseCase()
                 .onSuccess { projects ->
                     _uiState.update { it.copy(projects = projects, isLoading = false) }
                 }.onFailure {

@@ -38,6 +38,11 @@ class DailyWorkInputUseCasesTest {
     private val assignedInactive = Project(id = "p-inactive", name = "A案件", isActive = false)
     private val notAssigned = Project(id = "p-other", name = "C案件", isActive = true)
     private val allocatedNotAssigned = Project(id = "p-allocated", name = "D案件", isActive = true)
+    private val ownPersonal = Project(id = "p-own", name = "E個人", isActive = true, ownerId = userId)
+    private val ownDeletedPersonal = Project(id = "p-own-deleted", name = "F個人", isActive = true, ownerId = userId, isDeleted = true)
+    private val ownDeletedAllocated =
+        Project(id = "p-own-deleted-allocated", name = "G個人", isActive = true, ownerId = userId, isDeleted = true)
+    private val othersPersonal = Project(id = "p-others", name = "H個人", isActive = true, ownerId = "user-2")
 
     @Test
     fun `current user monthly sheet uses the profile id`() =
@@ -76,7 +81,32 @@ class DailyWorkInputUseCasesTest {
             assertEquals(DayKind.Weekday, entry.day.dayKind)
             assertEquals(shift, entry.shiftSettings)
             assertEquals(
-                listOf(AllocatableProject(assigned, isAssigned = true), AllocatableProject(allocatedNotAssigned, isAssigned = false)),
+                listOf(
+                    AllocatableProject(assigned, canAddAllocation = true),
+                    AllocatableProject(allocatedNotAssigned, canAddAllocation = false),
+                ),
+                entry.projects,
+            )
+        }
+
+    @Test
+    fun `entry contains own personal projects that are not deleted`() =
+        runTest {
+            // admin は他のユーザーの個人案件も参照できる (一覧に含まれる) が、配分できるのは自分の個人案件だけ
+            projectRepository.projectsResult =
+                Result.success(listOf(othersPersonal, ownDeletedAllocated, ownDeletedPersonal, ownPersonal, assigned))
+            projectRepository.assignedProjectIdsOfCurrentUserResult = Result.success(setOf(assigned.id, othersPersonal.id))
+            workRecordRepository.records[userId] =
+                listOf(WorkRecord(date, allocations = mapOf(ownDeletedAllocated.id to Hours.ofHundredths(100))))
+
+            val entry = GetWorkDayEntryUseCase(profileRepository, projectRepository, getMonthlyWorkSheetUseCase)(date).getOrThrow()
+
+            assertEquals(
+                listOf(
+                    AllocatableProject(assigned, canAddAllocation = true),
+                    AllocatableProject(ownPersonal, canAddAllocation = true),
+                    AllocatableProject(ownDeletedAllocated, canAddAllocation = false),
+                ),
                 entry.projects,
             )
         }

@@ -126,6 +126,33 @@
     <string name="settings_hours_too_large_error">%1$s以下で入力してください。</string>
     <string name="settings_min_hours_exceeds_max_hours_error">上限は下限以上にしてください。</string>
     <string name="settings_shift_saved_message">勤務時間を保存しました。</string>
+    <string name="settings_projects_header">案件</string>
+    <string name="settings_projects_description">日次入力で工数を記録する案件です。自分だけが使う個人の案件を追加・削除できます。</string>
+    <string name="settings_projects_button">案件の編集</string>
+
+    <!-- 案件の編集画面 (個人設定から開く。全員が使える) -->
+    <string name="my_projects_title">案件の編集</string>
+    <string name="my_projects_personal_header">個人の案件</string>
+    <string name="my_projects_personal_description">自分だけが使う案件です。他のメンバーには表示されず、影響もありません（管理者は集計で閲覧できます）。名前は他の案件と同じでもかまいません。</string>
+    <string name="my_projects_new_name_label">新しい個人の案件名</string>
+    <string name="my_projects_add_button">追加</string>
+    <string name="my_projects_adding_button">追加中...</string>
+    <string name="my_projects_blank_name_error_message">案件名を入力してください。</string>
+    <string name="my_projects_personal_empty_message">個人の案件はまだありません。</string>
+    <string name="my_projects_delete_button">削除</string>
+    <string name="my_projects_deleting_button">削除中...</string>
+    <string name="my_projects_delete_note">削除しても、先月までに記録した工数は集計に残ります。今月以降の日に工数を記録している案件は削除できません。</string>
+    <string name="my_projects_delete_confirm_title">個人の案件を削除しますか？</string>
+    <!-- %1$s: 案件名 -->
+    <string name="my_projects_delete_confirm_message">「%1$s」を削除します。削除した案件は、日次入力で選べなくなります。</string>
+    <string name="my_projects_delete_confirm_button">削除する</string>
+    <string name="my_projects_cancel_button">キャンセル</string>
+    <!-- 当月以降の日に工数があるため、DB 側で削除を拒否された場合 -->
+    <string name="my_projects_delete_in_use_error_message">今月以降の日に工数を記録しているため、削除できません。日次入力でその工数を消してから削除してください。</string>
+    <string name="my_projects_delete_error_message">削除に失敗しました。通信環境を確認して、もう一度お試しください。</string>
+    <string name="my_projects_assigned_header">担当の案件</string>
+    <string name="my_projects_assigned_description">管理者が割り当てた案件です。ここでは変更・削除できません。</string>
+    <string name="my_projects_assigned_empty_message">担当している案件はありません。</string>
     <!-- 案件管理画面 (admin のみ) -->
     <string name="projects_new_name_label">新しい案件名</string>
     <string name="projects_add_button">追加</string>
@@ -143,7 +170,7 @@
     <string name="projects_members_button">担当メンバー</string>
     <string name="projects_blank_name_error_message">案件名を入力してください。</string>
     <string name="projects_duplicate_name_error_message">同じ名前の案件があります。別の名前を入力してください。</string>
-    <string name="projects_inactive_note">無効にした案件は、日々の入力で選べなくなります（過去の記録は残ります）。案件は削除できません。</string>
+    <string name="projects_inactive_note">無効にした案件は、日々の入力で選べなくなります（過去の記録は残ります）。案件は削除できません。各メンバーが個人設定で追加した個人の案件は、ここには表示されません。</string>
 
     <!-- 案件の担当メンバー画面 (admin のみ) -->
     <string name="project_members_title">担当メンバー</string>
@@ -223,9 +250,12 @@
     <string name="daily_input_weekend_time_note">休みの日は、出勤か退勤を入力した場合だけ稼働として計算します（片方だけなら他方は定時）。</string>
     <string name="daily_input_fill_shift_button">定時を入力</string>
     <string name="daily_input_projects_header">案件ごとの工数（時間）</string>
-    <string name="daily_input_projects_empty_message">担当している有効な案件がありません。</string>
+    <string name="daily_input_projects_empty_message">工数を記録できる案件がありません。個人設定の「案件の編集」から、個人の案件を追加できます。</string>
     <!-- 担当から外された・無効にされた案件のうち、この日に既に工数がある案件の注記 -->
     <string name="daily_input_project_unassigned_note">担当外・無効の案件</string>
+    <string name="daily_input_project_personal_note">個人</string>
+    <!-- 削除した個人の案件のうち、この日に既に工数がある案件の注記 -->
+    <string name="daily_input_project_personal_deleted_note">削除した個人の案件</string>
     <string name="daily_input_allocation_hint">小数第2位まで。空欄・0 は配分なし</string>
     <!-- %1$s: 時間数 (7.50 のような表記) -->
     <string name="daily_input_working_hours_preview">稼働時間: %1$s 時間</string>
@@ -266,9 +296,12 @@
     <string name="admin_dashboard_imbalance_days">過不足のある日 %1$s日</string>
     <string name="admin_dashboard_open_member_button">案件別集計</string>
     <string name="admin_dashboard_projects_header">案件ごとのチーム合計</string>
-    <string name="admin_dashboard_projects_note">全メンバーの案件への配分の合計（今日まで）です。時間の多い順に表示します。</string>
+    <string name="admin_dashboard_projects_note">全メンバーの案件への配分の合計（今日まで）です。時間の多い順に表示します。個人の案件は、作成したメンバーごとに表示します。</string>
     <string name="admin_dashboard_projects_empty_message">この月の案件への配分はありません。</string>
     <string name="admin_dashboard_project_inactive_label">無効</string>
+    <!-- %1$s: 個人の案件を作成したメンバーの表示名 -->
+    <string name="admin_dashboard_project_personal_label">%1$sの個人の案件</string>
+    <string name="admin_dashboard_project_deleted_label">削除済み</string>
     <string name="admin_dashboard_project_unknown_name">（不明な案件）</string>
     <!-- %1$s: 時間数 -->
     <string name="admin_dashboard_hours">%1$s時間</string>
@@ -294,6 +327,10 @@
     <string name="summary_projects_empty">この月の案件の実績はありません。</string>
     <!-- %1$s: 案件名 -->
     <string name="summary_project_inactive">%1$s（無効）</string>
+    <!-- %1$s: 案件名 -->
+    <string name="summary_project_personal">%1$s（個人）</string>
+    <!-- %1$s: 案件名 -->
+    <string name="summary_project_personal_deleted">%1$s（個人・削除済み）</string>
     <!-- 実績のある案件が案件の一覧に無い (参照できない) 場合 -->
     <string name="summary_project_unknown">（不明な案件）</string>
     <string name="summary_unallocated_label">未配分</string>

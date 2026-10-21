@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,9 +31,11 @@ import kanuchi.presentation.generated.resources.Res
 import kanuchi.presentation.generated.resources.common_data_save_error_message
 import kanuchi.presentation.generated.resources.ic_badge
 import kanuchi.presentation.generated.resources.ic_coffee
+import kanuchi.presentation.generated.resources.ic_edit
 import kanuchi.presentation.generated.resources.ic_save
 import kanuchi.presentation.generated.resources.ic_schedule
 import kanuchi.presentation.generated.resources.ic_timer
+import kanuchi.presentation.generated.resources.ic_work
 import kanuchi.presentation.generated.resources.settings_break_hours_label
 import kanuchi.presentation.generated.resources.settings_display_name_blank_error
 import kanuchi.presentation.generated.resources.settings_display_name_header
@@ -48,6 +51,9 @@ import kanuchi.presentation.generated.resources.settings_hours_too_large_error
 import kanuchi.presentation.generated.resources.settings_max_hours_label
 import kanuchi.presentation.generated.resources.settings_min_hours_exceeds_max_hours_error
 import kanuchi.presentation.generated.resources.settings_min_hours_label
+import kanuchi.presentation.generated.resources.settings_projects_button
+import kanuchi.presentation.generated.resources.settings_projects_description
+import kanuchi.presentation.generated.resources.settings_projects_header
 import kanuchi.presentation.generated.resources.settings_save_button
 import kanuchi.presentation.generated.resources.settings_saving_button
 import kanuchi.presentation.generated.resources.settings_shift_description
@@ -63,11 +69,14 @@ import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * 個人設定画面。ログイン中のユーザー自身の表示名と勤務時間設定を変更する (全ユーザーが使える)。
- * 表示名と勤務時間設定は、それぞれの「保存」で別々に保存する。
+ * 表示名と勤務時間設定は、それぞれの「保存」で別々に保存する。工数を記録する案件の編集は別の画面で行う。
+ *
+ * @param onOpenProjects 「案件の編集」が押されたとき
  */
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onOpenProjects: () -> Unit,
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -88,8 +97,19 @@ fun SettingsScreen(
                     onChanged = viewModel::onShiftSettingsChanged,
                     onSave = viewModel::onSaveShiftSettingsClicked,
                 )
+                HorizontalDivider()
+                ProjectsSection(onOpenProjects = onOpenProjects)
             }
         }
+    }
+}
+
+@Composable
+private fun ProjectsSection(onOpenProjects: () -> Unit) {
+    SectionHeader(Res.drawable.ic_work, stringResource(Res.string.settings_projects_header))
+    Text(text = stringResource(Res.string.settings_projects_description))
+    OutlinedButton(onClick = onOpenProjects, modifier = Modifier.fillMaxWidth()) {
+        ButtonLabel(Res.drawable.ic_edit, stringResource(Res.string.settings_projects_button))
     }
 }
 

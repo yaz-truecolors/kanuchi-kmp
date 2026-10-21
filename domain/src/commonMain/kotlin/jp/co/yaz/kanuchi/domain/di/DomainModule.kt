@@ -11,9 +11,13 @@ import jp.co.yaz.kanuchi.domain.calendar.GetTodayUseCase
 import jp.co.yaz.kanuchi.domain.profile.GetCurrentUserProfileUseCase
 import jp.co.yaz.kanuchi.domain.profile.GetProfilesUseCase
 import jp.co.yaz.kanuchi.domain.profile.UpdateDisplayNameUseCase
+import jp.co.yaz.kanuchi.domain.project.AddPersonalProjectUseCase
 import jp.co.yaz.kanuchi.domain.project.AddProjectUseCase
+import jp.co.yaz.kanuchi.domain.project.DeletePersonalProjectUseCase
+import jp.co.yaz.kanuchi.domain.project.GetMyProjectsUseCase
 import jp.co.yaz.kanuchi.domain.project.GetProjectAssignmentUseCase
 import jp.co.yaz.kanuchi.domain.project.GetProjectsUseCase
+import jp.co.yaz.kanuchi.domain.project.GetSharedProjectsUseCase
 import jp.co.yaz.kanuchi.domain.project.RenameProjectUseCase
 import jp.co.yaz.kanuchi.domain.project.SaveProjectAssignmentUseCase
 import jp.co.yaz.kanuchi.domain.project.SetProjectActiveUseCase
@@ -63,6 +67,10 @@ val domainModule =
         factoryOf(::SetProjectActiveUseCase)
         factoryOf(::GetProjectAssignmentUseCase)
         factoryOf(::SaveProjectAssignmentUseCase)
+        factoryOf(::GetSharedProjectsUseCase)
+        factoryOf(::GetMyProjectsUseCase)
+        factoryOf(::AddPersonalProjectUseCase)
+        factoryOf(::DeletePersonalProjectUseCase)
         // 「今日」の基準。テストでは固定の Clock を渡す
         single<Clock> { Clock.System }
         factoryOf(::GetTodayUseCase)
