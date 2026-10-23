@@ -141,7 +141,7 @@ Compose Multiplatform の UI・ViewModel・リソース（`presentation/`）と�
 
 - **アクセシビリティ対応（スクリーンリーダー向け `Modifier.semantics { ... }`、
   `liveRegion` 等）は行わない方針。** 実装しないだけでなく、既存コードにも追加しないこと。
-  過去のPRレビュー（Copilotコードレビュー）でこの種の指摘を受けることがあるが、
+  PRレビューでこの種の指摘を受けることがあるが、
   本プロジェクトの方針として意図的に対応しないと決めているため、その指摘は採用しない
   （必要であれば本ファイルの当該記述と `docs/requirements.md` の「2. アプリ概要」UI/UX方針を根拠として説明する）。
   レビューで指摘しない事項の一覧は [.github/skills/code-review/SKILL.md](../skills/code-review/SKILL.md) を参照。

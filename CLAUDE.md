@@ -22,7 +22,8 @@
 ### PR 作成〜レビュー対応（`AGENTS.md` の手順の Claude Code での実施方法）
 
 - PR は `gh pr create --draft` で作成し、本文末尾に Claude Code の署名行を入れる。
-- レビュアーは引き続き GitHub Copilot（`gh pr edit <PR番号> --add-reviewer @copilot`、effort は Balanced）を使う。
+- Draft PR の作成後、CI の確認（`AGENTS.md` の手順2）とあわせて skill `pr-review` でセルフレビューし、指摘を PR に残す
+  （Copilot のレビューが使えなくなったため。指摘への対応は `AGENTS.md` の手順3と同じ）。
 - レビュースレッドへの返信と Resolve は `gh api graphql` で行う（トップレベルの PR コメントで返信しない）。
 
   ```sh

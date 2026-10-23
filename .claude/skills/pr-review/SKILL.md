@@ -8,7 +8,7 @@ description: kanuchi-kmp の Pull Request（または PR 作成前のブラン�
 本リポジトリの PR をレビューし、指摘を GitHub の PR 上に残すための手順です。
 
 - **観点の正本**: 本アプリ固有の「指摘しない事項」「重点的に確認すべき事項」は
-  [.github/skills/code-review/SKILL.md](../../../.github/skills/code-review/SKILL.md)（Copilot・人間のレビューと共通）を正とし、
+  [.github/skills/code-review/SKILL.md](../../../.github/skills/code-review/SKILL.md)（人間のレビューと共通）を正とし、
   ここには重複して書かない。このファイルには、標準的な観点と、レビューの進め方・PR への記録の仕方だけを書く。
 - **記録の形**: 指摘は1件ずつ行コメント（レビュースレッド）にし、PR 作成者が各スレッドで「採用（修正コミット）／採用しない（理由）」を
   返信して Resolve する（`AGENTS.md`「3. レビューフィードバックに対応する」）。レビューの全体像は概要コメントに表で残す。
