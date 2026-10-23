@@ -17,7 +17,8 @@
 - コードレビュー（`/code-review` 等でPR・差分をレビューするとき）は、`.github/skills/code-review/SKILL.md` の
   「指摘しない事項」「重点的に確認すべき事項」を観点として使う。
   - PR をレビューして指摘を PR 上に残す（行ごとのレビュースレッド＋概要コメント）・再レビューで対応状況を確認する場合は、
-    skill `pr-review`（`.claude/skills/pr-review/`）の手順で行う。
+    skill `pr-review`（`.claude/skills/pr-review/`）の手順で行う。このスキルは会話履歴を持たないサブエージェント（`context: fork`）で
+    実行され、確認を挟まずに投稿・スレッドへの返信まで行う（呼び出したセッションの文脈に引っ張られずにレビューするため）。
 
 ### PR 作成〜レビュー対応（`AGENTS.md` の手順の Claude Code での実施方法）
 
