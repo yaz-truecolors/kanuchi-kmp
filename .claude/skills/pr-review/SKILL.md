@@ -4,19 +4,18 @@ description: kanuchi-kmp の Pull Request（または PR 作成前のブラン�
 argument-hint: "[PR番号]"
 context: fork
 agent: general-purpose
+background: false
 allowed-tools:
   - Bash(gh pr view *)
   - Bash(gh pr diff *)
   - Bash(gh pr checks *)
-  - Bash(gh repo view *)
-  - Bash(gh api graphql *)
   - Bash(git fetch origin pull/*)
   - Bash(git show *)
   - Bash(git log *)
   - Bash(git diff *)
-  - Bash(git rev-parse *)
-  - Bash(mktemp -d)
+  - Bash(git status *)
   - Bash(python3 -I .claude/skills/pr-review/scripts/post_review.py *)
+  - Bash(python3 -I .claude/skills/pr-review/scripts/threads.py *)
 ---
 
 # PR レビュー（指摘を PR 上に記録する）
@@ -30,6 +29,11 @@ allowed-tools:
 - このスキルは、呼び出したセッションの会話履歴を持たないサブエージェント（`context: fork`）で実行される。
   呼び出し元で「なぜその変更をしたか」は分からない前提で、PR 本文・コミット・コード・規約ファイルだけを根拠に、初めて見るつもりでレビューする。
 - 途中でユーザーに確認せず、レビューから投稿（再レビューではスレッドへの返信・Resolve を含む）までをこのサブエージェントで行う。
+  呼び出し元は終わるまで待つ（`background: false`）。裏で動かすと、呼び出し元がレビューの投稿前に CI の成功だけを見て
+  Draft を解除するなど、先へ進んでしまうため。
+- 確認なしで使えるコマンドは frontmatter の `allowed-tools` に限っている。GitHub の GraphQL は `gh api graphql` を直接使わず、
+  操作を一覧・返信・Resolve に固定した `scripts/threads.py` 経由で使う（`gh api graphql` を許可すると、Ready 化・マージ等の
+  mutation まで確認なしで実行できてしまうため）。ファイルも書かない（投稿内容は標準入力で渡す）。
 - 行うのはレビューと PR への記録だけ。コードの修正・コミット・push、作業ツリーのブランチの切り替え、Draft の解除、
   レビュアーの指定・レビュー依頼、マージは行わない。
 - 終わったら、呼び出し元へ次の内容を返す（呼び出し元はこれをユーザーに伝える）。
@@ -50,7 +54,7 @@ allowed-tools:
 |---|---|---|
 | PR 番号（例: `/pr-review 53`） | その PR | PR に過去のこのスキルのレビュー（概要コメントに `<!-- pr-review:` を含む）が無ければ**初回**、あれば**再レビュー** |
 | 指定なし | 今のブランチの PR（`gh pr view --json number`） | 同上 |
-| 指定なしで PR が無い | `git diff main...HEAD` と未コミットの変更 | **セルフレビュー**（PR が無いので投稿せず、結果を呼び出し元に返すだけ） |
+| 指定なしで PR が無い | `git diff main...HEAD` と未コミットの変更（`git status --short` で未追跡のファイルも確認する） | **セルフレビュー**（PR が無いので投稿せず、結果を呼び出し元に返すだけ） |
 
 情報を集める（PR の場合）。
 
@@ -63,7 +67,7 @@ gh pr checks <N>
 - 未解決・解決済みのレビュースレッドを取得する（既存の指摘との重複を避けるため、初回でも取得する）。
 
   ```sh
-  gh api graphql -f query='query($o:String!,$r:String!,$n:Int!){repository(owner:$o,name:$r){pullRequest(number:$n){reviewThreads(first:100){nodes{id isResolved path line comments(first:20){nodes{author{login} body}}}}}}}' -f o=yaz-truecolors -f r=kanuchi-kmp -F n=<N>
+  python3 -I .claude/skills/pr-review/scripts/threads.py list <N>
   ```
 - 変更後のファイル全体を読む（差分だけで判断しない）。今のブランチが PR の head と同じなら作業ツリーを読み、違う場合は
   `git fetch origin pull/<N>/head` してから `git show <headRefOid>:<path>` で読む。作業ツリーのブランチは切り替えない。
@@ -178,13 +182,17 @@ PR 本文（概要・変更内容・確認方法・チェックリスト）と�
 ## 4. 投稿する
 
 1. セルフレビューのモードでは投稿せず、指摘の一覧を呼び出し元に返して終える。
-2. 投稿内容を JSON にして、`mktemp -d` で作ったディレクトリに保存する（リポジトリの中には置かない）。形式はスクリプト冒頭の docstring を参照。
-   `commit_id` には控えておいた `headRefOid` を入れる。
-3. `--dry-run` で、行コメントにできる件数と差分外に移る指摘を確かめてから投稿する。
+2. 投稿内容を JSON にまとめる。形式はスクリプト冒頭の docstring を参照。`commit_id` には控えておいた `headRefOid` を入れる。
+   ファイルには書かず、引数 `-` とヒアドキュメント（終端を引用符で囲み、本文の `$` や `` ` `` が展開されないようにする）で標準入力から渡す。
+3. `--dry-run` で、行コメントにできる件数と差分外に移る指摘を確かめてから、同じ JSON で投稿する。
 
    ```sh
-   python3 -I .claude/skills/pr-review/scripts/post_review.py --dry-run <review.json>
-   python3 -I .claude/skills/pr-review/scripts/post_review.py <review.json>
+   python3 -I .claude/skills/pr-review/scripts/post_review.py --dry-run - <<'REVIEW_JSON'
+   {"pr": <N>, "commit_id": "<headRefOid>", "body": "...", "comments": [...]}
+   REVIEW_JSON
+   python3 -I .claude/skills/pr-review/scripts/post_review.py - <<'REVIEW_JSON'
+   （dry-run と同じ JSON）
+   REVIEW_JSON
    ```
 
    - レビュー中に push されていた場合、スクリプトは投稿せずに終了する。新しいコミットの差分を確認し直してから投稿する。
@@ -203,13 +211,13 @@ PR 本文（概要・変更内容・確認方法・チェックリスト）と�
    | 🤝 採用しない（合意） | 返信の理由が妥当（方針・根拠ファイルに沿う、指摘の前提が誤り等） | 「🤝 理由を確認しました。このままで問題ありません」と返信して Resolve |
    | ⏳ 未対応 | 返信が無い／修正が不十分／理由に同意できない | 何が足りないかを返信し、Resolve しない（作成者が Resolve 済みなら、未解決に戻さず返信だけする） |
 
-   返信・Resolve は `gh api graphql` で行う（トップレベルの PR コメントで返信しない）。
+   返信・Resolve は `scripts/threads.py` で行う（トップレベルの PR コメントで返信しない）。
 
    ```sh
-   # スレッドへ返信
-   gh api graphql -f query='mutation($t:ID!,$b:String!){addPullRequestReviewThreadReply(input:{pullRequestReviewThreadId:$t,body:$b}){comment{id}}}' -f t=<thread id> -f b='<返信本文>'
+   # スレッドへ返信（本文に ' を含む場合は '\'' で書く）
+   python3 -I .claude/skills/pr-review/scripts/threads.py reply <thread id> '<返信本文>'
    # スレッドを Resolve
-   gh api graphql -f query='mutation($t:ID!){resolveReviewThread(input:{threadId:$t}){thread{isResolved}}}' -f t=<thread id>
+   python3 -I .claude/skills/pr-review/scripts/threads.py resolve <thread id>
    ```
 3. 前回の対象コミットからの変更を、2.〜3. と同じ手順でレビューする。修正のために入った変更が新しい問題を起こしていないかを重点的に見る。
    - 前回の対象コミットからのこの PR 自身の変更は、PR のコミットだけを辿って求める（`git log --no-merges <前回の sha>..<headRefOid>` の

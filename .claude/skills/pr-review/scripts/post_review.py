@@ -5,6 +5,8 @@
     python3 -I .claude/skills/pr-review/scripts/post_review.py --dry-run <review.json>
     python3 -I .claude/skills/pr-review/scripts/post_review.py <review.json>
 
+<review.json> に `-` を渡すと標準入力から読む（ファイルを書かずにヒアドキュメントで渡せる）。
+
 review.json の形式:
     {
       "pr": 53,
@@ -119,8 +121,11 @@ def main():
     parser.add_argument("review_json")
     args = parser.parse_args()
 
-    with open(args.review_json, encoding="utf-8") as f:
-        review = json.load(f)
+    if args.review_json == "-":
+        review = json.load(sys.stdin)
+    else:
+        with open(args.review_json, encoding="utf-8") as f:
+            review = json.load(f)
     pr = str(review["pr"])
 
     repo = gh("repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner").strip()
