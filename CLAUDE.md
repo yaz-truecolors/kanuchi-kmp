@@ -16,6 +16,8 @@
     （`copilot-construction.md`「領域別の規約ファイル（索引）」）を見て該当ファイルを自分で読むこと。
 - コードレビュー（`/code-review` 等でPR・差分をレビューするとき）は、`.github/skills/code-review/SKILL.md` の
   「指摘しない事項」「重点的に確認すべき事項」を観点として使う。
+  - PR をレビューして指摘を PR 上に残す（行ごとのレビュースレッド＋概要コメント）・再レビューで対応状況を確認する場合は、
+    skill `pr-review`（`.claude/skills/pr-review/`）の手順で行う。
 
 ### PR 作成〜レビュー対応（`AGENTS.md` の手順の Claude Code での実施方法）
 
