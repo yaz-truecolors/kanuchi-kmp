@@ -16,7 +16,7 @@ review.json の形式:
       ]
     }
 
-- commit_id が PR の最新コミットと違う（レビュー中に push された）場合は投稿しない。
+- commit_id は必須。PR の最新コミットと違う（レビュー中に push された）場合は投稿しない。
 - 差分の外の行を指す行コメントは GitHub が受け付けない（422）ため、概要コメントの末尾
   「差分外の指摘」に移して投稿する。
 - event は常に COMMENT（自分の PR には REQUEST_CHANGES / APPROVE を付けられないため）。
@@ -43,17 +43,22 @@ def gh(*args, stdin=None):
 def commentable_lines(diff):
     """差分から、行コメントを付けられる行番号を path ごと・side ごとに集める。"""
     lines = {}
-    path = None
+    path = old_path = None
     left = right = 0
     in_hunk = False
     for raw in diff.splitlines():
         if raw.startswith("diff --git "):
-            path = None
+            path = old_path = None
             in_hunk = False
+            continue
+        if not in_hunk and raw.startswith("--- "):
+            source = raw[4:]
+            old_path = source[2:] if source.startswith("a/") else None
             continue
         if not in_hunk and raw.startswith("+++ "):
             target = raw[4:]
-            path = target[2:] if target.startswith("b/") else None
+            # 削除したファイルは +++ が /dev/null になるので、削除前のパスで集める
+            path = target[2:] if target.startswith("b/") else old_path
             if path is not None:
                 lines.setdefault(path, {"LEFT": set(), "RIGHT": set()})
             continue
@@ -120,7 +125,9 @@ def main():
 
     repo = gh("repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner").strip()
     head = gh("pr", "view", pr, "--json", "headRefOid", "-q", ".headRefOid").strip()
-    commit_id = review.get("commit_id", head)
+    commit_id = review.get("commit_id")
+    if not commit_id:
+        sys.exit("commit_id（レビューしたコミットの SHA）を指定してください。")
     if commit_id != head:
         sys.exit(
             f"レビューしたコミット {commit_id[:7]} が PR の最新 {head[:7]} と違います。"
