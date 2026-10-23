@@ -1,11 +1,41 @@
 ---
 name: pr-review
-description: kanuchi-kmp の Pull Request（または PR 作成前のブランチの差分）を、標準的なレビュー観点と本アプリ固有の確認項目でレビューし、指摘を GitHub の PR に「概要コメント＋行ごとのレビュースレッド」として記録する手順。2回目以降は前回の指摘の対応状況を確認してスレッドを Resolve する。「PR をレビューして」「#53 をレビュー」「再レビューして」「指摘の対応を確認して」「PR を出す前にセルフレビューして」と言われたときに使う。
+description: kanuchi-kmp の Pull Request（または PR 作成前のブランチの差分）を、標準的なレビュー観点と本アプリ固有の確認項目でレビューし、指摘を GitHub の PR に「概要コメント＋行ごとのレビュースレッド」として記録する手順。2回目以降は前回の指摘の対応状況を確認してスレッドを Resolve する。「PR をレビューして」「#53 をレビュー」「再レビューして」「指摘の対応を確認して」「PR を出す前にセルフレビューして」と言われたときに使う。会話履歴を持たないサブエージェントで実行され、投稿まで行う。
+argument-hint: "[PR番号]"
+context: fork
+agent: general-purpose
+allowed-tools:
+  - Bash(gh pr view *)
+  - Bash(gh pr diff *)
+  - Bash(gh pr checks *)
+  - Bash(gh repo view *)
+  - Bash(gh api graphql *)
+  - Bash(git fetch origin pull/*)
+  - Bash(git show *)
+  - Bash(git log *)
+  - Bash(git diff *)
+  - Bash(git rev-parse *)
+  - Bash(mktemp -d)
+  - Bash(python3 -I .claude/skills/pr-review/scripts/post_review.py *)
 ---
 
 # PR レビュー（指摘を PR 上に記録する）
 
 本リポジトリの PR をレビューし、指摘を GitHub の PR 上に残すための手順です。
+
+レビュー対象の指定（引数）: `$ARGUMENTS`（空なら下の「0. 対象とモードを決める」に従う）
+
+## 実行のされ方
+
+- このスキルは、呼び出したセッションの会話履歴を持たないサブエージェント（`context: fork`）で実行される。
+  呼び出し元で「なぜその変更をしたか」は分からない前提で、PR 本文・コミット・コード・規約ファイルだけを根拠に、初めて見るつもりでレビューする。
+- 途中でユーザーに確認せず、レビューから投稿（再レビューではスレッドへの返信・Resolve を含む）までをこのサブエージェントで行う。
+- 行うのはレビューと PR への記録だけ。コードの修正・コミット・push、作業ツリーのブランチの切り替え、Draft の解除、
+  レビュアーの指定・レビュー依頼、マージは行わない。
+- 終わったら、呼び出し元へ次の内容を返す（呼び出し元はこれをユーザーに伝える）。
+  - 投稿したレビューの URL（セルフレビューのモードでは無し）
+  - 指摘の一覧（ID・種別・場所・1行の要約）。再レビューでは、前回までの指摘の状態も
+  - 確認していないこと、途中で失敗した手順があればその内容
 
 - **観点の正本**: 本アプリ固有の「指摘しない事項」「重点的に確認すべき事項」は
   [.github/skills/code-review/SKILL.md](../../../.github/skills/code-review/SKILL.md)（Copilot・人間のレビューと共通）を正とし、
@@ -20,7 +50,7 @@ description: kanuchi-kmp の Pull Request（または PR 作成前のブラン�
 |---|---|---|
 | PR 番号（例: `/pr-review 53`） | その PR | PR に過去のこのスキルのレビュー（概要コメントに `<!-- pr-review:` を含む）が無ければ**初回**、あれば**再レビュー** |
 | 指定なし | 今のブランチの PR（`gh pr view --json number`） | 同上 |
-| 指定なしで PR が無い | `git diff main...HEAD` と未コミットの変更 | **セルフレビュー**（PR が無いので投稿せず、結果を会話に出すだけ） |
+| 指定なしで PR が無い | `git diff main...HEAD` と未コミットの変更 | **セルフレビュー**（PR が無いので投稿せず、結果を呼び出し元に返すだけ） |
 
 情報を集める（PR の場合）。
 
@@ -30,8 +60,11 @@ gh pr diff <N>
 gh pr checks <N>
 ```
 
-- 未解決・解決済みのレビュースレッドは `CLAUDE.md` の「未解決スレッドの一覧」の `gh api graphql` で取得する
-  （既存の指摘との重複を避けるため、初回でも取得する）。
+- 未解決・解決済みのレビュースレッドを取得する（既存の指摘との重複を避けるため、初回でも取得する）。
+
+  ```sh
+  gh api graphql -f query='query($o:String!,$r:String!,$n:Int!){repository(owner:$o,name:$r){pullRequest(number:$n){reviewThreads(first:100){nodes{id isResolved path line comments(first:20){nodes{author{login} body}}}}}}}' -f o=yaz-truecolors -f r=kanuchi-kmp -F n=<N>
+  ```
 - 変更後のファイル全体を読む（差分だけで判断しない）。今のブランチが PR の head と同じなら作業ツリーを読み、違う場合は
   `git fetch origin pull/<N>/head` してから `git show <headRefOid>:<path>` で読む。作業ツリーのブランチは切り替えない。
 - レビューの基準にした `headRefOid` を控えておく（投稿時に、レビュー中に push されていないかの確認に使う）。
@@ -46,8 +79,8 @@ gh pr checks <N>
 ## 2. レビューする
 
 PR 本文（概要・変更内容・確認方法・チェックリスト）と差分を照合したうえで、次の2種類の観点で確認する。
-変更が大きい（目安: 変更ファイル 20 以上）場合は、領域（`supabase/`・`data/`・`domain/`・`presentation/` 等）ごとに
-サブエージェントへ分けて読ませてよい（観点の正本と該当する領域別ファイルのパスを渡す）。
+変更が大きい（目安: 変更ファイル 20 以上）場合は、領域（`supabase/`・`data/`・`domain/`・`presentation/` 等）ごとに区切り、
+領域ごとにその領域別ファイルを読み直してから順にレビューする。
 
 ### 標準的な観点
 
@@ -142,11 +175,10 @@ PR 本文（概要・変更内容・確認方法・チェックリスト）と�
 
 指摘が0件なら、表の代わりに「指摘はありません」と書き、確認した観点・確認していないことは同じように残す。
 
-## 4. ユーザーに確認してから投稿する
+## 4. 投稿する
 
-1. 指摘の一覧（ID・種別・場所・要約）を会話に出し、投稿してよいか確認する。ユーザーが最初の依頼で投稿まで指示している場合は確認を省いてよい。
-   セルフレビューのモードでは投稿せず、ここで終える（必要なら修正するかを確認する）。
-2. 投稿内容を JSON にしてスクラッチパッド（無ければ `mktemp -d` で作ったディレクトリ）に保存する。形式はスクリプト冒頭の docstring を参照。
+1. セルフレビューのモードでは投稿せず、指摘の一覧を呼び出し元に返して終える。
+2. 投稿内容を JSON にして、`mktemp -d` で作ったディレクトリに保存する（リポジトリの中には置かない）。形式はスクリプト冒頭の docstring を参照。
    `commit_id` には控えておいた `headRefOid` を入れる。
 3. `--dry-run` で、行コメントにできる件数と差分外に移る指摘を確かめてから投稿する。
 
@@ -158,7 +190,7 @@ PR 本文（概要・変更内容・確認方法・チェックリスト）と�
    - レビュー中に push されていた場合、スクリプトは投稿せずに終了する。新しいコミットの差分を確認し直してから投稿する。
    - レビューは常に `COMMENT` で投稿する（gh の認証ユーザーが PR 作成者と同じ場合、`REQUEST_CHANGES` / `APPROVE` は付けられない）。
      マージ可否の判断は概要コメントの結果（🔴 の有無）で示す。
-4. 投稿したレビューの URL をユーザーに伝える。このスキルではレビュアーの指定・レビュー依頼を行わず、エージェントはマージもしない（`AGENTS.md`）。
+4. 投稿したレビューの URL と指摘の一覧を呼び出し元に返す（「実行のされ方」の返す内容）。
 
 ## 5. 再レビュー（2回目以降）
 
@@ -171,8 +203,14 @@ PR 本文（概要・変更内容・確認方法・チェックリスト）と�
    | 🤝 採用しない（合意） | 返信の理由が妥当（方針・根拠ファイルに沿う、指摘の前提が誤り等） | 「🤝 理由を確認しました。このままで問題ありません」と返信して Resolve |
    | ⏳ 未対応 | 返信が無い／修正が不十分／理由に同意できない | 何が足りないかを返信し、Resolve しない（作成者が Resolve 済みなら、未解決に戻さず返信だけする） |
 
-   返信・Resolve は `CLAUDE.md` の `gh api graphql`（`addPullRequestReviewThreadReply`・`resolveReviewThread`）で行う。
-   スレッドへの返信もユーザーへの確認（4. の1）に含めて、まとめて確認を取る。
+   返信・Resolve は `gh api graphql` で行う（トップレベルの PR コメントで返信しない）。
+
+   ```sh
+   # スレッドへ返信
+   gh api graphql -f query='mutation($t:ID!,$b:String!){addPullRequestReviewThreadReply(input:{pullRequestReviewThreadId:$t,body:$b}){comment{id}}}' -f t=<thread id> -f b='<返信本文>'
+   # スレッドを Resolve
+   gh api graphql -f query='mutation($t:ID!){resolveReviewThread(input:{threadId:$t}){thread{isResolved}}}' -f t=<thread id>
+   ```
 3. 前回の対象コミットからの変更を、2.〜3. と同じ手順でレビューする。修正のために入った変更が新しい問題を起こしていないかを重点的に見る。
    - 前回の対象コミットからのこの PR 自身の変更は、PR のコミットだけを辿って求める（`git log --no-merges <前回の sha>..<headRefOid>` の
      各コミットの差分）。`git diff <前回の sha>..<headRefOid>` は、間に main をマージしている（アプリの「ベースブランチと同期」を含む）と
@@ -195,3 +233,6 @@ PR 本文（概要・変更内容・確認方法・チェックリスト）と�
 - 本アプリ固有の観点（指摘しない事項・重点的に確認すべき事項）を増やすときは、このファイルではなく
   `.github/skills/code-review/SKILL.md` に根拠ファイルとあわせて追加する（`copilot-construction.md`「6. このドキュメントの更新方針」）。
 - このファイルには、レビューの進め方・指摘の書き方・PR への記録の仕方だけを書く。
+- サブエージェントは呼び出し元の会話を見られないため、手順に必要なコマンド・前提はこのファイルの中で完結させる
+  （「さっきの」「会話で決めた」等、呼び出し元の文脈に頼る書き方をしない）。使うコマンドを増やしたら、frontmatter の
+  `allowed-tools` にも追加する。
