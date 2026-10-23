@@ -129,6 +129,10 @@ RLS の権限方針（誰が何を参照・編集できるか）は `docs/requir
   テーブルは、`grant insert (<送ってよい列>, ...)` のように列単位で insert を許可する。テーブル単位で許可すると、
   クライアントが他人の ID を送って既定値を上書きできてしまう（DBテストで「送ると 42501 になる」ことを確認する。実例:
   `10_company_holidays.test.sql`）。
+- 行の状態遷移に条件がある変更（例: 個人の案件の論理削除。当月以降の日に工数があれば不可）は、その列（`projects.deleted_at`）の
+  update 権限を `authenticated` に与えず、条件を確かめてから更新する `SECURITY DEFINER` の RPC（`delete_personal_project()`）でだけ
+  行えるようにする（列単位の grant で他の列だけ update を許可する）。RPC が確かめる条件と競合しうるトリガー（`guard_allocation_project` の
+  個人の案件への新しい配分）とは、同じ行のロック（RPC は `for update`、トリガーは `for share`）で直列化する。
 - 文字列の check 制約は、アプリ（domain）の検証と判定を完全に一致させる。DB が通した値を domain の変換が拒否すると、
   その行を含む一覧の取得全体が失敗する。特に `btrim()` は既定で半角スペースしか除かないため、「前後に空白なし」は
   Kotlin の `Char.isWhitespace()` と同じ文字の集合（タブ・改行・全角スペース等）を正規表現で明示して判定する

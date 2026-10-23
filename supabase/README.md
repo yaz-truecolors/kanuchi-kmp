@@ -199,8 +199,8 @@ adminはアプリの **ユーザー管理** 画面で、ユーザーを利用停
 | テーブル | 参照 | 追加・変更・削除 |
 |---|---|---|
 | profiles | 本人 or admin | 本人 or admin（ただし role の変更は admin のみ、トリガーで強制。自分自身の降格・利用中のadminが0人になる降格は不可。`suspended_at` は直接変更できず、`set_user_suspended()`（adminのみ）で変更する） |
-| projects | 全員 | admin のみ |
-| user_projects | 本人 or admin | admin のみ |
+| projects | 共有の案件（`owner_id` が null）は全員、個人の案件は作成者本人 or admin | 共有の案件は admin のみ（変更は `name`・`is_active` 列のみ）。個人の案件の追加は本人のみ（`owner_id` に自分を指定）、削除は `delete_personal_project()`（本人のみ、論理削除。当月以降の日に工数があれば不可）。個人の案件の変更・物理削除は不可 |
+| user_projects | 本人 or admin | admin のみ（共有の案件だけを割り当てられる） |
 | shift_settings | 本人 or admin（参照のみ） | 本人のみ |
 | work_records | 本人 or admin（参照のみ） | 本人のみ |
 | allocations | 本人 or admin（参照のみ、work_records経由で判定） | 本人のみ（work_records経由で判定） |
@@ -264,6 +264,7 @@ Docker（起動済み）と [Supabase CLI](https://supabase.com/docs/guides/loca
 | `08_hook_before_user_created.test.sql` | Hook 関数を SQL から直接呼び出し、招待済みは許可（`{}`）・未招待は拒否（`{"error": {"http_code": 403, "message": "email_not_invited"}}`）、正規化した照合、メールアドレスが無い/空のイベントの拒否、招待取り消し後の拒否。`PUBLIC` / `anon` / `authenticated` に `EXECUTE` 権限が無く呼び出すと権限エラーになること、`supabase_auth_admin` は実行できること、`SECURITY DEFINER` であること |
 | `09_user_suspension.test.sql` | `set_user_suspended()` による利用停止・復帰（`suspended_at`・`auth.users.banned_until`・セッション削除）、admin 以外（member・利用停止中のadmin・anon）は実行できないこと、自分自身の利用停止・降格の拒否、利用中のadminが0人になる利用停止・降格の拒否、`suspended_at` を直接変更できないこと、`is_admin()` が利用停止中のadminを除外すること、pre-request 関数 `reject_suspended_user()` が利用停止中のユーザーだけを拒否すること。ローカルDBに開発用のadminがいても検証できるよう、テスト内（rollback される）で `@db-test.invalid` 以外のadminを降格してから実行する |
 | `10_company_holidays.test.sql` | RLS（member/admin/利用停止中のadmin/anon × 参照/追加/変更/削除）、`created_by` の自動設定と偽装の拒否（列単位の insert 権限）、直接DB接続での登録（`created_by` が空）、CHECK制約（名前の空・前後の空白・長さ）・主キー（同じ日付の重複）、`work_records.flag` の列コメント（休・欠の意味） |
+| `12_personal_projects.test.sql` | 個人の案件の RLS（本人/他人/admin × 参照/追加/変更/削除）、列単位の権限（`owner_id`・`deleted_at` を直接変更できない）、名前の重複の許可（共有の案件同士は一意のまま）、`delete_personal_project()`（当月・来月以降の工数による拒否、先月までの工数は残す論理削除、他人・共有の案件の拒否、`EXECUTE` 権限）、`guard_allocation_project` による配分の制限（自分の削除していない個人の案件だけに新しく配分できる）、担当の割当に個人の案件を使えないこと |
 
 ### 自動テストでは検証していないもの
 

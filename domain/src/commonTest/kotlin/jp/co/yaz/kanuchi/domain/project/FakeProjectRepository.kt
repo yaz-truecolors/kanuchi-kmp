@@ -56,6 +56,21 @@ internal class FakeProjectRepository : ProjectRepository {
 
     override suspend fun getAssignedProjectIdsOfCurrentUser(): Result<Set<String>> = assignedProjectIdsOfCurrentUserResult
 
+    var addPersonalProjectResult: Result<Project>? = null
+    var deletePersonalProjectResult: Result<Unit> = Result.success(Unit)
+    var lastAddedPersonalName: ProjectName? = null
+    var lastDeletedPersonalProjectId: String? = null
+
+    override suspend fun addPersonalProject(name: ProjectName): Result<Project> {
+        lastAddedPersonalName = name
+        return addPersonalProjectResult ?: Result.success(Project(id = "new", name = name.value, isActive = true, ownerId = "user-1"))
+    }
+
+    override suspend fun deletePersonalProject(projectId: String): Result<Unit> {
+        lastDeletedPersonalProjectId = projectId
+        return deletePersonalProjectResult
+    }
+
     companion object {
         val ACTIVE = Project(id = "project-1", name = "案件A", isActive = true)
     }
