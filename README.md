@@ -177,8 +177,6 @@ JDK 17・Gradle・Chrome・Supabase CLI をセットアップし、DBテスト�
 
 - `main` にマージされるまで cloud agent には使われません。このファイルを変更した PR ではワークフローが自動で実行されるので、成功することを確認してください。
   マージ後は Actions タブから手動実行（`workflow_dispatch`）もできます。
-- Copilot code review は、ビルド・テストを行わない軽量な `.github/workflows/copilot-code-review.yml`（チェックアウトのみ）を使います
-  （無いと `copilot-setup-steps.yml` が使われ、レビューのたびに数分かかるため）。
 
 ## ライセンス・その他
 

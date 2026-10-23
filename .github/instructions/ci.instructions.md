@@ -5,7 +5,7 @@ paths: ".github/workflows/**,.github/github-app.yml"
 
 # CI（GitHub Actions ワークフロー）・Copilot の作業環境の規約
 
-`.github/workflows/` 配下（`ci.yml`・`supabase-deploy.yml`・`copilot-setup-steps.yml`・`copilot-code-review.yml`）と、
+`.github/workflows/` 配下（`ci.yml`・`supabase-deploy.yml`・`copilot-setup-steps.yml`）と、
 GitHub Copilot app のリポジトリ設定 `.github/github-app.yml` を変更するときの規約・ハマりどころです。
 ローカルでのテスト・検証の実行方法は [copilot-construction.md](../../copilot-construction.md) の
 「4. テスト・検証（共通）」を参照してください。
@@ -46,13 +46,6 @@ GitHub Copilot app のリポジトリ設定 `.github/github-app.yml` を変更�
   PRでは、ワークフローが成功することを確認する。**`paths` 指定のため、`main` のルールセットの必須チェックには追加しないこと**
   （変更の無いPRでは実行されず、必須チェックが pending のままになりマージできなくなる）。
 - cloud agent の作業開始前に毎回実行されるため、重い手順を足すときは所要時間（PR 上の実行時間）も確認する。
-
-## `copilot-code-review.yml`（Copilot code review の環境）
-
-- Copilot code review は、このファイルが無いと `copilot-setup-steps.yml` を実行環境のセットアップに使う（`verify` と DBテストを
-  実行するため、レビューのたびに数分待たされ、Actions の実行時間も増える）。本プロジェクトではレビュー時に検証の実行を求めていないため、
-  code review 用はチェックアウトだけの `copilot-code-review.yml` にしている。ジョブ名は同じく `copilot-setup-steps` 固定。
-- 検証環境の3箇所には含めない（検証のためのツールを足さない）。
 
 ## `.github/github-app.yml`（GitHub Copilot app のリポジトリ設定）
 

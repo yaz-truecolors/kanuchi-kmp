@@ -12,7 +12,7 @@ PR作成〜レビュー対応の手順は [AGENTS.md](AGENTS.md) を参照して
 ## 領域別の規約ファイル（索引）
 
 触るファイルのパスに対応する領域別ファイルを、作業前に必ず読むこと。
-GitHub Copilot（cloud agent / code review）はフロントマターの `applyTo` に、Claude Code は `paths`（`.claude/rules/` のリンク経由）に
+GitHub Copilot（cloud agent 等）はフロントマターの `applyTo` に、Claude Code は `paths`（`.claude/rules/` のリンク経由）に
 一致するファイルを扱うときに自動で読み込むが、`applyTo` を解釈しないエージェント・人間は下表を見て該当ファイルを読むこと。
 
 | 触るパス | 読むファイル | 主な内容 |
@@ -21,7 +21,7 @@ GitHub Copilot（cloud agent / code review）はフロントマターの `applyT
 | `presentation/**`, `app-wasmjs/**` | [.github/instructions/presentation.instructions.md](.github/instructions/presentation.instructions.md) | 文言の `strings.xml` 集約、ログイン状態による画面切り替え（`KanuchiNavHost`）、ホーム画面から開く画面の追加方法（`SubScreenScaffold`）、ViewModel のテスト、エラー表示、アイコン（Material Symbols・`IconParts.kt`）、フォント（Noto Sans JP）、アクセシビリティ対応を行わない方針、Chrome基準、`index.html` の `type="module"` などブラウザ実行時の注意点 |
 | `data/**` | [.github/instructions/data.instructions.md](.github/instructions/data.instructions.md) | 認証方式・RLS準拠クエリ・鍵の扱い、supabase-kt 例外の変換、DB アクセス（PostgREST）の実装パターン、ログイン状態（セッション）とマジックリンクの戻り先・エラー、招待制のクライアント側（`createUser`・例外変換・Hookメッセージ定数・意図的なトレードオフ） |
 | `supabase/**` | [.github/instructions/supabase.instructions.md](.github/instructions/supabase.instructions.md) | マイグレーション運用、新規テーブルの RLS/grant/policy の3点セット、DBテスト（`supabase/tests/`、pgTAP）の規約、ロール変更トリガー・`is_admin()`、Before User Created Hook のサーバー側規約 |
-| `.github/workflows/**`, `.github/github-app.yml` | [.github/instructions/ci.instructions.md](.github/instructions/ci.instructions.md) | 検証環境（CI・Copilot cloud agent・GitHub Copilot app）の3箇所をそろえる規約、`ci.yml`（Chromeセットアップ・`verify`・スモークテストの artifact・DBテストの `db-test` ジョブ・Pagesデプロイ・必須チェックのジョブ名）、`supabase-deploy.yml`（Secrets・トークン有効期限）、`copilot-setup-steps.yml` / `copilot-code-review.yml`（ジョブ名固定・事前取得）、`.github/github-app.yml`（承認・資格情報・スクリプト・`server_ready_pattern`） |
+| `.github/workflows/**`, `.github/github-app.yml` | [.github/instructions/ci.instructions.md](.github/instructions/ci.instructions.md) | 検証環境（CI・Copilot cloud agent・GitHub Copilot app）の3箇所をそろえる規約、`ci.yml`（Chromeセットアップ・`verify`・スモークテストの artifact・DBテストの `db-test` ジョブ・Pagesデプロイ・必須チェックのジョブ名）、`supabase-deploy.yml`（Secrets・トークン有効期限）、`copilot-setup-steps.yml`（ジョブ名固定・事前取得）、`.github/github-app.yml`（承認・資格情報・スクリプト・`server_ready_pattern`） |
 | `e2e/**` | [.github/instructions/e2e.instructions.md](.github/instructions/e2e.instructions.md) | UI 描画スモークテスト（Playwright）の位置付け（起動して描画されるかだけを見る）、実行方法、外部通信の遮断と許容する `console.error`、Canvas 描画の判定方法 |
 | `domain/**` | [.github/instructions/domain.instructions.md](.github/instructions/domain.instructions.md) | domain 層に関わるアーキテクチャ原則（本ファイル1節）への参照、UI文言を持たない・マーカー例外、`AuthRepository` の契約、`GenericDataFailureException` |
 
@@ -108,7 +108,7 @@ app-wasmjs -> domain
 
 ## 5. コードレビューで指摘しない事項
 
-過去のPRレビュー（Copilotコードレビュー）で、本プロジェクトが意図的に対応しないと決めている事項
+PRレビューで、本プロジェクトが意図的に対応しないと決めている事項
 （アクセシビリティ対応、Chrome以外のブラウザ差異 等）を指摘されることがあるが、その指摘は採用しない。
 対象の一覧と根拠は [.github/skills/code-review/SKILL.md](.github/skills/code-review/SKILL.md) の
 「指摘しない事項」を参照し、レビューに返信する際はそこに挙げた根拠ファイルの該当箇所を示すこと。
