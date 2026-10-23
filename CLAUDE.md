@@ -45,3 +45,14 @@
 - `verify` は数分かかるため、Bash のバックグラウンド実行で走らせる。
 - UI に関わる変更の実ブラウザでの確認（ログインした状態の画面の操作・スクリーンショット）は、skill `local-ui-check`
   （`.claude/skills/local-ui-check/`）の手順で、ローカル Supabase に接続したビルドを使って行う。
+
+### hooks（編集・作業終了時の自動 lint）
+
+`.claude/settings.json` の hooks で、`verify` を待たずに lint の違反をその場で直させている（スクリプトは `.claude/hooks/`）。
+
+- `PostToolUse`（Write|Edit）: `.kt` / `.kts` を編集すると、そのモジュールの `ktlintFormat` を実行する（約7秒）。
+  モジュール単位なので、同じモジュールの他のファイルも整形される。自動で直せない違反が残ると、違反箇所を Claude に返す。
+- `Stop`: 未コミットの `.kt` / `.kts` があるモジュールに `ktlintCheck`・`detekt` を実行し、失敗したら作業を終えずに直させる。
+  同じセッションで3回差し戻しても直らなければ止めて、ユーザーに判断を任せる（`lint-on-stop.sh` の `MAX_ATTEMPTS`）。
+- テストや `verify` の代わりではない（PR 作成前の `verify` は引き続き必須）。一時的に止めたいときは、各自の
+  `.claude/settings.local.json` に `"disableAllHooks": true` を書く。
