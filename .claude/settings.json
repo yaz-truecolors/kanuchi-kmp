@@ -14,7 +14,8 @@
       "Bash(gh run list *)",
       "Bash(.claude/skills/local-ui-check/scripts/build-local-dist.sh)",
       "Bash(.claude/skills/local-ui-check/scripts/serve-local-dist.sh)",
-      "Bash(python3 -I .claude/skills/local-ui-check/scripts/login_link.py *)"
+      "Bash(python3 -I .claude/skills/local-ui-check/scripts/login_link.py *)",
+      "Bash(python3 -I .claude/skills/pr-review/scripts/post_review.py --dry-run *)"
     ],
     "deny": [
       "Read(./.env)",

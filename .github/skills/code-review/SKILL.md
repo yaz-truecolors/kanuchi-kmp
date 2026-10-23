@@ -7,6 +7,8 @@ description: kanuchi-kmp リポジトリのプルリクエストをレビュー�
 
 このスキルは、本リポジトリのPRをレビューするときに使う観点の一覧です。
 規約の詳細（理由・具体的な書き方）はここに重複して書かず、各項目に示した根拠ファイルを正とします。
+Claude Code でレビューし、指摘を PR のレビュースレッドとして記録する手順は
+[.claude/skills/pr-review/SKILL.md](../../../.claude/skills/pr-review/SKILL.md)（`/pr-review`）にあります。
 変更ファイルのパスに対応する領域別ファイル（`.github/instructions/*.instructions.md`）の索引は
 [copilot-construction.md](../../../copilot-construction.md) の「領域別の規約ファイル（索引）」にあります。
 
@@ -54,3 +56,15 @@ description: kanuchi-kmp リポジトリのプルリクエストをレビュー�
 | lint 設定の変更 | detekt の設定変更で解析対象が `NO-SOURCE` になっていないか、baseline での一括抑制を使っていないか | `.github/instructions/build.instructions.md`「lint（ktlint / detekt）のビルド設定」、`copilot-construction.md`「3. コード規約（共通）」 |
 | スモークテストの外部通信遮断・許容エラー | `e2e/` のテストが localhost 以外への通信を遮断したままか（本番 Supabase にリクエストを投げない）、`console.error` の許容条件が理由付きで限定されているか（広すぎる許容で実行時エラーを見逃さないか） | `.github/instructions/e2e.instructions.md`「外部通信の遮断と console.error の扱い」 |
 | CI の必須チェック・検証内容 | `ci.yml` のジョブ名 `build-lint-test` / `db-test` を変更していないか、`db-test` を paths フィルタ等でスキップしていないか、検証内容を `ci.yml` 側で変えていないか（`verify` タスク・`supabase/tests/run.sh` 側で変える）、`SUPABASE_CLI_VERSION` が `ci.yml` と `supabase-deploy.yml` で一致しているか | `.github/instructions/ci.instructions.md`「`ci.yml`」 |
+| 検証環境の3箇所 | 検証に使うツール・手順を追加・変更したPRで、`ci.yml`・`copilot-setup-steps.yml`・`.github/github-app.yml` の3箇所がすべて更新されているか | `.github/instructions/ci.instructions.md`「検証環境の3箇所をそろえる」 |
+| 権限の強制場所 | admin 用の画面・操作の制限を、メニューを隠すことや画面側の判定だけで実現していないか（参照・変更の可否は RLS・トリガー・関数で DB 側に強制する） | `.github/instructions/presentation.instructions.md`「ホーム画面から開く画面の追加」、`docs/requirements.md`「5. 認証・権限設計」 |
+| RLS で0行になる変更 | PostgREST の `update` / `delete` に `select()` を付けずに、RLS で0行になった（権限が無かった）場合を成功として扱っていないか | `.github/instructions/data.instructions.md`「DB アクセス（PostgREST）の実装パターン」 |
+| DB アクセスの実装パターン | 取得列を `Columns.list(...)` で明示しているか、DTO と `toDomain()` の変換テストがあるか、DB のエラーを HTTP ステータスや Postgres が組み立てた message ではなく SQLSTATE（`code`）と独自のメッセージで判別しているか | `.github/instructions/data.instructions.md`「DB アクセス（PostgREST）の実装パターン」 |
+| 一括取得の打ち切り・N+1 | 行数が「ユーザー数 × 日数」のように増えるテーブルの一括取得を `range()` でページングしているか（`max_rows` で打ち切られてもエラーにならない）、ユーザーごとに取得する N+1 になっていないか | `.github/instructions/data.instructions.md`「全ユーザー分の一括取得（PostgREST の `max_rows`）」 |
+| 親子のテーブルの保存 | 複数リクエストに分かれる保存の各手順が冪等か（途中で失敗しても保存し直せば揃うか）、空にした値を null に戻すための DTO の nullable なプロパティに既定値を付けていないか | `.github/instructions/data.instructions.md`「親子のテーブルの保存（日次入力）」 |
+| upsert とトリガー | upsert（`insert ... on conflict do update`）でも BEFORE INSERT トリガーが発火することを考慮しているか、`before update of <列>` のトリガーが値の変化（`is distinct from`）で判定しているか | `.github/instructions/supabase.instructions.md`「upsert と BEFORE INSERT トリガー」 |
+| 計算・入力検証の置き場所と数値型 | 稼働時間・過不足・集計を画面側で計算し直していないか（`MonthlyWorkSheet` 等の domain の値を表示する）、時間数を `Double` で計算していないか（`Hours` / `SignedHours` / `AllocationRatio`）、入力の検証が domain にあり DB の check 制約・列の型の範囲と一致しているか | `.github/instructions/domain.instructions.md`「時刻・時間数・入力の検証」「日付・祝日・稼働時間の計算」 |
+| 「今日」と日本時間 | `Clock` を注入して `Clock.todayInJapan()` で求めているか（`Clock.System` の直接使用や `TimeZone.of("Asia/Tokyo")` を使っていないか） | `.github/instructions/domain.instructions.md`「日付・祝日・稼働時間の計算」 |
+| 画面遷移 | 画面側からログイン状態で決まる画面（読み込み中・ログイン・ホーム）へ `navigate` していないか、画面・ViewModel が `NavController` に依存していないか（コールバック・`isFinished` で戻す）、「戻る」が連打で戻りすぎないか | `.github/instructions/presentation.instructions.md`「画面遷移とログイン状態」「ホーム画面から開く画面の追加」「引数付きの画面遷移・画面からの戻り（日次入力）」 |
+| UI 状態と ViewModel のテスト | 新しい UI 状態が文言そのものではなく種別（enum・Boolean 等）を持っているか（ViewModel で `getString` しない）、ViewModel のロジックにテストがあるか | `.github/instructions/presentation.instructions.md`「ViewModel のテスト」 |
+| マジックリンク・セッション | URL 由来の `errorDescription` を表示していないか、`redirectUrl` を明示的に渡しているか、Auth の `flowType` を PKCE にしていないか、`SessionStatus.RefreshFailure` を `SignedOut` として扱っていないか | `.github/instructions/data.instructions.md`「ログイン状態（セッション）・マジックリンクの戻り」 |
