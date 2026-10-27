@@ -22,6 +22,9 @@ object KanuchiDestinations {
     /** 個人設定 (表示名・勤務時間設定)。全員が使える。 */
     const val SETTINGS = "settings"
 
+    /** 案件の編集 (工数を記録する案件の確認・個人の案件の追加と削除。個人設定から開く)。全員が使える。 */
+    const val MY_PROJECTS = "settings/projects"
+
     /** 案件管理 (案件マスタ・担当割当)。admin のみ。 */
     const val PROJECTS = "projects"
 
