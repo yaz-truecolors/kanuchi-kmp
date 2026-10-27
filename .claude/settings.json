@@ -22,5 +22,32 @@
       "Read(./.env.*)",
       "Read(./local.properties)"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ktlint-format.sh",
+            "timeout": 120,
+            "statusMessage": "ktlintFormat を実行中..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lint-on-stop.sh",
+            "timeout": 300,
+            "statusMessage": "ktlintCheck・detekt を実行中..."
+          }
+        ]
+      }
+    ]
   }
 }
