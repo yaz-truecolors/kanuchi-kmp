@@ -43,6 +43,8 @@ import kanuchi.presentation.generated.resources.summary_hours_value
 import kanuchi.presentation.generated.resources.summary_imbalance_days_label
 import kanuchi.presentation.generated.resources.summary_overview_header
 import kanuchi.presentation.generated.resources.summary_project_inactive
+import kanuchi.presentation.generated.resources.summary_project_personal
+import kanuchi.presentation.generated.resources.summary_project_personal_deleted
 import kanuchi.presentation.generated.resources.summary_project_unknown
 import kanuchi.presentation.generated.resources.summary_projects_description
 import kanuchi.presentation.generated.resources.summary_projects_empty
@@ -121,6 +123,9 @@ private fun ProjectSummaryContent(summary: ProjectSummary) {
                     label =
                         when {
                             project == null -> stringResource(Res.string.summary_project_unknown)
+                            project.isPersonal && project.isDeleted ->
+                                stringResource(Res.string.summary_project_personal_deleted, project.name)
+                            project.isPersonal -> stringResource(Res.string.summary_project_personal, project.name)
                             project.isActive -> project.name
                             else -> stringResource(Res.string.summary_project_inactive, project.name)
                         },

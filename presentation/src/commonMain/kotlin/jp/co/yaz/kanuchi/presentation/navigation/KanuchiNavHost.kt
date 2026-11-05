@@ -23,6 +23,7 @@ import jp.co.yaz.kanuchi.presentation.home.HomeScreen
 import jp.co.yaz.kanuchi.presentation.project.ProjectMembersScreen
 import jp.co.yaz.kanuchi.presentation.project.ProjectsScreen
 import jp.co.yaz.kanuchi.presentation.role.RolesScreen
+import jp.co.yaz.kanuchi.presentation.settings.MyProjectsScreen
 import jp.co.yaz.kanuchi.presentation.settings.SettingsScreen
 import jp.co.yaz.kanuchi.presentation.summary.ProjectSummaryScreen
 import jp.co.yaz.kanuchi.presentation.users.UsersScreen
@@ -80,9 +81,7 @@ fun KanuchiNavHost(authGateViewModel: AuthGateViewModel = koinViewModel()) {
         composable(KanuchiDestinations.HOME) {
             HomeScreen(onNavigate = { route -> navController.navigate(route) { launchSingleTop = true } })
         }
-        composable(KanuchiDestinations.SETTINGS) {
-            SettingsScreen(onBack = navController::backToHome)
-        }
+        settingsRoutes(navController)
         projectRoutes(navController)
         composable(KanuchiDestinations.USERS) {
             UsersScreen(onBack = navController::backToHome)
@@ -100,6 +99,22 @@ fun KanuchiNavHost(authGateViewModel: AuthGateViewModel = koinViewModel()) {
  */
 private fun NavHostController.backToHome() {
     popBackStack(KanuchiDestinations.HOME, inclusive = false)
+}
+
+/**
+ * 個人設定画面と、そこから開く案件の編集画面のルート。
+ */
+private fun NavGraphBuilder.settingsRoutes(navController: NavHostController) {
+    composable(KanuchiDestinations.SETTINGS) {
+        SettingsScreen(
+            onBack = navController::backToHome,
+            onOpenProjects = { navController.navigate(KanuchiDestinations.MY_PROJECTS) { launchSingleTop = true } },
+        )
+    }
+    composable(KanuchiDestinations.MY_PROJECTS) {
+        // 戻る操作の連打で個人設定画面より前に戻らないよう、backToHome と同じく popBackStack(route) を使う
+        MyProjectsScreen(onBack = { navController.popBackStack(KanuchiDestinations.SETTINGS, inclusive = false) })
+    }
 }
 
 /**

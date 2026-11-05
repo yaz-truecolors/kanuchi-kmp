@@ -4,6 +4,7 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.exception.PostgrestRestException
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.PostgrestUpdate
@@ -13,13 +14,16 @@ import jp.co.yaz.kanuchi.domain.project.DuplicateProjectNameException
 import jp.co.yaz.kanuchi.domain.project.Project
 import jp.co.yaz.kanuchi.domain.project.ProjectName
 import jp.co.yaz.kanuchi.domain.project.ProjectRepository
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 /**
  * [ProjectRepository] のSupabase実装。`projects`・`user_projects` テーブルを PostgREST で参照・変更する。
  *
- * 変更は RLS で admin のみに制限されている。権限の無い insert はエラーになるが、update・delete はエラーにならず
+ * 共有の案件・割当の変更は RLS で admin のみに制限されている。権限の無い insert はエラーになるが、update・delete はエラーにならず
  * 0行の変更になる (data.instructions.md の「DB アクセス (PostgREST) の実装パターン」) ため、
  * 変更後の行を受け取って件数を確かめ、足りなければ失敗にする。
+ * 個人案件の追加は本人だけに RLS で制限され、削除 (論理削除) は関数 `delete_personal_project` で行う。
  */
 internal class SupabaseProjectRepository(
     private val supabaseClient: SupabaseClient,
@@ -133,7 +137,7 @@ internal class SupabaseProjectRepository(
     override suspend fun getAssignedProjectIdsOfCurrentUser(): Result<Set<String>> =
         runCatchingData {
             // 本人の割当は RLS (user_projects_select_own_or_admin) で参照できる
-            val userId = checkNotNull(supabaseClient.auth.currentUserOrNull()?.id) { "not signed in" }
+            val userId = currentUserId()
             supabaseClient
                 .from(USER_PROJECTS)
                 .select(Columns.list(UserProjectDto.COLUMNS)) {
@@ -143,8 +147,35 @@ internal class SupabaseProjectRepository(
                 .toSet()
         }
 
+    override suspend fun addPersonalProject(name: ProjectName): Result<Project> =
+        runCatchingData {
+            supabaseClient
+                .from(PROJECTS)
+                .insert(NewPersonalProjectDto(name = name.value, ownerId = currentUserId())) {
+                    select(Columns.list(ProjectDto.COLUMNS))
+                }.decodeSingle<ProjectDto>()
+                .toDomain()
+        }
+
+    override suspend fun deletePersonalProject(projectId: String): Result<Unit> {
+        val result =
+            runCatchingData {
+                supabaseClient.postgrest.rpc(
+                    function = DELETE_PERSONAL_PROJECT,
+                    parameters = buildJsonObject { put("target_project_id", projectId) },
+                )
+                Unit
+            }
+        val failure = result.exceptionOrNull() as? GenericDataFailureException ?: return result
+        val restException = failure.cause as? PostgrestRestException
+        return Result.failure(personalProjectDeleteFailure(failure, restException?.code, restException?.error))
+    }
+
+    private fun currentUserId(): String = checkNotNull(supabaseClient.auth.currentUserOrNull()?.id) { "not signed in" }
+
     private companion object {
         const val PROJECTS = "projects"
         const val USER_PROJECTS = "user_projects"
+        const val DELETE_PERSONAL_PROJECT = "delete_personal_project"
     }
 }

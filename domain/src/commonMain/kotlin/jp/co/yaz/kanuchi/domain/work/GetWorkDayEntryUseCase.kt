@@ -18,16 +18,18 @@ class GetWorkDayEntryUseCase(
 ) {
     suspend operator fun invoke(date: LocalDate): Result<WorkDayEntry> =
         coroutineScope {
+            val profileResult = async { profileRepository.getCurrentUserProfile() }
             val projectsResult = async { projectRepository.getProjects() }
             val assignedResult = async { projectRepository.getAssignedProjectIdsOfCurrentUser() }
             val sheetResult =
                 async {
-                    profileRepository.getCurrentUserProfile().fold(
+                    profileResult.await().fold(
                         onSuccess = { getMonthlyWorkSheetUseCase(it.id, YearMonth(date.year, date.month)) },
                         onFailure = { Result.failure(it) },
                     )
                 }
             val sheet = sheetResult.await().getOrElse { return@coroutineScope Result.failure(it) }
+            val userId = profileResult.await().getOrThrow().id
             val projects = projectsResult.await().getOrElse { return@coroutineScope Result.failure(it) }
             val assignedIds = assignedResult.await().getOrElse { return@coroutineScope Result.failure(it) }
 
@@ -40,8 +42,14 @@ class GetWorkDayEntryUseCase(
             val allocatable =
                 projects
                     .mapNotNull { project ->
-                        val isAssigned = project.isActive && project.id in assignedIds
-                        if (isAssigned || project.id in allocatedIds) AllocatableProject(project, isAssigned) else null
+                        val canAddAllocation =
+                            if (project.isPersonal) {
+                                // admin は他のユーザーの個人案件も参照できるため、作成者で判定する
+                                project.ownerId == userId && !project.isDeleted
+                            } else {
+                                project.isActive && project.id in assignedIds
+                            }
+                        if (canAddAllocation || project.id in allocatedIds) AllocatableProject(project, canAddAllocation) else null
                     }.sortedWith(AllocatableProject.DISPLAY_ORDER)
             Result.success(WorkDayEntry(day = day, shiftSettings = sheet.shiftSettings, projects = allocatable))
         }

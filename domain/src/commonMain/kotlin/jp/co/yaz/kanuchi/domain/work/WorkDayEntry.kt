@@ -17,18 +17,19 @@ data class WorkDayEntry(
 )
 
 /**
- * 日次入力で工数を配分できる案件。本人に割り当てられた有効な案件と、その日に既に配分がある案件
- * (無効にされた・割当を外された案件でも、配分を直したり 0 にしたりできるよう含める)。
+ * 日次入力で工数を配分できる案件。本人に割り当てられた有効な共有の案件、本人の削除していない個人案件と、
+ * その日に既に配分がある案件 (無効にされた・割当を外された・削除した案件でも、配分を直したり 0 にしたりできるよう含める)。
  *
- * @property isAssigned 本人に割り当てられた有効な案件か (false なら、既に配分があるため表示している案件)
+ * @property canAddAllocation 新しく工数を配分できる案件か (本人に割り当てられた有効な共有の案件か、本人の削除していない個人案件)。
+ *   false なら、既に配分があるため表示している案件
  */
 data class AllocatableProject(
     val project: Project,
-    val isAssigned: Boolean,
+    val canAddAllocation: Boolean,
 ) {
     companion object {
-        /** 表示する順。割り当てられた有効な案件を先に、それぞれ案件名の順に並べる。 */
+        /** 表示する順。新しく配分できる案件を先に、それぞれ案件名の順に並べる。 */
         val DISPLAY_ORDER: Comparator<AllocatableProject> =
-            compareByDescending<AllocatableProject> { it.isAssigned }.thenBy { it.project.name }
+            compareByDescending<AllocatableProject> { it.canAddAllocation }.thenBy { it.project.name }
     }
 }
