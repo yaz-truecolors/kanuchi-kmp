@@ -201,7 +201,7 @@ Domain Service側で都度計算する「導出値」として扱う。
 2. Supabaseプロジェクト作成・DBスキーマ適用・RLSポリシー設定
 3. domain層の実装（Entity/Value Object/UseCase/Domain Service）とテスト
 4. data層の実装（Supabase連携）とテスト
-5. presentation層の実装（画面：ログイン、ホーム、個人設定、日次入力、案件別集計、管理者ダッシュボード、案件管理、ユーザー管理、権限管理、休業日管理）
+5. presentation層の実装（画面：ログイン、ホーム、個人設定、案件の編集、日次入力、案件別集計、管理者ダッシュボード、案件管理、ユーザー管理、権限管理、休業日管理）
 6. GitHub Pagesへのデプロイ確認・動作検証
 
 ## 9. 日次入力・集計の仕様
