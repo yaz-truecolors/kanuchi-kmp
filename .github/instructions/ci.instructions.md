@@ -18,7 +18,7 @@ GitHub Copilot app のリポジトリ設定 `.github/github-app.yml` を変更�
 
 | 環境 | ファイル | 役割 |
 |---|---|---|
-| CI | `.github/workflows/ci.yml` | 必須チェック（`build-lint-test`・`db-test`。`migration-order` は追加予定）で検証を実行する |
+| CI | `.github/workflows/ci.yml` | 必須チェック（`build-lint-test`・`db-test`・`migration-order`）で検証を実行する |
 | Copilot cloud agent | `.github/workflows/copilot-setup-steps.yml` | エージェントの作業開始前に、検証に必要なツールと実行時にダウンロードされるものを事前に取得する |
 | GitHub Copilot app（ローカル） | `.github/github-app.yml` | 新しいセッション（worktree）作成時の依存取得と、検証・開発サーバー等を実行する手動スクリプト |
 
@@ -95,18 +95,21 @@ GitHub Copilot app のリポジトリ設定 `.github/github-app.yml` を変更�
 - `migration-order` ジョブは、PR が追加するマイグレーションのタイムスタンプが、ベースブランチの最新のマイグレーションより後であることと、
   ベースブランチにあるマイグレーションを削除・名前の変更をしていないことを確かめる（中身はローカルと同じ `./supabase/tests/check-migration-order.sh`。理由は [supabase.instructions.md](supabase.instructions.md)
   の「マイグレーション運用」）。PR のときだけベースブランチを取得してチェックし、push（main へのマージ）ではチェックせずに成功として終える。
-  - `main` のルールセットの必須チェックに追加する予定のジョブのため、`db-test` と同じく **paths フィルタやジョブの `if:` でスキップしないこと**
-    （ステップの `if:` で push のときだけチェックを飛ばしている）。必須チェックに追加した後はジョブ名を変更しないこと。
-  - 必須チェックへの追加は、このジョブが main にマージされ、main 向けの PR で実際に実行されたのを確かめてから行う
-    （存在しないジョブを必須チェックにすると、結果が届かず全 PR がマージできなくなる）。あわせてルールセットの strict
-    （「Require branches to be up to date before merging」）を有効にする予定。PR の CI は main の更新では再実行されないため、
-    strict が無いと、チェックの後に main へ入ったマイグレーションとの順番の問題を見逃してマージできてしまう。
+  - `main` のルールセットの必須チェックのため、`db-test` と同じく **paths フィルタやジョブの `if:` でスキップしないこと**
+    （ステップの `if:` で push のときだけチェックを飛ばしている）。ジョブ名を変更しないこと。
+  - 新しいジョブを必須チェックに追加するときは、そのジョブが main にマージされ、main 向けの PR で実際に実行されたのを確かめてから行う
+    （存在しないジョブを必須チェックにすると、結果が届かず全 PR がマージできなくなる。`migration-order` もこの順番で追加した）。
 - `main` へのマージ時は追加でGitHub Pagesへの自動デプロイが走る。
 - **`main` はルールセット（main-protect）で保護されており、直接pushできない。** 変更は必ずPR経由でマージする
-  （承認数は0件でよいが、ステータスチェック `build-lint-test`・`db-test` の成功が必須。最新 `main` との同期は現状は不要）。
-  必須チェックはジョブ名で照合されるため、**`ci.yml` のジョブ名 `build-lint-test`・`db-test` を変更すると必須チェックが
-  永久に満たされずPRがマージできなくなる。** ジョブ名を変える必要がある場合は、先にルールセット側の
+  （承認数は0件でよいが、ステータスチェック `build-lint-test`・`db-test`・`migration-order` の成功が必須）。
+  必須チェックはジョブ名で照合されるため、**`ci.yml` のジョブ名 `build-lint-test`・`db-test`・`migration-order` を変更すると
+  必須チェックが永久に満たされずPRがマージできなくなる。** ジョブ名を変える必要がある場合は、先にルールセット側の
   必須チェック名を変更すること。
+- **ルールセットは strict（「Require branches to be up to date before merging」）にしている。** main が更新されると、
+  main 向けの PR は main を取り込む（PR 画面の「Update branch」か `git merge origin/main` して push）までマージできず、
+  取り込んだコミットで CI が再実行される。PR の CI は main の更新では自動で再実行されないため、strict が無いと、
+  チェックの後に main へ入ったマイグレーションとの順番の問題（[supabase.instructions.md](supabase.instructions.md)「マイグレーション運用」）を
+  見逃してマージできてしまう。`migration-order` が失敗したら、PR で追加したマイグレーションのファイル名を振り直す。
 
 ## `supabase-deploy.yml`
 
