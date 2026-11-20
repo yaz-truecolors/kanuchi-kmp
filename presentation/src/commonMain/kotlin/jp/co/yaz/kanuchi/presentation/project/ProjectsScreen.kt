@@ -59,8 +59,9 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
- * 案件管理画面 (admin のみ)。案件の一覧 (有効な案件が先)・追加・名前変更・有効／無効の切り替えを行い、
+ * 案件管理画面 (admin のみ)。共有の案件の一覧 (有効な案件が先)・追加・名前変更・有効／無効の切り替えを行い、
  * 各案件の担当メンバー画面を開く。案件は削除できない (使わなくなった案件は無効にする)。
+ * 各ユーザーが個人設定で追加した個人の案件は表示しない。
  *
  * @param onOpenMembers 「担当メンバー」が押されたときに、案件のIDを受け取る
  */

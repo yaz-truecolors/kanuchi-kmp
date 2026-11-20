@@ -40,7 +40,9 @@ import kanuchi.presentation.generated.resources.admin_dashboard_members_empty_me
 import kanuchi.presentation.generated.resources.admin_dashboard_members_header
 import kanuchi.presentation.generated.resources.admin_dashboard_members_note
 import kanuchi.presentation.generated.resources.admin_dashboard_open_member_button
+import kanuchi.presentation.generated.resources.admin_dashboard_project_deleted_label
 import kanuchi.presentation.generated.resources.admin_dashboard_project_inactive_label
+import kanuchi.presentation.generated.resources.admin_dashboard_project_personal_label
 import kanuchi.presentation.generated.resources.admin_dashboard_project_unknown_name
 import kanuchi.presentation.generated.resources.admin_dashboard_projects_empty_message
 import kanuchi.presentation.generated.resources.admin_dashboard_projects_header
@@ -106,9 +108,11 @@ private fun SummaryContent(
     if (summary.projectHours.isEmpty()) {
         EmptyMessage(stringResource(Res.string.admin_dashboard_projects_empty_message))
     } else {
+        // 個人の案件は名前が重複してよいため、作成したメンバーの表示名を添える (作成者は配分のあるメンバーなので members にいる)
+        val displayNames = summary.members.associate { it.profile.id to it.profile.displayName }
         summary.projectHours.forEach { projectHours ->
             HorizontalDivider()
-            ProjectRow(projectHours)
+            ProjectRow(projectHours, ownerDisplayName = projectHours.project?.ownerId?.let(displayNames::get))
         }
         HorizontalDivider()
     }
@@ -175,8 +179,16 @@ private fun RangeStatusLabel(status: WorkingHoursRangeStatus) {
     }
 }
 
+/**
+ * 案件ごとのチーム合計の1行。
+ *
+ * @param ownerDisplayName 個人の案件なら、作成したメンバーの表示名 (共有の案件・見つからない場合は null)
+ */
 @Composable
-private fun ProjectRow(projectHours: TeamProjectHours) {
+private fun ProjectRow(
+    projectHours: TeamProjectHours,
+    ownerDisplayName: String?,
+) {
     val project = projectHours.project
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -184,12 +196,14 @@ private fun ProjectRow(projectHours: TeamProjectHours) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(project?.name ?: stringResource(Res.string.admin_dashboard_project_unknown_name))
-        if (project != null && !project.isActive) {
-            Text(
-                stringResource(Res.string.admin_dashboard_project_inactive_label),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.outline,
+        val notes =
+            listOfNotNull(
+                ownerDisplayName?.let { stringResource(Res.string.admin_dashboard_project_personal_label, it) },
+                if (project != null && !project.isActive) stringResource(Res.string.admin_dashboard_project_inactive_label) else null,
+                if (project != null && project.isDeleted) stringResource(Res.string.admin_dashboard_project_deleted_label) else null,
             )
+        notes.forEach { note ->
+            Text(note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
         }
         Spacer(modifier = Modifier.weight(1f))
         Text(stringResource(Res.string.admin_dashboard_hours, formatHours(projectHours.hours)))

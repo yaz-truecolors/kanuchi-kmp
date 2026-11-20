@@ -67,6 +67,8 @@ import kanuchi.presentation.generated.resources.daily_input_hours_hint
 import kanuchi.presentation.generated.resources.daily_input_negative_working_hours_warning
 import kanuchi.presentation.generated.resources.daily_input_not_calculable
 import kanuchi.presentation.generated.resources.daily_input_note_label
+import kanuchi.presentation.generated.resources.daily_input_project_personal_deleted_note
+import kanuchi.presentation.generated.resources.daily_input_project_personal_note
 import kanuchi.presentation.generated.resources.daily_input_project_unassigned_note
 import kanuchi.presentation.generated.resources.daily_input_projects_empty_message
 import kanuchi.presentation.generated.resources.daily_input_projects_header
@@ -328,12 +330,14 @@ private fun AllocationFields(
     projects.forEach { allocatable ->
         val project = allocatable.project
         val error = uiState.allocationViolations[project.id]?.message()
-        val label =
-            if (allocatable.isAssigned) {
-                project.name
-            } else {
-                "${project.name} (${stringResource(Res.string.daily_input_project_unassigned_note)})"
+        val note =
+            when {
+                project.isPersonal && project.isDeleted -> stringResource(Res.string.daily_input_project_personal_deleted_note)
+                project.isPersonal -> stringResource(Res.string.daily_input_project_personal_note)
+                !allocatable.canAddAllocation -> stringResource(Res.string.daily_input_project_unassigned_note)
+                else -> null
             }
+        val label = if (note == null) project.name else "${project.name} ($note)"
         OutlinedTextField(
             value = uiState.input.allocations[project.id].orEmpty(),
             onValueChange = { onAllocationChange(project.id, it) },
