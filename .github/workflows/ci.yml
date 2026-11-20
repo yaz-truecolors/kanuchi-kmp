@@ -44,7 +44,7 @@ jobs:
 
   # DBテスト（supabase/tests/database/ の pgTAP テスト）。RLS・トリガー・招待制Hook のアクセス制御ルールを、
   # Supabase の実際の Postgres イメージにマイグレーションを適用した状態で検証する。
-  # ジョブ名 db-test は、main のルールセットの必須ステータスチェックに追加する予定（追加後は名前を変更しないこと）。
+  # ジョブ名 db-test は main のルールセットで必須ステータスチェックに指定されている（名前を変更しないこと）。
   # 必須チェックはスキップされると pending のままになりマージできなくなるため、paths フィルタは使わず全PRで実行する。
   db-test:
     runs-on: ubuntu-latest
@@ -63,6 +63,31 @@ jobs:
       # ローカルと同じスクリプトを実行する（Postgres のみ起動 → マイグレーション適用 → supabase test db）
       - name: Run database tests (pgTAP)
         run: ./supabase/tests/run.sh
+
+  # マイグレーションの順番のチェック。PR が追加するマイグレーションのタイムスタンプが、ベースブランチの最新より後であることと、
+  # ベースブランチにあるマイグレーションを削除・名前の変更をしていないことを確かめる
+  # （どちらかが崩れると、マージ後の supabase-deploy.yml の supabase db push が止まる。db-test はファイル名順に空の DB へ適用するので検出できない）。
+  # ジョブ名 migration-order は、main のルールセットの必須チェックに追加する予定（追加後は名前を変更しないこと）。
+  # 必須チェックはスキップされると pending のままになるため、paths フィルタやジョブの if: は使わず、全 PR で実行する。
+  migration-order:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      # push（main へのマージ）では比べるベースが無いので、PR のときだけチェックする（ジョブ自体は常に成功として終える）
+      - name: Fetch base branch
+        if: github.event_name == 'pull_request'
+        run: git fetch --no-tags --depth=1 origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
+        env:
+          BASE_REF: ${{ github.base_ref }}
+
+      # ローカルと同じスクリプトを実行する
+      - name: Check migration order
+        if: github.event_name == 'pull_request'
+        run: ./supabase/tests/check-migration-order.sh "origin/${BASE_REF}"
+        env:
+          BASE_REF: ${{ github.base_ref }}
 
   deploy-pages:
     needs: build-lint-test
