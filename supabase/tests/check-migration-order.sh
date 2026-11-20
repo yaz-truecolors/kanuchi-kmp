@@ -3,10 +3,13 @@
 #
 # 使い方: ./supabase/tests/check-migration-order.sh [ベースの ref]（省略時は origin/main。事前に git fetch しておく）
 #
-# HEAD にあってベースに無いマイグレーション（この PR が追加・ファイル名を変えたもの）のタイムスタンプが、
-# ベースにあるマイグレーションの最新のタイムスタンプより後であることを確かめる。
-# 前にあると、main へのマージ後に supabase-deploy.yml の `supabase db push`（--include-all なし）が
-# 本番の最新より古いマイグレーションを適用できずに止まる。DBテスト（run.sh）はファイル名順に空の DB へ適用するため、検出できない。
+# 次の2つを確かめる。どちらかが崩れると、main へのマージ後に supabase-deploy.yml の `supabase db push`（--include-all なし）が
+# 止まる。DBテスト（run.sh）はファイル名順に空の DB へ適用するため、どちらも検出できない。
+# 1. ベースにあるマイグレーション（main なら本番に適用済み）が、HEAD でもすべて同じ名前で残っている（削除・名前の変更をしていない）
+# 2. HEAD にあってベースに無いマイグレーション（この PR が追加・ファイル名を変えたもの）のタイムスタンプが、
+#    ベースにあるマイグレーションの最新のタイムスタンプより後である
+# CI（pull_request）では HEAD は PR を main に取り込んだ merge コミットなので、main の最新のファイルは必ず HEAD にある。
+# ローカルで、main より古いブランチのまま実行すると 1 で失敗するため、main を取り込んでから実行する。
 set -euo pipefail
 export LC_ALL=C # sort と comm の並び順をそろえる
 
@@ -27,6 +30,19 @@ list_migrations() {
 base_files=$(list_migrations "$base_ref")
 head_files=$(list_migrations HEAD)
 new_files=$(comm -13 <(echo "$base_files") <(echo "$head_files") | sed '/^$/d')
+removed_files=$(comm -23 <(echo "$base_files") <(echo "$head_files") | sed '/^$/d')
+
+if [ -n "$removed_files" ]; then
+  while IFS= read -r f; do
+    echo "NG: ${base_ref} にある $dir/$f が HEAD にありません（削除・名前の変更）。" >&2
+  done <<<"$removed_files"
+  cat >&2 <<EOF
+
+${base_ref} にあるマイグレーション（main なら本番に適用済み）は、削除・名前の変更をしないでください。修正は新しいマイグレーションを追加して行います。
+ブランチが ${base_ref} より古いだけの場合は、${base_ref} を取り込んで（git merge ${base_ref}）から実行し直してください。
+EOF
+  exit 1
+fi
 
 if [ -z "$new_files" ]; then
   echo "この変更で追加されたマイグレーションはありません。"

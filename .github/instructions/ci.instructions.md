@@ -92,8 +92,8 @@ GitHub Copilot app のリポジトリ設定 `.github/github-app.yml` を変更�
     手で変更する場合も3ファイルを同じ値にすること。
   - `build-lint-test`（Gradle）とは独立したジョブにしている。Docker が必要な DBテストを `./gradlew verify` に
     含めないため（`verify` は Docker の無い環境でも実行できるようにしている）。
-- `migration-order` ジョブは、PR が追加するマイグレーションのタイムスタンプが、ベースブランチの最新のマイグレーションより後であることを
-  確かめる（中身はローカルと同じ `./supabase/tests/check-migration-order.sh`。理由は [supabase.instructions.md](supabase.instructions.md)
+- `migration-order` ジョブは、PR が追加するマイグレーションのタイムスタンプが、ベースブランチの最新のマイグレーションより後であることと、
+  ベースブランチにあるマイグレーションを削除・名前の変更をしていないことを確かめる（中身はローカルと同じ `./supabase/tests/check-migration-order.sh`。理由は [supabase.instructions.md](supabase.instructions.md)
   の「マイグレーション運用」）。PR のときだけベースブランチを取得してチェックし、push（main へのマージ）ではチェックせずに成功として終える。
   - `main` のルールセットの必須チェックに追加する予定のジョブのため、`db-test` と同じく **paths フィルタやジョブの `if:` でスキップしないこと**
     （ステップの `if:` で push のときだけチェックを飛ばしている）。必須チェックに追加した後はジョブ名を変更しないこと。

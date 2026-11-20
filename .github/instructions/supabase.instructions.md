@@ -61,7 +61,9 @@ RLS の権限方針（誰が何を参照・編集できるか）は `docs/requir
   `supabase db push`（`--include-all` なし）が本番の最新より古いマイグレーションを適用できずに止まり、アプリだけが新しく DB が古い状態になる。
   DBテストはファイル名順に空の DB へ適用するため、この問題を検出できない。PR を作った後に main へ新しいマイグレーションが入った場合も、
   main を取り込んだうえでこの PR のファイル名を振り直す（未マージのファイルなので名前を変えてよい。内容は変えない）。
-  CI の `migration-order` ジョブがチェックし、ローカルでは `git fetch origin main` の後に `./supabase/tests/check-migration-order.sh` で確かめられる。
+  CI の `migration-order` ジョブがチェックし（main にあるマイグレーションの削除・名前の変更も検出する）、ローカルでは
+  `git fetch origin main` と main の取り込みの後に `./supabase/tests/check-migration-order.sh` で確かめられる
+  （main より古いブランチのまま実行すると、main の新しいマイグレーションが「削除された」と判定されて失敗する）。
 
 ## DBテスト（`supabase/tests/`）
 
