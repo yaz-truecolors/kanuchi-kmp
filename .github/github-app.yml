@@ -27,7 +27,8 @@ scripts:
   # Docker（起動済み）と Supabase CLI が必要
   - name: DBテスト（supabase/tests/run.sh）
     command: ./supabase/tests/run.sh
-  # 追加したマイグレーションのタイムスタンプが main の最新より後かを確かめる（CI の migration-order ジョブと同じ）
+  # 追加したマイグレーションのタイムスタンプが main の最新より後か、main のマイグレーションを削除・名前の変更をしていないかを
+  # 確かめる（CI の migration-order ジョブと同じ。main より古いブランチでは main を取り込んでから実行する）
   - name: マイグレーションの順番のチェック
     command: git fetch origin main && ./supabase/tests/check-migration-order.sh origin/main
 
