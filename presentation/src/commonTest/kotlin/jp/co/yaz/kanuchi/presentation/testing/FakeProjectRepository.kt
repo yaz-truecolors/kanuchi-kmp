@@ -76,10 +76,29 @@ internal class FakeProjectRepository : ProjectRepository {
 
     override suspend fun getAssignedProjectIdsOfCurrentUser(): Result<Set<String>> = assignedProjectIdsOfCurrentUserResult
 
+    var addPersonalProjectResult: CompletableDeferred<Result<Project>>? = null
+    var deletePersonalProjectResult: CompletableDeferred<Result<Unit>>? = null
+    val addedPersonalNames = mutableListOf<String>()
+    val deletedPersonalProjectIds = mutableListOf<String>()
+
+    override suspend fun addPersonalProject(name: ProjectName): Result<Project> {
+        addedPersonalNames += name.value
+        return addPersonalProjectResult?.await()
+            ?: Result.success(Project(id = "new-personal", name = name.value, isActive = true, ownerId = FakeProfileRepository.MEMBER.id))
+    }
+
+    override suspend fun deletePersonalProject(projectId: String): Result<Unit> {
+        deletedPersonalProjectIds += projectId
+        return deletePersonalProjectResult?.await() ?: Result.success(Unit)
+    }
+
     private fun projectOf(projectId: String): Project = projectsResult.getOrThrow().first { it.id == projectId }
 
     companion object {
         val ACTIVE = Project(id = "project-1", name = "案件B", isActive = true)
         val INACTIVE = Project(id = "project-2", name = "案件A", isActive = false)
+
+        /** ログイン中のユーザー ([FakeProfileRepository.MEMBER]) の個人の案件。 */
+        val PERSONAL = Project(id = "project-3", name = "個人案件", isActive = true, ownerId = FakeProfileRepository.MEMBER.id)
     }
 }

@@ -20,7 +20,7 @@ enum class ProjectNameSaveError {
  * 案件管理画面のUI状態。
  */
 data class ProjectsUiState(
-    /** すべての案件 (無効な案件を含む)。一覧に表示する順 ([Project.DISPLAY_ORDER]) に並べる。 */
+    /** すべての共有の案件 (無効な案件を含む。個人の案件は含まない)。一覧に表示する順 ([Project.DISPLAY_ORDER]) に並べる。 */
     val projects: List<Project> = emptyList(),
     val isLoading: Boolean = false,
     val loadFailed: Boolean = false,

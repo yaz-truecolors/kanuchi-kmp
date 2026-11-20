@@ -3,7 +3,7 @@ package jp.co.yaz.kanuchi.presentation.project
 import jp.co.yaz.kanuchi.domain.common.GenericDataFailureException
 import jp.co.yaz.kanuchi.domain.project.AddProjectUseCase
 import jp.co.yaz.kanuchi.domain.project.DuplicateProjectNameException
-import jp.co.yaz.kanuchi.domain.project.GetProjectsUseCase
+import jp.co.yaz.kanuchi.domain.project.GetSharedProjectsUseCase
 import jp.co.yaz.kanuchi.domain.project.Project
 import jp.co.yaz.kanuchi.domain.project.RenameProjectUseCase
 import jp.co.yaz.kanuchi.domain.project.SetProjectActiveUseCase
@@ -23,7 +23,7 @@ class ProjectsViewModelTest : MainDispatcherTest() {
 
     private fun createViewModel() =
         ProjectsViewModel(
-            GetProjectsUseCase(repository),
+            GetSharedProjectsUseCase(repository),
             AddProjectUseCase(repository),
             RenameProjectUseCase(repository),
             SetProjectActiveUseCase(repository),
@@ -36,6 +36,14 @@ class ProjectsViewModelTest : MainDispatcherTest() {
         assertEquals(listOf(ACTIVE, INACTIVE), viewModel.uiState.value.projects)
         assertFalse(viewModel.uiState.value.isLoading)
         assertFalse(viewModel.uiState.value.loadFailed)
+    }
+
+    @Test
+    fun `personal projects are not shown`() {
+        repository.projectsResult = Result.success(listOf(FakeProjectRepository.PERSONAL, ACTIVE))
+        val viewModel = createViewModel()
+
+        assertEquals(listOf(ACTIVE), viewModel.uiState.value.projects)
     }
 
     @Test
